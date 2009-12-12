@@ -2,7 +2,7 @@
 // Code based on a tutorial by Martin Bohme (boehme@inb.uni-luebeckREMOVETHIS.de)
 // 
 // Patched by BOYPT(pentie@gmail.com) for ffmpeg 0.5.0, 
-// tested on Ubuntu 9.10, compiled with gcc 4.4.1
+// tested on Ubuntu 9.10, compiled with gcc 4.4.1, Dec 12, 2009
 //
 // A small sample program that shows how to use libavformat and libavcodec to
 // read video from a file.
@@ -13,6 +13,8 @@
 //
 // to build (assuming libavformat and libavcodec are correctly installed
 // your system).
+// To install all ffmpeg-dev libs under Ubuntu: 
+// sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libpostproc-dev libswscale-dev libavdevice-dev
 //
 // Run using
 //
@@ -21,8 +23,6 @@
 // to write the first five frames from "myvideofile.mpg" to disk in PPM
 // format.
 //
-// To install all ffmpeg-dev libs under Ubuntu: 
-// sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libpostproc-dev libswscale-dev libavdevice-dev
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
