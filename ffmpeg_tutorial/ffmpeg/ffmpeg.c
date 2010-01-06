@@ -65,6 +65,8 @@
 
 #include "cmdutils.h"
 
+#include "ffmpeg.h"
+
 #undef NDEBUG
 #include <assert.h>
 
@@ -380,7 +382,7 @@ static int decode_interrupt_cb(void)
     return q_pressed || (q_pressed = read_key() == 'q');
 }
 
-static int av_exit(int ret)
+int av_total_free()
 {
     int i;
 
@@ -427,6 +429,11 @@ static int av_exit(int ret)
     void powerpc_display_perf_report(void);
     powerpc_display_perf_report();
 #endif /* CONFIG_POWERPC_PERF */
+}
+
+int av_exit(int ret)
+{
+    av_total_free();
 
     if (received_sigterm) {
         fprintf(stderr,
@@ -763,10 +770,10 @@ static void pre_process_video_frame(AVInputStream *ist, AVPicture *picture, void
     } else {
         picture2 = picture;
     }
-
+/*
     if (CONFIG_VHOOK)
         frame_hook_process(picture2, dec->pix_fmt, dec->width, dec->height,
-                           1000000 * ist->pts / AV_TIME_BASE);
+                           1000000 * ist->pts / AV_TIME_BASE);*/
 
     if (picture != picture2)
         *picture = *picture2;
@@ -3890,10 +3897,65 @@ static const OptionDef options[] = {
     { NULL, },
 };
 
-int main(int argc, char **argv)
+
+//
+//int main(int argc, char **argv)
+//{
+//    int i;
+//    int64_t ti;
+//
+//    avcodec_register_all();
+//    avdevice_register_all();
+//    av_register_all();
+//
+//    if(isatty(STDIN_FILENO))
+//        url_set_interrupt_cb(decode_interrupt_cb);
+//
+//    for(i=0; i<CODEC_TYPE_NB; i++){
+//        avctx_opts[i]= avcodec_alloc_context2(i);
+//    }
+//    avformat_opts = avformat_alloc_context();
+//    sws_opts = sws_getContext(16,16,0, 16,16,0, sws_flags, NULL,NULL,NULL);
+//
+////    show_banner();
+//
+//    /* parse options */
+////    parse_options(argc, argv, options, opt_output_file);
+//
+//    opt_input_file("v.avi");
+//    opt_bitrate ("ab", "32k");
+//    opt_audio_rate("ar", "22050");
+//    opt_bitrate("b", "400k");
+//    opt_frame_size("320x240");
+//    opt_output_file("video.flv");
+//
+//    /* file converter / grab */
+//    if (nb_output_files <= 0) {
+//        fprintf(stderr, "At least one output file must be specified\n");
+//        av_exit(1);
+//    }
+//
+//    if (nb_input_files == 0) {
+//        fprintf(stderr, "At least one input file must be specified\n");
+//        av_exit(1);
+//    }
+//
+//    ti = getutime();
+//    if (av_encode(output_files, nb_output_files, input_files, nb_input_files,
+//                  stream_maps, nb_stream_maps) < 0)
+//        av_exit(1);
+//    ti = getutime() - ti;
+//    if (do_benchmark) {
+//        printf("bench: utime=%0.3fs\n", ti / 1000000.0);
+//    }
+//
+//    return av_exit(0);
+//}
+
+
+void init_convert()
 {
     int i;
-    int64_t ti;
 
     avcodec_register_all();
     avdevice_register_all();
@@ -3907,20 +3969,25 @@ int main(int argc, char **argv)
     }
     avformat_opts = avformat_alloc_context();
     sws_opts = sws_getContext(16,16,0, 16,16,0, sws_flags, NULL,NULL,NULL);
+}
 
-//    show_banner();
-
-    /* parse options */
-//    parse_options(argc, argv, options, opt_output_file);
-
-    opt_input_file("/home/boypt/Videos/idaho_2008_rally.flv");
-    opt_bitrate ("ab", "32000");
+void set_options(int argc, char *argv[])
+{
+    parse_options(argc, argv, options, opt_output_file);
+    /*  
+    opt_input_file("v.avi");
+    opt_bitrate ("ab", "32k");
     opt_audio_rate("ar", "22050");
-    opt_bitrate("b", "900000");
+    opt_bitrate("b", "400k");
     opt_frame_size("320x240");
-    opt_output_file("video.mp4");
+    opt_output_file("video.flv");
+    */
+}
 
-    /* file converter / grab */
+void begin_convert()
+{
+    int64_t ti;
+
     if (nb_output_files <= 0) {
         fprintf(stderr, "At least one output file must be specified\n");
         av_exit(1);
@@ -3939,6 +4006,5 @@ int main(int argc, char **argv)
     if (do_benchmark) {
         printf("bench: utime=%0.3fs\n", ti / 1000000.0);
     }
-
-    return av_exit(0);
 }
+
