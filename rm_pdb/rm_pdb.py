@@ -5,7 +5,7 @@ import sys
 import threading
 import pdb as _pdb
 
-def begin(addr = 'localhost', port = 8964):
+def begin(addr = 'localhost', port = 18964):
     def __output(conn):
         while True:
             data = conn.recv(1024)
@@ -32,7 +32,7 @@ def begin(addr = 'localhost', port = 8964):
         finally:
             conn.close()
 
-def pdb(addr = 'localhost', port = 8964):
+def pdb(addr = 'localhost', port = 18964):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((addr, port))
 
