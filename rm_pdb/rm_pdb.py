@@ -8,7 +8,7 @@ import pdb as _pdb
 def begin(addr = 'localhost', port = 8964):
     def __output(conn):
         while True:
-            data = conn.recv(1)
+            data = conn.recv(1024)
             if not data:break
             sys.stdout.write(data)
             sys.stdout.flush()
