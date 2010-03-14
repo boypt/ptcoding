@@ -5,7 +5,7 @@ import sys
 import threading
 import pdb as _pdb
 
-def begin(addr = 'localhost', port = 18964):
+def server(addr = 'localhost', port = 18964):
     def __output(conn):
         while True:
             data = conn.recv(1024)
@@ -14,8 +14,11 @@ def begin(addr = 'localhost', port = 18964):
             sys.stdout.flush()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     sock.bind((addr, port))
     sock.listen(1)
+
+    print "Remote Pdb listening at %s:%d\n" % (addr, port)
 
     while True:
         conn, addr = sock.accept()
