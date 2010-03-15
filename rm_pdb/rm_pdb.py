@@ -6,9 +6,14 @@ import threading
 import pdb as _pdb
 
 def server(addr = 'localhost', port = 18964):
+    
     def __output(conn):
         while True:
-            data = conn.recv(1024)
+            try:
+                data = conn.recv(1024)
+            except socket.error:
+                print "Connection close."
+                break
             if not data:break
             sys.stdout.write(data)
             sys.stdout.flush()
@@ -20,20 +25,23 @@ def server(addr = 'localhost', port = 18964):
 
     print "Remote Pdb listening at %s:%d\n" % (addr, port)
 
-    while True:
+    try:
         conn, addr = sock.accept()
-        print "connect from %s" % str(addr)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
-        threading.Thread(target = __output, args = (conn,)).start()
-        
-        try:
-            while 1:
-                i = sys.stdin.readline()
-                conn.sendall(i)
-        except socket.error:
-            print "Connect close."
-        finally:
-            conn.close()
+    print "Connect from %s\n" % str(addr)
+
+    threading.Thread(target = __output, args = (conn,)).start()
+    
+    try:
+        while 1:
+            i = sys.stdin.readline()
+            conn.sendall(i)
+    except socket.error:
+        print "Connection close."
+    finally:
+        conn.close()
 
 def pdb(addr = 'localhost', port = 18964):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
