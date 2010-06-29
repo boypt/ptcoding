@@ -11,12 +11,14 @@ def server(addr = 'localhost', port = 18964):
         while True:
             try:
                 data = conn.recv(1024)
+                if not data:break
+                sys.stdout.write(data)
+                sys.stdout.flush()
             except socket.error:
                 print "Connection close."
                 break
-            if not data:break
-            sys.stdout.write(data)
-            sys.stdout.flush()
+            except:
+                break
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
