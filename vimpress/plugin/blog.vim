@@ -25,18 +25,18 @@
 " Last Change:  2010 June 27
 "
 " Commands :
-" ":BlogList [count]"
-"   Lists articles in the blog, defaultly show recent 10, arg to define.
+" ":BlogList [<count>]"
+"   Lists articles in the blog, defaultly show recent 10, arg to specify.
 " ":BlogNew"
 "   Opens page to write new article
 " ":BlogOpen <id>"
 "   Opens the article <id> for edition
-" ":BlogSend"
-"   Saves the article and publish to the blog
+" ":BlogPub"
+"   Publish to the blog
 " ":BlogSave"
 "   Saves the article as draft.
 " ":BlogUpload <file>"
-"   Upload media file to blog.
+"   Upload media file to blog. Appends img element after cursor.
 "
 " Configuration : 
 "   Edit the "Settings" section (starts at line 51).
@@ -51,7 +51,7 @@ endif
 
 command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
 command! -nargs=0 BlogNew exec("py blog_new_post()")
-command! -nargs=0 BlogSend exec("py blog_send_post(1)")
+command! -nargs=0 BlogPub exec("py blog_send_post(1)")
 command! -nargs=0 BlogSave exec("py blog_send_post(0)")
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
@@ -72,7 +72,7 @@ blog_url = 'http://local.blog/xmlrpc.php'
 #####################
 
 handler = xmlrpclib.ServerProxy(blog_url).metaWeblog
-edit = 1
+edit_mode = True
 
 def __exception_check(func):
     def __check(*args, **kwargs):
@@ -87,20 +87,15 @@ def __exception_check(func):
 
     return __check
 
-
-def blog_edit_off():
-    global edit
-    if edit:
-        edit = 0
+def blog_edit_on(switch = True):
+    global edit_mode
+    if edit_mode != switch:
+        edit_mode = switch
         for i in ["i","a","s","o","I","A","S","O"]:
-            vim.command('map '+i+' <nop>')
-
-def blog_edit_on():
-    global edit
-    if not edit:
-        edit = 1
-        for i in ["i","a","s","o","I","A","S","O"]:
-            vim.command('unmap '+i)
+            if switch:
+                vim.command('unmap %s' % i)
+            else:
+                vim.command("map %s <nop>" % i)
 
 @__exception_check
 def blog_send_post(publish):
@@ -158,14 +153,14 @@ def blog_new_post():
         return ", ".join([i["description"].encode("utf-8") for i in l])
 
     del vim.current.buffer[:]
-    blog_edit_on()
+    blog_edit_on(True)
     vim.command("set syntax=blogsyntax")
 
     vim.current.buffer[0] =   "\"=========== Meta ============\n"
     vim.current.buffer.append("\"StrID : ")
     vim.current.buffer.append("\"Title : ")
     vim.current.buffer.append("\"Slug  : ")
-    vim.current.buffer.append("\"Cats  : "+blog_get_cats())
+    vim.current.buffer.append("\"Cats  : %s" % blog_get_cats())
     vim.current.buffer.append("\"Tags  : ")
     vim.current.buffer.append("\"========== Content ==========\n")
     vim.current.buffer.append("\n")
@@ -177,7 +172,7 @@ def blog_new_post():
 @__exception_check
 def blog_open_post(post_id):
     post = handler.getPost(post_id, blog_username, blog_password)
-    blog_edit_on()
+    blog_edit_on(True)
     vim.command("set syntax=blogsyntax")
 
     del vim.current.buffer[:]
@@ -201,6 +196,7 @@ def blog_open_post(post_id):
     vim.current.window.cursor = (text_start+1, 0)
     vim.command('set nomodified')
     vim.command('set textwidth=0')
+    vim.command('unmap <enter>')
 
 def blog_list_edit():
     row,col = vim.current.window.cursor
@@ -220,22 +216,25 @@ def blog_list_posts(count = "10"):
         title = "%(postid)s\t%(title)s" % p
         vim.current.buffer.append(title.encode('utf8'))
         vim.command('set nomodified')
-    blog_edit_off()
+    blog_edit_on(False)
     vim.current.window.cursor = (2, 0)
     vim.command('map <enter> :py blog_list_edit()<cr>')
 
 @__exception_check
 def blog_upload_media(file_path):
     if not os.path.exists(file_path):
-        sys.stderr.write("file %s not existed." % file_path)
+        sys.stderr.write("File not existed: %s" % file_path)
         return
+
     name = os.path.basename(file_path)
     type = mimetypes.guess_type(file_path)[0]
     with open(file_path, 'r') as f:
         bits = xmlrpclib.Binary(f.read())
-    value = handler.newMediaObject(1, blog_username, blog_password, 
+    ret = handler.newMediaObject(1, blog_username, blog_password, 
             dict(name = name, type = type, bits = bits))
+    img = "<img src=\"%s\" />" % ret["url"]
+    row = vim.current.window.cursor[0]
+    vim.current.buffer[row - 1] += img
 
-    vim.current.buffer.append(value['url'])
 
 
