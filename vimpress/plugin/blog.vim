@@ -26,15 +26,13 @@
 "
 " Commands :
 " ":BlogList [<count>]"
-"   Lists articles in the blog, defaultly show recent 10, arg to specify.
+"   Lists articles in the blog, defaultly recent 10, arg to specify.
 " ":BlogNew"
 "   Opens page to write new article
 " ":BlogOpen <id>"
 "   Opens the article <id> for edition
-" ":BlogPub"
-"   Publish to the blog
-" ":BlogSave"
-"   Saves the article as draft.
+" ":BlogSave <draft|publish>"
+"   Saves the article, defaultly as draft, arg to specify.
 " ":BlogUpload <file>"
 "   Upload media file to blog. Appends img element after cursor.
 "
@@ -49,10 +47,13 @@ if !has("python")
     finish
 endif
 
+function! CompletionSave(ArgLead, CmdLine, CursorPos)
+  return "publish\ndraft\n"
+endfunction
+
+command! -nargs=0 BlogNew exec('py blog_new_post()')
 command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
-command! -nargs=0 BlogNew exec("py blog_new_post()")
-command! -nargs=0 BlogPub exec("py blog_send_post(1)")
-command! -nargs=0 BlogSave exec("py blog_send_post(0)")
+command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<q-args>)')
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 python <<EOF
@@ -89,7 +90,15 @@ def __exception_check(func):
     return __check
 
 @__exception_check
-def blog_send_post(publish):
+def blog_send_post(pub = 'draft'):
+
+    if pub == "publish":
+        publish = True
+    elif pub == 'draft':
+        publish = False
+    else:
+        sys.stderr.write(":BlogSave draft|publish")
+        return
 
     def get_line(what):
         start = 0
@@ -184,11 +193,13 @@ def blog_open_post(post_id):
     vim.current.window.cursor = (text_start+1, 0)
     vim.command('set nomodified')
     vim.command('set textwidth=0')
-    vim.command('unmap <enter>')
+
+    if vim.eval("mapcheck('<enter>')"):
+        vim.command('unmap <enter>')
 
 def blog_list_edit():
-    row,col = vim.current.window.cursor
-    id = vim.current.buffer[row-1].split()[0]
+    row = vim.current.window.cursor[0]
+    id = vim.current.buffer[row - 1].split()[0]
     blog_open_post(int(id))
 
 @__exception_check
@@ -207,7 +218,8 @@ def blog_list_posts(count = "10"):
     vim.command('set nomodified')
     vim.command("set nomodifiable")
     vim.current.window.cursor = (2, 0)
-    vim.command('map <enter> :py blog_list_edit()<cr>')
+    if not vim.eval("mapcheck('<enter>')"):
+        vim.command('map <enter> :py blog_list_edit()<cr>')
 
 @__exception_check
 def blog_upload_media(file_path):
@@ -219,22 +231,18 @@ def blog_upload_media(file_path):
     filetype = mimetypes.guess_type(file_path)[0]
     with open(file_path, 'r') as f:
         bits = xmlrpclib.Binary(f.read())
+
     result = handler.newMediaObject(1, blog_username, blog_password, 
             dict(name = name, type = filetype, bits = bits))
 
-    row = vim.current.window.cursor[0]
-    buf = vim.current.buffer[row:]
-    vim.current.buffer[row:] = None
+    ran = vim.current.range
 
     if filetype.startswith("image"):
         img = image_template % result
-        vim.current.buffer.append(img)
+        ran.append(img)
     else:
-        vim.current.buffer.append(result["url"])
-
-    vim.current.buffer.append('')
-    if buf:
-        vim.current.buffer.append(buf)
+        ran.append(result["url"])
+    ran.append('')
 
 
 
