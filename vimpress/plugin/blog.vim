@@ -67,6 +67,8 @@ blog_username = 'user'
 blog_password = 'pass'
 blog_url = 'http://local.blog/xmlrpc.php'
 
+image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
+
 #####################
 # Do not edit below #
 #####################
@@ -214,20 +216,25 @@ def blog_upload_media(file_path):
         return
 
     name = os.path.basename(file_path)
-    type = mimetypes.guess_type(file_path)[0]
+    filetype = mimetypes.guess_type(file_path)[0]
     with open(file_path, 'r') as f:
         bits = xmlrpclib.Binary(f.read())
-    ret = handler.newMediaObject(1, blog_username, blog_password, 
-            dict(name = name, type = type, bits = bits))
-    img = "<img src=\"%s\" />" % ret["url"]
+    result = handler.newMediaObject(1, blog_username, blog_password, 
+            dict(name = name, type = filetype, bits = bits))
+
     row = vim.current.window.cursor[0]
-    
     buf = vim.current.buffer[row:]
     vim.current.buffer[row:] = None
+
+    if filetype.startswith("image"):
+        img = image_template % result
+        vim.current.buffer.append(img)
+    else:
+        vim.current.buffer.append(result["url"])
+
     vim.current.buffer.append('')
-    vim.current.buffer.append(img)
-    vim.current.buffer.append('')
-    vim.current.buffer.append(buf)
+    if buf:
+        vim.current.buffer.append(buf)
 
 
 
