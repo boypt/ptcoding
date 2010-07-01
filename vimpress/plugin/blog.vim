@@ -72,7 +72,6 @@ blog_url = 'http://local.blog/xmlrpc.php'
 #####################
 
 handler = xmlrpclib.ServerProxy(blog_url).metaWeblog
-edit_mode = True
 
 def __exception_check(func):
     def __check(*args, **kwargs):
@@ -86,16 +85,6 @@ def __exception_check(func):
             sys.stderr.write("network error: %s" % e)
 
     return __check
-
-def blog_edit_on(switch = True):
-    global edit_mode
-    if edit_mode != switch:
-        edit_mode = switch
-        for i in ["i","a","s","o","I","A","S","O"]:
-            if switch:
-                vim.command('unmap %s' % i)
-            else:
-                vim.command("map %s <nop>" % i)
 
 @__exception_check
 def blog_send_post(publish):
@@ -122,12 +111,9 @@ def blog_send_post(publish):
     text_start = 0
     while not vim.current.buffer[text_start] == "\"========== Content ==========":
         text_start +=1
-    text_start +=1
-    text = '\n'.join(vim.current.buffer[text_start:])
+    text = '\n'.join(vim.current.buffer[text_start + 1:])
 
-    content = text
-
-    post = dict(title = title, description = content,
+    post = dict(title = title, description = text,
             categories = cats, mt_keywords = tags,
             wp_slug = slug)
 
@@ -153,17 +139,17 @@ def blog_new_post():
         return ", ".join([i["description"].encode("utf-8") for i in l])
 
     del vim.current.buffer[:]
-    blog_edit_on(True)
+    vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
 
-    vim.current.buffer[0] =   "\"=========== Meta ============\n"
+    vim.current.buffer[0] =   "\"=========== Meta ============"
     vim.current.buffer.append("\"StrID : ")
     vim.current.buffer.append("\"Title : ")
     vim.current.buffer.append("\"Slug  : ")
     vim.current.buffer.append("\"Cats  : %s" % blog_get_cats())
     vim.current.buffer.append("\"Tags  : ")
-    vim.current.buffer.append("\"========== Content ==========\n")
-    vim.current.buffer.append("\n")
+    vim.current.buffer.append("\"========== Content ==========")
+    vim.current.buffer.append("")
 
     vim.current.window.cursor = (len(vim.current.buffer), 0)
     vim.command('set nomodified')
@@ -172,17 +158,17 @@ def blog_new_post():
 @__exception_check
 def blog_open_post(post_id):
     post = handler.getPost(post_id, blog_username, blog_password)
-    blog_edit_on(True)
+    vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
 
     del vim.current.buffer[:]
-    vim.current.buffer[0] =   "\"=========== Meta ============\n"
+    vim.current.buffer[0] =   "\"=========== Meta ============"
     vim.current.buffer.append("\"StrID : "+str(post_id))
     vim.current.buffer.append("\"Title : "+(post["title"]).encode("utf-8"))
     vim.current.buffer.append("\"Slug  : "+(post["wp_slug"]).encode("utf-8"))
     vim.current.buffer.append("\"Cats  : "+",".join(post["categories"]).encode("utf-8"))
     vim.current.buffer.append("\"Tags  : "+(post["mt_keywords"]).encode("utf-8"))
-    vim.current.buffer.append("\"========== Content ==========\n")
+    vim.current.buffer.append("\"========== Content ==========")
 
     content = (post["description"]).encode("utf-8")
     for line in content.split('\n'):
@@ -205,18 +191,19 @@ def blog_list_edit():
 
 @__exception_check
 def blog_list_posts(count = "10"):
-#    lessthan = handler.getRecentPosts('',blog_username, blog_password,1)[0]["postid"]
-#    size = len(lessthan)
-    allposts = handler.getRecentPosts('',blog_username, blog_password,int(count))
+    allposts = handler.getRecentPosts('',blog_username, 
+            blog_password, int(count))
+
     del vim.current.buffer[:]
     vim.command("set syntax=blogsyntax")
     vim.current.buffer[0] = "\"====== List of Posts ========="
+
     for p in allposts:
-        #vim.current.buffer.append(("".zfill(size-len(p["postid"])).replace("0", " ")+p["postid"])+"\t"+(p["title"]).encode("utf-8"))
-        title = "%(postid)s\t%(title)s" % p
+        title = u"%(postid)s\t%(title)s" % p
         vim.current.buffer.append(title.encode('utf8'))
-        vim.command('set nomodified')
-    blog_edit_on(False)
+
+    vim.command('set nomodified')
+    vim.command("set nomodifiable")
     vim.current.window.cursor = (2, 0)
     vim.command('map <enter> :py blog_list_edit()<cr>')
 
@@ -234,7 +221,13 @@ def blog_upload_media(file_path):
             dict(name = name, type = type, bits = bits))
     img = "<img src=\"%s\" />" % ret["url"]
     row = vim.current.window.cursor[0]
-    vim.current.buffer[row - 1] += img
+    
+    buf = vim.current.buffer[row:]
+    vim.current.buffer[row:] = None
+    vim.current.buffer.append('')
+    vim.current.buffer.append(img)
+    vim.current.buffer.append('')
+    vim.current.buffer.append(buf)
 
 
 
