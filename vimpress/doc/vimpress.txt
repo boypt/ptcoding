@@ -1,0 +1,40 @@
+*vimpress.txt* Manage wordpress blog posts from Vim
+
+vimpress
+
+Author: Adrien Friggeri <adrien@friggeri.net>
+        BOYPT <pentie@gmail.com>
+
+==============================================================================
+
+Using vimpress, you need to do some configuration firstly.
+
+Open vimpress.vim, jump to line around 65, you would find such section:
+
+#####################
+#      Settings     #
+#####################
+
+blog_username = 'user'
+blog_password = 'pass'
+blog_url = 'http://local.blog/xmlrpc.php'
+
+Fill in this about your blog, save, thats all.
+
+Vimpress commands begin with ':Blog':
+
+ :BlogList [<count>]
+   Lists articles in the blog, defaultly recent 10, arg to specify.
+   
+ :BlogNew
+   Opens page to write new article
+
+ :BlogOpen <id>
+   Opens the article <id> for edition
+
+ :BlogSave <draft|publish>"
+   Saves the article, defaultly as draft, arg to specify.
+
+ :BlogUpload <file>
+   Upload media file to blog. Appends img element after cursor.
+

@@ -17,31 +17,16 @@
 " 
 " Maintainer:	Adrien Friggeri <adrien@friggeri.net>
 "               BOYPT <pentie@gmail.com>
+"
 " URL:		http://www.friggeri.net/projets/vimblog/
 "           http://pigeond.net/blog/2009/05/07/vimpress-again/
 "           http://pigeond.net/git/?p=vimpress.git
 "           http://apt-blog.net
+"
 " Version:	1.0
-" Last Change:  2010 June 27
+" Last Change:  2010 July 3
 "
-" Commands :
-" ":BlogList [<count>]"
-"   Lists articles in the blog, defaultly recent 10, arg to specify.
-" ":BlogNew"
-"   Opens page to write new article
-" ":BlogOpen <id>"
-"   Opens the article <id> for edition
-" ":BlogSave <draft|publish>"
-"   Saves the article, defaultly as draft, arg to specify.
-" ":BlogUpload <file>"
-"   Upload media file to blog. Appends img element after cursor.
-"
-" Configuration : 
-"   Edit the "Settings" section (starts at line 51).
-"
-" Usage : 
-"   Just fill in the blanks, do not modify the highlighted parts and everything
-"   should be ok.
+"#######################################################################
 
 if !has("python")
     finish
@@ -68,8 +53,8 @@ blog_username = 'user'
 blog_password = 'pass'
 blog_url = 'http://local.blog/xmlrpc.php'
 
-image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 
+image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 #####################
 # Do not edit below #
 #####################
