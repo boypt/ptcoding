@@ -1,5 +1,4 @@
 " Copyright (C) 2007 Adrien Friggeri.
-" Copyright (C) 2010 BOYPT
 "
 " This program is free software; you can redistribute it and/or modify
 " it under the terms of the GNU General Public License as published by
@@ -16,6 +15,7 @@
 " Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 " 
 " Maintainer:	Adrien Friggeri <adrien@friggeri.net>
+"               Pigeond <http://pigeond.net/blog/>
 "               BOYPT <pentie@gmail.com>
 "
 " URL:		http://www.friggeri.net/projets/vimblog/
@@ -41,6 +41,7 @@ command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<q-args>)')
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
+command! -nargs=0 BlogCode exec('py blog_append_code()')
 python <<EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes
@@ -49,9 +50,9 @@ import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re,
 #      Settings     #
 #####################
 
-blog_username = 'user'
-blog_password = 'pass'
-blog_url = 'http://local.blog/xmlrpc.php'
+blog_username = 'admin'
+blog_password = 'p1e5n1t2'
+blog_url = 'http://apt-blog.net/xmlrpc.php'
 
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
@@ -228,6 +229,11 @@ def blog_upload_media(file_path):
     else:
         ran.append(result["url"])
     ran.append('')
+
+def blog_append_code():
+    ran = vim.current.range
+    ran.append('<pre lang="" line="1" escaped="True">')
+    ran.append('</pre>')
 
 
 

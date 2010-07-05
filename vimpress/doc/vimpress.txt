@@ -9,7 +9,7 @@ Author: Adrien Friggeri <adrien@friggeri.net>
 
 Using vimpress, you need to do some configuration firstly.
 
-Open vimpress.vim, jump to line around 65, you would find such section:
+Open blog.vim, jump to line around 50, you would find such section:
 
 #####################
 #      Settings     #
