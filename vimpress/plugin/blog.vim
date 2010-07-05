@@ -50,8 +50,8 @@ import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re,
 #      Settings     #
 #####################
 
-blog_username = 'admin'
-blog_password = 'p1e5n1t2'
+blog_username = 'user'
+blog_password = 'pass'
 blog_url = 'http://apt-blog.net/xmlrpc.php'
 
 
