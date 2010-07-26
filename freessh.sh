@@ -11,15 +11,16 @@ auto_login_ssh () {
 }
 
 conn_to_ssh () {
-    HOSTS=($(curl -s freessh.us | sed -n "s/.*<td bgcolor='#FFFFFF'>\(.\+\?\)<\/td>.*$/\1/p"))
+    echo "Retriving servers list from freessh.us ...."
+    HOSTS=($(curl freessh.us | sed -n "s/.*<td bgcolor='#FFFFFF'>\(.\+\?\)<\/td>.*$/\1/p"))
+    ITMS=${#HOSTS[@]}
     
-    for I in seq 0 7 $((${#HOSTS[@]} - 1)); do
+    for I in seq 0 7 $(($ITMS - 1)); do
         if [[ ${HOSTS[$I + 6]} == "正常" ]]; then
             IDX=$I
             break
-        fi
-        if [[ $I -eq $((${#HOSTS[@]} - 7)) ]]; then
-            echo -e "Status: All server's busy, or something's wrong: \n\n${HOSTS[@]}"
+        elif [[ $I -eq $(($ITMS - 7)) ]]; then
+            echo -e "\nError: All server are busy, or something's wrong: \n\n${HOSTS[@]}"
             exit 1
         fi
     done
