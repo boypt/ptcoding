@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
 
   printf("%s: waiting for data on port UDP %u\n", 
        argv[0],LOCAL_SERVER_PORT);
+  fflush(stdout);
 
 
   /* server infinite loop */
@@ -86,6 +87,7 @@ int main(int argc, char *argv[]) {
     if (n != 18 || msg[0] != 0x10 || msg[1] != 0x08 || (*(int*)(&msg[6])) != 0) {
         printf("bad data received from %s, len=%zu\n",  inet_ntoa(cliAddr.sin_addr), n);
         print_hex((uint8_t *)msg, n);
+        fflush(stdout);
         continue;
     }
     PIN = *(u_long*)(&msg[2]);
@@ -95,6 +97,7 @@ int main(int argc, char *argv[]) {
 
     sprintf(pinbuf, "%x", ntohl(PIN));
     printf("Request received from %s, PIN=%s ...response sent.\n", inet_ntoa(cliAddr.sin_addr), pinbuf); 
+    fflush(stdout);
     
   }/* end of server infinite loop */
 
