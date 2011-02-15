@@ -17,14 +17,18 @@
 " Maintainer:	Adrien Friggeri <adrien@friggeri.net>
 "               Pigeond <http://pigeond.net/blog/>
 "               BOYPT <pentie@gmail.com>
+"               Justin Sattery <justin.slattery@fzysqr.com>
 "
 " URL:		http://www.friggeri.net/projets/vimblog/
 "           http://pigeond.net/blog/2009/05/07/vimpress-again/
 "           http://pigeond.net/git/?p=vimpress.git
 "           http://apt-blog.net
+"           http://fzysqr.com/
 "
-" Version:	1.0
-" Last Change:  2010 July 3
+" Version:	1.0.01
+" Last Change:  2010 August 20 - Fixed a bug with BlogSave command, and added 
+" feature to take an existing document and use the BlogNew command to 
+" convert it to a blog post (which can be saved with the header intact). 
 "
 "#######################################################################
 
@@ -38,7 +42,7 @@ endfunction
 
 command! -nargs=0 BlogNew exec('py blog_new_post()')
 command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<q-args>)')
+command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<f-args>)')
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 command! -nargs=0 BlogCode exec('py blog_append_code()')
@@ -50,9 +54,9 @@ import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re,
 #      Settings     #
 #####################
 
-blog_username = 'user'
-blog_password = 'pass'
-blog_url = 'http://apt-blog.net/xmlrpc.php'
+blog_username = 'username'
+blog_password = 'password'
+blog_url = 'http://yourblog.com/xmlrpc.php'
 
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
@@ -76,11 +80,11 @@ def __exception_check(func):
     return __check
 
 @__exception_check
-def blog_send_post(pub = 'draft'):
+def blog_send_post(pub = "draft"):
 
     if pub == "publish":
         publish = True
-    elif pub == 'draft':
+    elif pub == "draft":
         publish = False
     else:
         sys.stderr.write(":BlogSave draft|publish")
@@ -135,11 +139,12 @@ def blog_new_post():
         l = handler.getCategories('', blog_username, blog_password)
         return ", ".join([i["description"].encode("utf-8") for i in l])
 
+    currentContent = vim.current.buffer[:]
     del vim.current.buffer[:]
     vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
 
-    vim.current.buffer[0] =   "\"=========== Meta ============"
+    vim.current.buffer[0] = "\"=========== Meta ============"
     vim.current.buffer.append("\"StrID : ")
     vim.current.buffer.append("\"Title : ")
     vim.current.buffer.append("\"Slug  : ")
@@ -147,6 +152,8 @@ def blog_new_post():
     vim.current.buffer.append("\"Tags  : ")
     vim.current.buffer.append("\"========== Content ==========")
     vim.current.buffer.append("")
+
+    vim.current.buffer.append(currentContent)
 
     vim.current.window.cursor = (len(vim.current.buffer), 0)
     vim.command('set nomodified')
@@ -189,7 +196,7 @@ def blog_list_edit():
     blog_open_post(int(id))
 
 @__exception_check
-def blog_list_posts(count = "10"):
+def blog_list_posts(count = "30"):
     allposts = handler.getRecentPosts('',blog_username, 
             blog_password, int(count))
 
@@ -210,7 +217,7 @@ def blog_list_posts(count = "10"):
 @__exception_check
 def blog_upload_media(file_path):
     if not os.path.exists(file_path):
-        sys.stderr.write("File not existed: %s" % file_path)
+        sys.stderr.write("File does not exist: %s" % file_path)
         return
 
     name = os.path.basename(file_path)
