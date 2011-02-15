@@ -1,3 +1,7 @@
+" VimRepress 
+"    - A mod of a mod of a mod of Vimpress.   
+"    - A vim plugin fot writting your wordpress blog.
+"
 " Copyright (C) 2007 Adrien Friggeri.
 "
 " This program is free software; you can redistribute it and/or modify
@@ -16,7 +20,7 @@
 " 
 " Maintainer:	Adrien Friggeri <adrien@friggeri.net>
 "               Pigeond <http://pigeond.net/blog/>
-"               BOYPT <pentie@gmail.com>
+"               Preston M.[BOYPT] <pentie@gmail.com>
 "               Justin Sattery <justin.slattery@fzysqr.com>
 "
 " URL:		http://www.friggeri.net/projets/vimblog/
@@ -25,8 +29,16 @@
 "           http://apt-blog.net
 "           http://fzysqr.com/
 "
-" Version:	1.0.01
-" Last Change:  2010 August 20 - Fixed a bug with BlogSave command, and added 
+" Version:	1.1.0
+" Last Change:  
+"
+" 2011 Feb. 15 - Add: BlogPreview Command.
+"                Add: BlogCode command args to specify code type
+"                Change: blog_url uses pure address.
+"                Code: Some code pretty work.
+"
+"
+" 2010 August 20 - Fixed a bug with BlogSave command, and added 
 " feature to take an existing document and use the BlogNew command to 
 " convert it to a blog post (which can be saved with the header intact). 
 "
@@ -68,14 +80,6 @@ blog_handler = "%s/xmlrpc.php" % blog_url
 
 handler = xmlrpclib.ServerProxy(blog_handler).metaWeblog
 
-meta_text = \
-""""=========== Meta ============
-"StrID : %(strid)s
-"Title : %(title)s
-"Slug  : %(slug)s
-"Cats  : %(cats)s
-"Tags  : %(tags)s
-"========== Content =========="""
 
 class VimPressException(Exception):
     pass
@@ -149,8 +153,15 @@ def blog_send_post(pub = "draft"):
 
 
 def blog_fill_meta_area(meta_dict):
-    strs = meta_text % meta_dict
-    m = strs.split('\n')
+    meta_text = \
+""""=========== Meta ============
+"StrID : %(strid)s
+"Title : %(title)s
+"Slug  : %(slug)s
+"Cats  : %(cats)s
+"Tags  : %(tags)s
+"========== Content ==========""" % meta_dict
+    m = meta_text.split('\n')
     vim.current.buffer[0] = m[0]
     for l in m[1:]:
         vim.current.buffer.append(l)
@@ -254,13 +265,9 @@ def blog_upload_media(file_path):
     ran.append('')
 
 def blog_append_code(code_type = ""):
-    """ todo: arg to define which type of code """
-    ran = vim.current.range
     html = \
-"""
-<pre escaped="True" %s>
-</pre>
-"""
+"""<pre escaped="True" %s>
+</pre>"""
     if code_type != "":
         args = 'lang="%s" line="1"' % code_type
     else:
@@ -268,13 +275,13 @@ def blog_append_code(code_type = ""):
 
     html = html % args
     for l in html.split('\n'):
-        ran.append(l)
+        vim.current.range.append(l)
 
 @__exception_check
 def blog_preview():
     strid = get_meta("StrID")
     if strid == "":
-        raise VimPressException("Save Post before Preview.")
+        raise VimPressException("Save Post before Preview :BlogSave")
     url = "%s/?p=%s&preview=true" % (blog_url, strid)
     webbrowser.open(url)
 
