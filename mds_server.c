@@ -1,5 +1,9 @@
-/* mds_server.c */
-/* MDS Sample Server for unix by Preson M.(BOYPT)<pentie@gmail.com> */
+/* mds_server.c 
+ * MDS Sample Server for unix by Preson M.(BOYPT)<pentie@gmail.com> 
+ * Compile with:
+ *      gcc -Wall -o mds_server mds_server.c 
+ */
+
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -8,7 +12,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <unistd.h> /* close() */
 #include <string.h> /* memset() */
 
 #define LOCAL_SERVER_PORT 19781
@@ -98,3 +101,5 @@ int main(int argc, char *argv[]) {
 return 0;
 
 }
+
+
