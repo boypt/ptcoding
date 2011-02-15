@@ -45,10 +45,11 @@ command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<f-args>)')
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
-command! -nargs=0 BlogCode exec('py blog_append_code()')
+command! -nargs=1 BlogCode exec('py blog_append_code(<f-args>)')
+command! -nargs=0 BlogPreview exec('py blog_preview()')
 python <<EOF
 # -*- coding: utf-8 -*-
-import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes
+import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser
 
 #####################
 #      Settings     #
@@ -56,20 +57,48 @@ import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re,
 
 blog_username = 'username'
 blog_password = 'password'
-blog_url = 'http://yourblog.com/xmlrpc.php'
-
+blog_url = 'http://yourblog.com'
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 #####################
 # Do not edit below #
 #####################
 
-handler = xmlrpclib.ServerProxy(blog_url).metaWeblog
+blog_handler = "%s/xmlrpc.php" % blog_url
+
+handler = xmlrpclib.ServerProxy(blog_handler).metaWeblog
+
+meta_text = \
+""""=========== Meta ============
+"StrID : %(strid)s
+"Title : %(title)s
+"Slug  : %(slug)s
+"Cats  : %(cats)s
+"Tags  : %(tags)s
+"========== Content =========="""
+
+class VimPressException(Exception):
+    pass
+
+def get_line(what):
+    start = 0
+    while not vim.current.buffer[start].startswith('"'+what):
+        start +=1
+    return start
+
+def get_meta(what): 
+    start = get_line(what)
+    end = start + 1
+    while not vim.current.buffer[end][0] == '"':
+        end +=1
+    return " ".join(vim.current.buffer[start:end]).split(":")[1].strip()
 
 def __exception_check(func):
     def __check(*args, **kwargs):
         try:
             return func(*args, **kwargs)
+        except VimPressException, e:
+            sys.stderr.write("%s" % e)
         except xmlrpclib.Fault, e:
             sys.stderr.write("xmlrpc error: %s" % e.faultString.encode("utf-8"))
         except xmlrpclib.ProtocolError, e:
@@ -87,21 +116,8 @@ def blog_send_post(pub = "draft"):
     elif pub == "draft":
         publish = False
     else:
-        sys.stderr.write(":BlogSave draft|publish")
-        return
+        raise VimPressException(":BlogSave draft|publish")
 
-    def get_line(what):
-        start = 0
-        while not vim.current.buffer[start].startswith('"'+what):
-            start +=1
-        return start
-
-    def get_meta(what): 
-        start = get_line(what)
-        end = start + 1
-        while not vim.current.buffer[end][0] == '"':
-            end +=1
-        return " ".join(vim.current.buffer[start:end]).split(":")[1].strip()
         
     strid = get_meta("StrID")
     title = get_meta("Title")
@@ -132,6 +148,13 @@ def blog_send_post(pub = "draft"):
     vim.command('set nomodified')
 
 
+def blog_fill_meta_area(meta_dict):
+    strs = meta_text % meta_dict
+    m = strs.split('\n')
+    vim.current.buffer[0] = m[0]
+    for l in m[1:]:
+        vim.current.buffer.append(l)
+
 @__exception_check
 def blog_new_post():
 
@@ -144,17 +167,10 @@ def blog_new_post():
     vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
 
-    vim.current.buffer[0] = "\"=========== Meta ============"
-    vim.current.buffer.append("\"StrID : ")
-    vim.current.buffer.append("\"Title : ")
-    vim.current.buffer.append("\"Slug  : ")
-    vim.current.buffer.append("\"Cats  : %s" % blog_get_cats())
-    vim.current.buffer.append("\"Tags  : ")
-    vim.current.buffer.append("\"========== Content ==========")
-    vim.current.buffer.append("")
+    meta_dict = dict(strid = "", title = "", slug = "", cats = blog_get_cats(), tags = "")
 
+    blog_fill_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
-
     vim.current.window.cursor = (len(vim.current.buffer), 0)
     vim.command('set nomodified')
     vim.command('set textwidth=0')
@@ -166,13 +182,14 @@ def blog_open_post(post_id):
     vim.command("set syntax=blogsyntax")
 
     del vim.current.buffer[:]
-    vim.current.buffer[0] =   "\"=========== Meta ============"
-    vim.current.buffer.append("\"StrID : "+str(post_id))
-    vim.current.buffer.append("\"Title : "+(post["title"]).encode("utf-8"))
-    vim.current.buffer.append("\"Slug  : "+(post["wp_slug"]).encode("utf-8"))
-    vim.current.buffer.append("\"Cats  : "+",".join(post["categories"]).encode("utf-8"))
-    vim.current.buffer.append("\"Tags  : "+(post["mt_keywords"]).encode("utf-8"))
-    vim.current.buffer.append("\"========== Content ==========")
+    meta_dict = dict(strid = str(post_id), 
+                    title = post["title"].encode("utf-8"), 
+                    slug = post["wp_slug"].encode("utf-8"), 
+                    cats = ",".join(post["categories"]).encode("utf-8"), 
+                    tags = (post["mt_keywords"]).encode("utf-8")
+                    )
+
+    blog_fill_meta_area(meta_dict)
 
     content = (post["description"]).encode("utf-8")
     for line in content.split('\n'):
@@ -217,8 +234,7 @@ def blog_list_posts(count = "30"):
 @__exception_check
 def blog_upload_media(file_path):
     if not os.path.exists(file_path):
-        sys.stderr.write("File does not exist: %s" % file_path)
-        return
+        raise VimPressException("File does not exist: %s" % file_path)
 
     name = os.path.basename(file_path)
     filetype = mimetypes.guess_type(file_path)[0]
@@ -237,10 +253,32 @@ def blog_upload_media(file_path):
         ran.append(result["url"])
     ran.append('')
 
-def blog_append_code():
+def blog_append_code(code_type = ""):
+    """ todo: arg to define which type of code """
     ran = vim.current.range
-    ran.append('<pre lang="" line="1" escaped="True">')
-    ran.append('</pre>')
+    html = \
+"""
+<pre escaped="True" %s>
+</pre>
+"""
+    if code_type != "":
+        args = 'lang="%s" line="1"' % code_type
+    else:
+        args = ""
+
+    html = html % args
+    for l in html.split('\n'):
+        ran.append(l)
+
+@__exception_check
+def blog_preview():
+    strid = get_meta("StrID")
+    if strid == "":
+        raise VimPressException("Save Post before Preview.")
+    url = "%s/?p=%s&preview=true" % (blog_url, strid)
+    webbrowser.open(url)
+
+
 
 
 
