@@ -1,7 +1,3 @@
-" VimRepress 
-"    - A mod of a mod of a mod of Vimpress.   
-"    - A vim plugin fot writting your wordpress blog.
-"
 " Copyright (C) 2007 Adrien Friggeri.
 "
 " This program is free software; you can redistribute it and/or modify
@@ -29,16 +25,20 @@
 "           http://apt-blog.net
 "           http://fzysqr.com/
 "
-" Version:	1.1.0
-" Last Change:  
+" VimRepress 
+"    - A mod of a mod of a mod of Vimpress.   
+"    - A vim plugin fot writting your wordpress blog.
 "
-" 2011 Feb. 15 - Add: BlogPreview Command.
+" Version:	1.1.0
+" Changes:  
+"
+" 2011 Feb. 15 [by Preston]
+"                Add: BlogPreview Command.
 "                Add: BlogCode command args to specify code type
 "                Change: blog_url uses pure address.
 "                Code: Some code pretty work.
 "
-"
-" 2010 August 20 - Fixed a bug with BlogSave command, and added 
+" 2010 August 20 [by Justin] - Fixed a bug with BlogSave command, and added 
 " feature to take an existing document and use the BlogNew command to 
 " convert it to a blog post (which can be saved with the header intact). 
 "
@@ -58,7 +58,7 @@ command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_po
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 command! -nargs=1 BlogCode exec('py blog_append_code(<f-args>)')
-command! -nargs=0 BlogPreview exec('py blog_preview()')
+command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_preview(<f-args>)')
 python <<EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser
@@ -142,7 +142,7 @@ def blog_send_post(pub = "draft"):
         strid = handler.newPost('', blog_username,
             blog_password, post, publish)
         vim.current.buffer[get_line("StrID")] = "\"StrID : %s" % strid
-        notify = "Blog %s.   ID=%s" % ("Published" if publish else "Saved", strid)
+        notify = "Blog %s.   ID=%s" % ("Published" if publish else "Saved as draft", strid)
     else:
         handler.editPost(strid, blog_username,
             blog_password, post, publish)
@@ -161,9 +161,9 @@ def blog_fill_meta_area(meta_dict):
 "Cats  : %(cats)s
 "Tags  : %(tags)s
 "========== Content ==========""" % meta_dict
-    m = meta_text.split('\n')
-    vim.current.buffer[0] = m[0]
-    for l in m[1:]:
+    meta = meta_text.split('\n')
+    vim.current.buffer[0] = meta[0]
+    for l in meta[1:]:
         vim.current.buffer.append(l)
 
 @__exception_check
@@ -278,14 +278,15 @@ def blog_append_code(code_type = ""):
         vim.current.range.append(l)
 
 @__exception_check
-def blog_preview():
+def blog_preview(pub = "draft"):
+    blog_send_post(pub)
     strid = get_meta("StrID")
     if strid == "":
         raise VimPressException("Save Post before Preview :BlogSave")
     url = "%s/?p=%s&preview=true" % (blog_url, strid)
     webbrowser.open(url)
-
-
+    if pub == "draft":
+        sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
 
 
 
