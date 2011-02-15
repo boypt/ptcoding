@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (n != 18 || msg[0] != 0x10 || msg[1] != 0x08 || (*(int*)(&msg[6])) != 0) {
-        printf("bad data received from %s, len=%d\n",  inet_ntoa(cliAddr.sin_addr), n);
+        printf("bad data received from %s, len=%zu\n",  inet_ntoa(cliAddr.sin_addr), n);
         print_hex((uint8_t *)msg, n);
         continue;
     }
