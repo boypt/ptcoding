@@ -163,8 +163,7 @@ def blog_fill_meta_area(meta_dict):
 "========== Content ==========""" % meta_dict
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
-    for l in meta[1:]:
-        vim.current.buffer.append(l)
+    vim.current.buffer.append(meta[1:])
 
 @__exception_check
 def blog_new_post():
@@ -203,8 +202,7 @@ def blog_open_post(post_id):
     blog_fill_meta_area(meta_dict)
 
     content = (post["description"]).encode("utf-8")
-    for line in content.split('\n'):
-        vim.current.buffer.append(line)
+    vim.current.buffer.append(content.split('\n'))
     text_start = 0
 
     while not vim.current.buffer[text_start] == "\"========== Content ==========":
@@ -232,9 +230,9 @@ def blog_list_posts(count = "30"):
     vim.command("set syntax=blogsyntax")
     vim.current.buffer[0] = "\"====== List of Posts ========="
 
-    for p in allposts:
-        title = u"%(postid)s\t%(title)s" % p
-        vim.current.buffer.append(title.encode('utf8'))
+    vim.current.buffer.append(\
+        [(u"%(postid)s\t%(title)s" % p).encode('utf8') for p in allposts]
+        )
 
     vim.command('set nomodified')
     vim.command("set nomodifiable")
@@ -274,8 +272,7 @@ def blog_append_code(code_type = ""):
         args = ""
 
     html = html % args
-    for l in html.split('\n'):
-        vim.current.range.append(l)
+    vim.current.range.append(html.split('\n'))
 
 @__exception_check
 def blog_preview(pub = "draft"):
