@@ -4,7 +4,6 @@
  *      gcc -Wall -o mds_server mds_server.c 
  */
 
-
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,6 +12,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h> /* memset() */
+#include <time.h>
 
 #define LOCAL_SERVER_PORT 19781
 
@@ -44,11 +44,17 @@ int main(int argc, char *argv[]) {
   char response[] = {0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   unsigned long PIN;
   unsigned long *responsePIN = (unsigned long*)(response + 6);
+  time_t timep;
+  char *time_stamp;
+
+  time (&timep);
+  time_stamp = ctime(&timep);
+  time_stamp[24] = 0;
 
   /* socket creation */
   sd=socket(AF_INET, SOCK_DGRAM, 0);
   if(sd<0) {
-    printf("%s: cannot open socket \n",argv[0]);
+    printf("[%s] %s: cannot open socket \n",time_stamp, argv[0]);
     exit(1);
   }
 
@@ -58,13 +64,13 @@ int main(int argc, char *argv[]) {
   servAddr.sin_port = htons(LOCAL_SERVER_PORT);
   rc = bind (sd, (struct sockaddr *) &servAddr,sizeof(servAddr));
   if(rc<0) {
-    printf("%s: cannot bind port number %d \n", 
-       argv[0], LOCAL_SERVER_PORT);
+    printf("[%s] %s: cannot bind port number %d \n", 
+       time_stamp, argv[0], LOCAL_SERVER_PORT);
     exit(1);
   }
 
-  printf("%s: waiting for data on port UDP %u\n", 
-       argv[0],LOCAL_SERVER_PORT);
+  printf("[%s] %s: waiting for data on port UDP %u\n", 
+       time_stamp, argv[0], LOCAL_SERVER_PORT);
   fflush(stdout);
 
 
@@ -79,13 +85,17 @@ int main(int argc, char *argv[]) {
     n = recvfrom(sd, msg, MAX_MSG, 0,
          (struct sockaddr *) &cliAddr, &cliLen);
 
+    time (&timep);
+    time_stamp = ctime(&timep);
+    time_stamp[24] = 0;
+
     if(n<0) {
-      printf("%s: cannot receive data \n",argv[0]);
+      printf("[%s] %s: cannot receive data \n", time_stamp, argv[0]);
       continue;
     }
 
     if (n != 18 || msg[0] != 0x10 || msg[1] != 0x08 || (*(int*)(&msg[6])) != 0) {
-        printf("bad data received from %s, len=%zu\n",  inet_ntoa(cliAddr.sin_addr), n);
+        printf("[%s] bad data received from %s, len=%zu\n", time_stamp,  inet_ntoa(cliAddr.sin_addr), n);
         print_hex((uint8_t *)msg, n);
         fflush(stdout);
         continue;
@@ -96,7 +106,7 @@ int main(int argc, char *argv[]) {
     sendto(sd, (const char *)response, sizeof(response), 0, (struct sockaddr*)&cliAddr, n);
 
     sprintf(pinbuf, "%x", ntohl(PIN));
-    printf("Request received from %s, PIN=%s ...response sent.\n", inet_ntoa(cliAddr.sin_addr), pinbuf); 
+    printf("[%s] Request received from %s, PIN=%s ...response sent.\n", time_stamp, inet_ntoa(cliAddr.sin_addr), pinbuf); 
     fflush(stdout);
     
   }/* end of server infinite loop */
