@@ -29,7 +29,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.1.0
+" Version:	1.1.2
 " Changes:  
 "
 " 2011 Feb. 15 [by Preston]
@@ -77,10 +77,7 @@ image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 #####################
 
 blog_handler = "%s/xmlrpc.php" % blog_url
-
 handler = xmlrpclib.ServerProxy(blog_handler).metaWeblog
-
-
 class VimPressException(Exception):
     pass
 
@@ -97,12 +94,29 @@ def get_meta(what):
         end +=1
     return " ".join(vim.current.buffer[start:end]).split(":")[1].strip()
 
+def blog_get_cats():
+    l = handler.getCategories('', blog_username, blog_password)
+    return ", ".join([i["description"].encode("utf-8") for i in l])
+
+def blog_fill_meta_area(meta_dict):
+    meta_text = \
+""""=========== Meta ============
+"StrID : %(strid)s
+"Title : %(title)s
+"Slug  : %(slug)s
+"Cats  : %(cats)s
+"Tags  : %(tags)s
+"========== Content ==========""" % meta_dict
+    meta = meta_text.split('\n')
+    vim.current.buffer[0] = meta[0]
+    vim.current.buffer.append(meta[1:])
+
 def __exception_check(func):
     def __check(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except VimPressException, e:
-            sys.stderr.write("%s" % e)
+            sys.stderr.write(str(e))
         except xmlrpclib.Fault, e:
             sys.stderr.write("xmlrpc error: %s" % e.faultString.encode("utf-8"))
         except xmlrpclib.ProtocolError, e:
@@ -151,33 +165,20 @@ def blog_send_post(pub = "draft"):
     sys.stdout.write(notify)
     vim.command('set nomodified')
 
-
-def blog_fill_meta_area(meta_dict):
-    meta_text = \
-""""=========== Meta ============
-"StrID : %(strid)s
-"Title : %(title)s
-"Slug  : %(slug)s
-"Cats  : %(cats)s
-"Tags  : %(tags)s
-"========== Content ==========""" % meta_dict
-    meta = meta_text.split('\n')
-    vim.current.buffer[0] = meta[0]
-    vim.current.buffer.append(meta[1:])
-
 @__exception_check
 def blog_new_post():
-
-    def blog_get_cats():
-        l = handler.getCategories('', blog_username, blog_password)
-        return ", ".join([i["description"].encode("utf-8") for i in l])
 
     currentContent = vim.current.buffer[:]
     del vim.current.buffer[:]
     vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
 
-    meta_dict = dict(strid = "", title = "", slug = "", cats = blog_get_cats(), tags = "")
+    meta_dict = dict(\
+        strid = "", 
+        title = "", 
+        slug = "", 
+        cats = blog_get_cats(), 
+        tags = "")
 
     blog_fill_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
@@ -192,15 +193,14 @@ def blog_open_post(post_id):
     vim.command("set syntax=blogsyntax")
 
     del vim.current.buffer[:]
-    meta_dict = dict(strid = str(post_id), 
-                    title = post["title"].encode("utf-8"), 
-                    slug = post["wp_slug"].encode("utf-8"), 
-                    cats = ",".join(post["categories"]).encode("utf-8"), 
-                    tags = (post["mt_keywords"]).encode("utf-8")
-                    )
+    meta_dict = dict(\
+            strid = str(post_id), 
+            title = post["title"].encode("utf-8"), 
+            slug = post["wp_slug"].encode("utf-8"), 
+            cats = ",".join(post["categories"]).encode("utf-8"), 
+            tags = (post["mt_keywords"]).encode("utf-8"))
 
     blog_fill_meta_area(meta_dict)
-
     content = (post["description"]).encode("utf-8")
     vim.current.buffer.append(content.split('\n'))
     text_start = 0
@@ -271,8 +271,10 @@ def blog_append_code(code_type = ""):
     else:
         args = ""
 
-    html = html % args
-    vim.current.range.append(html.split('\n'))
+    row, col = vim.current.window.cursor 
+    code_block = (html % args).split('\n')
+    vim.current.range.append(code_block)
+    vim.current.window.cursor = (row + len(code_block), 0)
 
 @__exception_check
 def blog_preview(pub = "draft"):
@@ -284,6 +286,5 @@ def blog_preview(pub = "draft"):
     webbrowser.open(url)
     if pub == "draft":
         sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
-
 
 
