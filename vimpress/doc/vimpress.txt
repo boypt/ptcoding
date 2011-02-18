@@ -1,20 +1,22 @@
-*vimpress.txt* Manage wordpress blog from Vim
+*vimpress.txt*   Plugin for managing wordpress blog from Vim.
 
-Vimpress
+Script:   blog.vim
+Author:   Adrien Friggeri <adrien@friggeri.net>
+          Pigeond <http://pigeond.net/blog/>
+          Preston M.[BOYPT] <pentie@gmail.com>
+          Justin Sattery <justin.slattery@fzysqr.com>
+License:  Same terms as Vim itself (see |license|)
 
-Author: Adrien Friggeri <adrien@friggeri.net>
-        Preston M. [BOYPT] <pentie@gmail.com>
+============================================================================
 
-==============================================================================
-
-== Install ==
+*INSTALL*
 
 Download vimpress-1.x.x.zip, extract it in your .vim directory:
 
   cd ~/.vim
   unzip /where/you/downlaod/vimpress-1.x.x.zip
 
-== Configure ==
+*CONFIGURE*
 
 Edit ~/.vim/plugin/blog.vim, search "Settings", you will find such section:
 
@@ -28,30 +30,29 @@ blog_url = 'http://yourblog.com'
 
 Fill in this about your blog, save, thats all.
 
-== Using Vimpress ==
+*USING*
 
 Vimpress Commands: 
 
+>
  :BlogList [<count>]
-   Lists articles in the blog, defaultly recent 30, use an arg. to specify.
-   
+< Lists post titles in your blog, defaultly recent 30, use an arg. to specify.
+>
  :BlogNew
-   Open for a new post. Contents in current buffer will append in the post edit area.
-
+< Open for a new post. Contents in current buffer will append in the post edit area.
+>
  :BlogOpen <id>
-   Open a post <id> for editing.
-
+< Open a post <id> for editing.
+>
  :BlogSave <draft|publish>
-   Saves the article, defaultly as draft, an arg. to specify.
-
+< Saves the post, defaultly as draft, an arg. to specify.
+>
  :BlogPreview <draft|publish>
-   Same as :BlogSave, will open a browser to preview current post. You have to login
-   in your browser to preview the draft post.
-
+< Same as :BlogSave, will open a browser to preview current post. You have to login in your browser to preview the draft post.
+>
  :BlogUpload <file>
-   Upload media file to blog. Appends img element after cursor.
-
+< Upload media file to blog. Appends img element after cursor.
+>
  :BlogCode [<code type>]
-   Append a section of a <pre> element, which could be hilighted by wp-syntax plugin.
-   When give a code type, will fillin the element for syntax.
+< Append a section of a <pre> element, which could be hilighted by wp-syntax plugin. When give a code type, will fillin the element for syntax.
 
