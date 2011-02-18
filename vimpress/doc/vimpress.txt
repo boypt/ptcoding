@@ -7,9 +7,16 @@ Author: Adrien Friggeri <adrien@friggeri.net>
 
 ==============================================================================
 
-Using vimpress, you need some configuration firstly.
+== Install ==
 
-Edit blog.vim, jump to line around 50, you will find such section:
+Download vimpress-1.x.x.zip, extract it in your .vim directory:
+
+  cd ~/.vim
+  unzip /where/you/downlaod/vimpress-1.x.x.zip
+
+== Configure ==
+
+Edit ~/.vim/plugin/blog.vim, search "Settings", you will find such section:
 
 #####################
 #      Settings     #
@@ -20,6 +27,8 @@ blog_password = 'pass'
 blog_url = 'http://yourblog.com'
 
 Fill in this about your blog, save, thats all.
+
+== Using Vimpress ==
 
 Vimpress Commands: 
 
