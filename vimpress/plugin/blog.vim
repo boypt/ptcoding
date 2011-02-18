@@ -57,7 +57,7 @@ command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<f-args>)')
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
-command! -nargs=1 BlogCode exec('py blog_append_code(<f-args>)')
+command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_preview(<f-args>)')
 python <<EOF
 # -*- coding: utf-8 -*-
@@ -264,12 +264,12 @@ def blog_upload_media(file_path):
 
 def blog_append_code(code_type = ""):
     html = \
-"""<pre escaped="True" %s>
+"""<pre escaped="True"%s>
 </pre>"""
     if code_type != "":
-        args = 'lang="%s" line="1"' % code_type
+        args = ' lang="%s" line="1"' % code_type
     else:
-        args = ""
+        args = ''
 
     row, col = vim.current.window.cursor 
     code_block = (html % args).split('\n')
