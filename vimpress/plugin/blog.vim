@@ -63,21 +63,19 @@ python <<EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser
 
-#####################
-#      Settings     #
-#####################
-
-blog_username = 'username'
-blog_password = 'password'
-blog_url = 'http://yourblog.com'
-
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
-#####################
-# Do not edit below #
-#####################
-
-blog_handler = "%s/xmlrpc.php" % blog_url
-handler = xmlrpclib.ServerProxy(blog_handler).metaWeblog
+handler = None
+try:
+    wp = vim.eval("VIMPRESS")[0]
+    blog_username = wp['username']
+    blog_password = wp['password']
+    blog_url = wp['blog_url']
+    handler = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).metaWeblog
+except vim.error:
+    sys.stderr.write("No Wordpress confire for Vimpress.")
+except KeyError, e:
+    sys.stderr.write("Configure Error: %s" % e)
+    
 class VimPressException(Exception):
     pass
 
@@ -95,8 +93,13 @@ def get_meta(what):
     return " ".join(vim.current.buffer[start:end]).split(":")[1].strip()
 
 def blog_get_cats():
+    if handler is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
     l = handler.getCategories('', blog_username, blog_password)
     return ", ".join([i["description"].encode("utf-8") for i in l])
+
+def blog_switch():
+    pass
 
 def blog_fill_meta_area(meta_dict):
     meta_text = \
@@ -128,6 +131,8 @@ def __exception_check(func):
 
 @__exception_check
 def blog_send_post(pub = "draft"):
+    if handler is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
 
     if pub == "publish":
         publish = True
@@ -188,6 +193,8 @@ def blog_new_post():
 
 @__exception_check
 def blog_open_post(post_id):
+    if handler is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
     post = handler.getPost(post_id, blog_username, blog_password)
     vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
@@ -223,6 +230,8 @@ def blog_list_edit():
 
 @__exception_check
 def blog_list_posts(count = "30"):
+    if handler is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
     allposts = handler.getRecentPosts('',blog_username, 
             blog_password, int(count))
 
@@ -242,6 +251,8 @@ def blog_list_posts(count = "30"):
 
 @__exception_check
 def blog_upload_media(file_path):
+    if handler is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
     if not os.path.exists(file_path):
         raise VimPressException("File does not exist: %s" % file_path)
 
@@ -282,7 +293,7 @@ def blog_preview(pub = "draft"):
     strid = get_meta("StrID")
     if strid == "":
         raise VimPressException("Save Post before Preview :BlogSave")
-    url = "%s/?p=%s&preview=true" % (blog_url, strid)
+    url = "%s?p=%s&preview=true" % (blog_url, strid)
     webbrowser.open(url)
     if pub == "draft":
         sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
