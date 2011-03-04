@@ -29,8 +29,20 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.1.2
+" Version:	1.1.5
+"
+" Configure: Add blog configure into your .vimrc
+"
+" let VIMPRESS=[{'username':'user', 'password':'pass', 'blog_url':'http://your-first-blog.com/'}, {'username':'user', 'password':'pass', 'blog_url':'http://your-second-blog.com/'}]
+"
 " Changes:  
+"
+" 2011 Mar. 4  [by Preston]
+"               Add: Move blog config info to personal .vimrc
+"               Add: Multiple blog config is now supported with :BlogSwitch
+"               command.
+"               Add: Show which blog your editing at :BlogList view.
+"               Fix: bug running :BlogList in the List view got error.
 "
 " 2011 Feb. 15 [by Preston]
 "                Add: BlogPreview Command.
@@ -59,23 +71,19 @@ command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_preview(<f-args>)')
+command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
 python <<EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
+blog_username = None
+blog_password = None
+blog_url = None
 handler = None
-try:
-    wp = vim.eval("VIMPRESS")[0]
-    blog_username = wp['username']
-    blog_password = wp['password']
-    blog_url = wp['blog_url']
-    handler = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).metaWeblog
-except vim.error:
-    sys.stderr.write("No Wordpress confire for Vimpress.")
-except KeyError, e:
-    sys.stderr.write("Configure Error: %s" % e)
-    
+blog_conf_index = 0
+vimpress_view = 'edit'
+
 class VimPressException(Exception):
     pass
 
@@ -97,9 +105,6 @@ def blog_get_cats():
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
     l = handler.getCategories('', blog_username, blog_password)
     return ", ".join([i["description"].encode("utf-8") for i in l])
-
-def blog_switch():
-    pass
 
 def blog_fill_meta_area(meta_dict):
     meta_text = \
@@ -131,6 +136,8 @@ def __exception_check(func):
 
 @__exception_check
 def blog_send_post(pub = "draft"):
+    if vimpress_view != 'edit':
+        raise VimPressException("Command not available at list view")
     if handler is None:
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
 
@@ -172,6 +179,8 @@ def blog_send_post(pub = "draft"):
 
 @__exception_check
 def blog_new_post():
+    global vimpress_view
+    vimpress_view = 'edit'
 
     currentContent = vim.current.buffer[:]
     del vim.current.buffer[:]
@@ -195,6 +204,9 @@ def blog_new_post():
 def blog_open_post(post_id):
     if handler is None:
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
+    global vimpress_view
+    vimpress_view = 'edit'
+
     post = handler.getPost(post_id, blog_username, blog_password)
     vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
@@ -224,6 +236,8 @@ def blog_open_post(post_id):
         vim.command('unmap <enter>')
 
 def blog_list_edit():
+    global vimpress_view
+    vimpress_view = 'edit'
     row = vim.current.window.cursor[0]
     id = vim.current.buffer[row - 1].split()[0]
     blog_open_post(int(id))
@@ -235,9 +249,13 @@ def blog_list_posts(count = "30"):
     allposts = handler.getRecentPosts('',blog_username, 
             blog_password, int(count))
 
+    global vimpress_view
+    vimpress_view = 'list'
+
+    vim.command("set modifiable")
     del vim.current.buffer[:]
     vim.command("set syntax=blogsyntax")
-    vim.current.buffer[0] = "\"====== List of Posts ========="
+    vim.current.buffer[0] = "\"====== List of Posts in %s =========" % blog_url
 
     vim.current.buffer.append(\
         [(u"%(postid)s\t%(title)s" % p).encode('utf8') for p in allposts]
@@ -251,6 +269,8 @@ def blog_list_posts(count = "30"):
 
 @__exception_check
 def blog_upload_media(file_path):
+    if vimpress_view != 'edit':
+        raise VimPressException("Command not available at list view")
     if handler is None:
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
     if not os.path.exists(file_path):
@@ -273,7 +293,10 @@ def blog_upload_media(file_path):
         ran.append(result["url"])
     ran.append('')
 
+@__exception_check
 def blog_append_code(code_type = ""):
+    if vimpress_view != 'edit':
+        raise VimPressException("Command not available at list view")
     html = \
 """<pre escaped="True"%s>
 </pre>"""
@@ -289,6 +312,8 @@ def blog_append_code(code_type = ""):
 
 @__exception_check
 def blog_preview(pub = "draft"):
+    if vimpress_view != 'edit':
+        raise VimPressException("Command not available at list view")
     blog_send_post(pub)
     strid = get_meta("StrID")
     if strid == "":
@@ -297,5 +322,37 @@ def blog_preview(pub = "draft"):
     webbrowser.open(url)
     if pub == "draft":
         sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
+
+
+@__exception_check
+def blog_update_config(wp_config):
+    global blog_username, blog_password, blog_url, handler
+    try:
+        blog_username = wp_config['username']
+        blog_password = wp_config['password']
+        blog_url = wp_config['blog_url']
+        handler = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).metaWeblog
+    except vim.error:
+        sys.stderr.write("No Wordpress confire for Vimpress.")
+    except KeyError, e:
+        sys.stderr.write("Configure Error: %s" % e)
+
+@__exception_check
+def blog_config_switch():
+    global blog_conf_index
+    try:
+        blog_conf_index += 1
+        wp = vim.eval("VIMPRESS")[blog_conf_index]
+    except IndexError:
+        blog_conf_index = 0
+        wp = vim.eval("VIMPRESS")[blog_conf_index]
+
+    blog_update_config(wp)
+    if vimpress_view == 'list':
+        blog_list_posts()
+    sys.stdout.write("Vimpress switched to %s" % blog_url)
+
+wp = vim.eval("VIMPRESS")[0]
+blog_update_config(wp)
 
 
