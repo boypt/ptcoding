@@ -72,6 +72,9 @@ command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)
 command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_preview(<f-args>)')
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
+command! -nargs=0 MarkDownPreview exec('py markdown_preview()')
+command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
+
 python <<EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser
@@ -355,4 +358,9 @@ def blog_config_switch():
 wp = vim.eval("VIMPRESS")[0]
 blog_update_config(wp)
 
+def markdown_preview():
+    pass
+
+def markdown_newpost():
+    pass
 
