@@ -77,7 +77,7 @@ command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
 
 python <<EOF
 # -*- coding: utf-8 -*-
-import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser
+import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser, tempfile
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 blog_username = None
@@ -86,6 +86,7 @@ blog_url = None
 handler = None
 blog_conf_index = 0
 vimpress_view = 'edit'
+vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
 
 class VimPressException(Exception):
     pass
@@ -355,12 +356,35 @@ def blog_config_switch():
         blog_list_posts()
     sys.stdout.write("Vimpress switched to %s" % blog_url)
 
-wp = vim.eval("VIMPRESS")[0]
-blog_update_config(wp)
 
 def markdown_preview():
-    pass
+    temp_mkd = os.path.join(vimpress_temp_dir, "vimpress_temp.mkd")
+    temp_htm = os.path.join(vimpress_temp_dir, "vimpress_temp.htm")
+    html_heads = \
+"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+<body>
+"""
+    with open(temp_htm, 'w') as f:
+        f.write(html_heads)
+    
+    vim.command(":w %s" % temp_mkd)
+    vim.command(":!markdown %s >>%s" % (temp_mkd, temp_htm))
+    webbrowser.open("file://%s" % temp_htm)
 
 def markdown_newpost():
     pass
+
+if __name__ == "__main__":
+    try:
+        wp = vim.eval("VIMPRESS")[0]
+    except IndexError:
+        sys.stderr("Vimpress default configure index error. Check your .vimrc and review :help vimpress ")
+    else:    
+        blog_update_config(wp)
+
+
 
