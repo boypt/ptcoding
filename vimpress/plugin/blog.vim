@@ -29,13 +29,25 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.1.5
+" Version:	1.2.0
 "
 " Configure: Add blog configure into your .vimrc
 "
-" let VIMPRESS=[{'username':'user', 'password':'pass', 'blog_url':'http://your-first-blog.com/'}, {'username':'user', 'password':'pass', 'blog_url':'http://your-second-blog.com/'}]
+" let VIMPRESS=[{'username':'user',
+"               \'password':'pass',
+"               \'blog_url':'http://your-first-blog.com/'
+"               \},
+"               \{'username':'user',
+"               \'password':'pass',
+"               \'blog_url':'http://your-second-blog.com/'
+"               \}]
 "
 " Changes:  
+" 2011 Mar. 7  [by Preston]
+"               Add: MarkdownPreview command to preiview markdown in browser.
+"               Add: MarkdownNewPost command to convert a markdown
+"               written post into html and set to the new post view.
+"
 "
 " 2011 Mar. 4  [by Preston]
 "               Add: Move blog config info to personal .vimrc
@@ -86,7 +98,7 @@ blog_url = None
 handler = None
 blog_conf_index = 0
 vimpress_view = 'edit'
-vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
+vimpress_temp_dir = ''
 
 class VimPressException(Exception):
     pass
@@ -282,8 +294,9 @@ def blog_upload_media(file_path):
 
     name = os.path.basename(file_path)
     filetype = mimetypes.guess_type(file_path)[0]
-    with open(file_path, 'r') as f:
-        bits = xmlrpclib.Binary(f.read())
+    f = open(file_path, 'r')
+    bits = xmlrpclib.Binary(f.read())
+    f.close()
 
     result = handler.newMediaObject(1, blog_username, blog_password, 
             dict(name = name, type = filetype, bits = bits))
@@ -358,7 +371,9 @@ def blog_config_switch():
 
 
 def markdown_preview():
-    temp_mkd = os.path.join(vimpress_temp_dir, "vimpress_temp.mkd")
+    global vimpress_temp_dir
+    if vimpress_temp_dir == '':
+        vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
     temp_htm = os.path.join(vimpress_temp_dir, "vimpress_temp.htm")
     html_heads = \
 """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -368,15 +383,23 @@ def markdown_preview():
 </head>
 <body>
 """
-    with open(temp_htm, 'w') as f:
-        f.write(html_heads)
+    tmp_file = open(temp_htm, 'w')
+    tmp_file.write(html_heads)
+    tmp_file.close()
     
-    vim.command(":w %s" % temp_mkd)
-    vim.command(":!markdown %s >>%s" % (temp_mkd, temp_htm))
+    vim.command(":w !markdown >>%s" % temp_htm)
     webbrowser.open("file://%s" % temp_htm)
 
 def markdown_newpost():
-    pass
+    global vimpress_temp_dir
+    if vimpress_temp_dir == '':
+        vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
+    temp_htm = os.path.join(vimpress_temp_dir, "vimpress_post.htm")
+    vim.command(":w !markdown >>%s" % temp_htm)
+    sys.stdout.write("Press ENTER to continue.")
+    del vim.current.buffer[:]
+    vim.command(":r %s" % temp_htm)
+    blog_new_post()
 
 if __name__ == "__main__":
     try:
