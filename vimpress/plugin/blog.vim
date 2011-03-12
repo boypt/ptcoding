@@ -29,7 +29,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.2.0
+" Version:	1.2.1
 "
 " Configure: Add blog configure into your .vimrc
 "
@@ -395,9 +395,14 @@ def markdown_newpost():
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
     temp_htm = os.path.join(vimpress_temp_dir, "vimpress_post.htm")
-    vim.command(":w !markdown >>%s" % temp_htm)
+    cur_file = vim.eval('expand("%:p")')
+    if cur_file is None: 
+        cur_file = os.path.join(vimpress_temp_dir, "tmp_mkd")
+        sys.stdout.write("\n\nCurrent buffer saved to %s\n\n" % cur_file)
+    vim.command(":w %s" % cur_file)
+    vim.command(":!markdown %s >%s" % (cur_file, temp_htm))
     sys.stdout.write("Press ENTER to continue.")
-    del vim.current.buffer[:]
+    vim.command(":bdelete")
     vim.command(":r %s" % temp_htm)
     blog_new_post()
 
