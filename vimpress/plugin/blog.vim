@@ -29,7 +29,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.2.1
+" Version:	1.2.2
 "
 " Configure: Add blog configure into your .vimrc
 "
@@ -43,6 +43,12 @@
 "               \}]
 "
 " Changes:  
+" 2011 Mar. 15 [by Preston]
+"               Fix: MarkdownNewPost may override original mkd source file.
+"               Add: MarkdownNewPost command detects title begins with
+"                   "#" in first 10 lines of markdown source, copy the line
+"                   striped "#" to the new post view.
+"
 " 2011 Mar. 7  [by Preston]
 "               Add: MarkdownPreview command to preiview markdown in browser.
 "               Add: MarkdownNewPost command to convert a markdown
@@ -194,7 +200,7 @@ def blog_send_post(pub = "draft"):
     vim.command('set nomodified')
 
 @__exception_check
-def blog_new_post():
+def blog_new_post(**args):
     global vimpress_view
     vimpress_view = 'edit'
 
@@ -209,6 +215,8 @@ def blog_new_post():
         slug = "", 
         cats = blog_get_cats(), 
         tags = "")
+
+    meta_dict.update(args)
 
     blog_fill_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
@@ -395,16 +403,27 @@ def markdown_newpost():
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
     temp_htm = os.path.join(vimpress_temp_dir, "vimpress_post.htm")
+
+    title = ""
+    title_s = 0
+    while title_s < 10:
+        if vim.current.buffer[title_s].startswith("#"):
+            break
+        title_s += 1
+    title = vim.current.buffer[title_s]
+    real_title = title.rfind("#") + 1
+    title = title[real_title:]
+
     cur_file = vim.eval('expand("%:p")')
     if cur_file is None: 
-        cur_file = os.path.join(vimpress_temp_dir, "tmp_mkd")
+        cur_file = os.path.join(vimpress_temp_dir, "tmp_vimpress.mkd")
         sys.stdout.write("\n\nCurrent buffer saved to %s\n\n" % cur_file)
     vim.command(":w %s" % cur_file)
     vim.command(":!markdown %s >%s" % (cur_file, temp_htm))
     sys.stdout.write("Press ENTER to continue.")
     vim.command(":bdelete")
     vim.command(":r %s" % temp_htm)
-    blog_new_post()
+    blog_new_post(title = title)
 
 if __name__ == "__main__":
     try:
