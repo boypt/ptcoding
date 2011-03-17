@@ -29,7 +29,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.2.4
+" Version:	1.2.5
 "
 " Configure: Add blog configure into your .vimrc
 "
@@ -237,9 +237,9 @@ def blog_open_post(post_id):
 
     post = handler.getPost(post_id, blog_username, blog_password)
     vim.command("set modifiable")
+    vim.command(":bdelete!")
     vim.command("set syntax=blogsyntax")
 
-    vim.command(":bdelete!")
     meta_dict = dict(\
             strid = str(post_id), 
             title = post["title"].encode("utf-8"), 
