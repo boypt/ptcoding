@@ -29,7 +29,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.2.3
+" Version:	1.2.4
 "
 " Configure: Add blog configure into your .vimrc
 "
@@ -202,11 +202,15 @@ def blog_send_post(pub = "draft"):
 @__exception_check
 def blog_new_post(**args):
     global vimpress_view
-    vimpress_view = 'edit'
 
-    currentContent = vim.current.buffer[:]
-    del vim.current.buffer[:]
+    if vimpress_view == "list":
+        currentContent = ['']
+    else:
+        currentContent = vim.current.buffer[:]
+
     vim.command("set modifiable")
+    vim.command(":bdelete!")
+    vimpress_view = 'edit'
     vim.command("set syntax=blogsyntax")
 
     meta_dict = dict(\
@@ -220,7 +224,7 @@ def blog_new_post(**args):
 
     blog_fill_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
-    vim.current.window.cursor = (len(vim.current.buffer), 0)
+    vim.current.window.cursor = (1, 0)
     vim.command('set nomodified')
     vim.command('set textwidth=0')
 
@@ -235,7 +239,7 @@ def blog_open_post(post_id):
     vim.command("set modifiable")
     vim.command("set syntax=blogsyntax")
 
-    del vim.current.buffer[:]
+    vim.command(":bdelete!")
     meta_dict = dict(\
             strid = str(post_id), 
             title = post["title"].encode("utf-8"), 
@@ -264,6 +268,7 @@ def blog_list_edit():
     vimpress_view = 'edit'
     row = vim.current.window.cursor[0]
     id = vim.current.buffer[row - 1].split()[0]
+    vim.command(":bdelete!")
     blog_open_post(int(id))
 
 @__exception_check
@@ -277,7 +282,7 @@ def blog_list_posts(count = "30"):
     vimpress_view = 'list'
 
     vim.command("set modifiable")
-    del vim.current.buffer[:]
+    vim.command(":bdelete!")
     vim.command("set syntax=blogsyntax")
     vim.current.buffer[0] = "\"====== List of Posts in %s =========" % blog_url
 
