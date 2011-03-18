@@ -11,14 +11,16 @@ License:  Same terms as Vim itself (see |license|)
 
 *INSTALL*
 
-Download vimpress-1.x.x.zip, extract it in your .vim directory:
+Download vimpress_1.x.x.zip, extract it in your .vim directory:
 
   cd ~/.vim
-  unzip /where/you/downlaod/vimpress-1.x.x.zip
+  unzip /where/you/downlaod/vimpress_1.x.x.zip
 
 *CONFIGURE*
 
-Edit ~/.vimrc , add a variable name VIMPRESS. Multiple blogs Config are support, written as array list.
+Edit ~/.vimrc , add a variable name VIMPRESS. Multiple blogs Config are supported, written as dictionarys in a array list.
+
+Example:
 
 let VIMPRESS=[{'username':'user',
                \'password':'pass',
