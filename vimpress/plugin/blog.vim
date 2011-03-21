@@ -97,6 +97,13 @@ command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
 python <<EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser, tempfile
+try:
+    import markdown
+except ImportError:
+    try:
+        import markdown2 as markdown
+    except ImportError:
+        markdown = None
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 blog_username = None
@@ -364,9 +371,9 @@ def blog_update_config(wp_config):
         blog_url = wp_config['blog_url']
         handler = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).metaWeblog
     except vim.error:
-        sys.stderr.write("No Wordpress confire for Vimpress.")
+        raise VimPressException("No Wordpress confire for Vimpress.")
     except KeyError, e:
-        sys.stderr.write("Configure Error: %s" % e)
+        raise VimPressException("Configure Error: %s" % e)
 
 @__exception_check
 def blog_config_switch():
@@ -384,12 +391,10 @@ def blog_config_switch():
     sys.stdout.write("Vimpress switched to %s" % blog_url)
 
 
+@__exception_check
 def markdown_preview():
-    try:
-        import markdown
-    except ImportError:
-        sys.stderr.write("python-markdown module not installed.")
-        return
+    if markdown is None:
+        raise VimPressException("python-markdown module not installed.")
 
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
@@ -414,12 +419,10 @@ def markdown_preview():
     
     webbrowser.open("file://%s" % temp_htm)
 
+@__exception_check
 def markdown_newpost():
-    try:
-        import markdown
-    except ImportError:
-        sys.stderr.write("python-markdown module not installed.")
-        return
+    if markdown is None:
+        raise VimPressException("python-markdown module not installed.")
 
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
@@ -448,7 +451,8 @@ def markdown_newpost():
 
     vim.command(":bdelete!")
     vim.current.buffer[0] = html_list[0]
-    vim.current.buffer.append(html_list[1:])
+    if len(html_list) > 1:
+        vim.current.buffer.append(html_list[1:])
     blog_new_post(title = title)
 
 if __name__ == "__main__":
