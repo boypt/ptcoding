@@ -120,7 +120,7 @@ def get_meta(what):
     end = start + 1
     while not vim.current.buffer[end][0] == '"':
         end +=1
-    return " ".join(vim.current.buffer[start:end]).split(":")[1].strip()
+    return ':'.join(" ".join(vim.current.buffer[start:end]).split(":")[1:]).strip()
 
 def blog_get_cats():
     if handler is None:
