@@ -18,6 +18,7 @@
 "               Pigeond <http://pigeond.net/blog/>
 "               Preston M.[BOYPT] <pentie@gmail.com>
 "               Justin Sattery <justin.slattery@fzysqr.com>
+"               Lenin Lee <>
 "
 " URL:		http://www.friggeri.net/projets/vimblog/
 "           http://pigeond.net/blog/2009/05/07/vimpress-again/
@@ -29,7 +30,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.2.5
+" Version:	1.2.8
 "
 " Configure: Add blog configure into your .vimrc
 "
