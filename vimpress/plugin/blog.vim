@@ -384,26 +384,42 @@ def blog_config_switch():
 
 
 def markdown_preview():
+    try:
+        import markdown
+    except ImportError:
+        sys.stderr.write("python-markdown module not installed.")
+        return
+
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
     temp_htm = os.path.join(vimpress_temp_dir, "vimpress_temp.htm")
-    html_heads = \
+    html_templeate = \
 """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
+%s
+</body>
+</html>
 """
-    tmp_file = open(temp_htm, 'w')
-    tmp_file.write(html_heads)
-    tmp_file.close()
+    mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
+    html = html_templeate % markdown.markdown(mkd_text, output_format = 'html4').encode('utf-8')
+    f_htm = open(temp_htm, 'w')
+    f_htm.write(html)
+    f_htm.close()
     
-    vim.command(":w !markdown >>%s" % temp_htm)
     webbrowser.open("file://%s" % temp_htm)
 
 def markdown_newpost():
+    try:
+        import markdown
+    except ImportError:
+        sys.stderr.write("python-markdown module not installed.")
+        return
+
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
@@ -425,19 +441,20 @@ def markdown_newpost():
         cur_file = os.path.join(vimpress_temp_dir, "tmp_vimpress.mkd")
         sys.stdout.write("\n\nCurrent buffer saved to %s\n\n" % cur_file)
     vim.command(":w! %s" % cur_file)
-    vim.command(":!markdown %s >%s" % (cur_file, temp_htm))
-    sys.stdout.write("Press ENTER to continue.")
-    vim.command(":bdelete")
-    vim.command(":r %s" % temp_htm)
+
+    mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
+    html_list = markdown.markdown(mkd_text, output_format = 'html4').encode('utf-8').split('\n')
+
+    vim.command(":bdelete!")
+    vim.current.buffer[0] = html_list[0]
+    vim.current.buffer.append(html_list[1:])
     blog_new_post(title = title)
 
 if __name__ == "__main__":
     try:
         wp = vim.eval("VIMPRESS")[0]
     except IndexError:
-        sys.stderr("Vimpress default configure index error. Check your .vimrc and review :help vimpress ")
+        sys.stderr.write("Vimpress default configure index error. Check your .vimrc and review :help vimpress ")
     else:    
         blog_update_config(wp)
-
-
 
