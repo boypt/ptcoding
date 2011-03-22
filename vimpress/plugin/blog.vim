@@ -164,7 +164,21 @@ def __exception_check(func):
 
     return __check
 
+def __vim_encoding_check(func):
+    def __check(*args, **kw):
+        orig_enc = vim.eval("&encoding") 
+        if orig_enc != "utf-8":
+            buf_list = '\n'.join(vim.current.buffer).decode(orig_enc).encode('utf-8').split('\n')
+            vim.command(":bdelete!")
+            vim.command("set encoding=utf-8")
+            vim.current.buffer[0] = buf_list[0]
+            if len(buf_list) > 1:
+                vim.current.buffer.append(buf_list[1:])
+        return func(*args, **kw)
+    return __check
+
 @__exception_check
+@__vim_encoding_check
 def blog_send_post(pub = "draft"):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
@@ -208,6 +222,7 @@ def blog_send_post(pub = "draft"):
     vim.command('set nomodified')
 
 @__exception_check
+@__vim_encoding_check
 def blog_new_post(**args):
     global vimpress_view
 
@@ -237,6 +252,7 @@ def blog_new_post(**args):
     vim.command('set textwidth=0')
 
 @__exception_check
+@__vim_encoding_check
 def blog_open_post(post_id):
     if handler is None:
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
@@ -280,6 +296,7 @@ def blog_list_edit():
     blog_open_post(int(id))
 
 @__exception_check
+@__vim_encoding_check
 def blog_list_posts(count = "30"):
     if handler is None:
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
@@ -305,6 +322,7 @@ def blog_list_posts(count = "30"):
         vim.command('map <enter> :py blog_list_edit()<cr>')
 
 @__exception_check
+@__vim_encoding_check
 def blog_upload_media(file_path):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
@@ -332,6 +350,7 @@ def blog_upload_media(file_path):
     ran.append('')
 
 @__exception_check
+@__vim_encoding_check
 def blog_append_code(code_type = ""):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
@@ -349,6 +368,7 @@ def blog_append_code(code_type = ""):
     vim.current.window.cursor = (row + len(code_block), 0)
 
 @__exception_check
+@__vim_encoding_check
 def blog_preview(pub = "draft"):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
@@ -376,6 +396,7 @@ def blog_update_config(wp_config):
         raise VimPressException("Configure Error: %s" % e)
 
 @__exception_check
+@__vim_encoding_check
 def blog_config_switch():
     global blog_conf_index
     try:
@@ -392,6 +413,7 @@ def blog_config_switch():
 
 
 @__exception_check
+@__vim_encoding_check
 def markdown_preview():
     if markdown is None:
         raise VimPressException("python-markdown module not installed.")
@@ -420,6 +442,7 @@ def markdown_preview():
     webbrowser.open("file://%s" % temp_htm)
 
 @__exception_check
+@__vim_encoding_check
 def markdown_newpost():
     if markdown is None:
         raise VimPressException("python-markdown module not installed.")
