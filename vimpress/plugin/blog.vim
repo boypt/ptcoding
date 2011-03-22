@@ -412,7 +412,7 @@ def markdown_preview():
 </html>
 """
     mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
-    html = html_templeate % markdown.markdown(mkd_text, output_format = 'html4').encode('utf-8')
+    html = html_templeate % markdown.markdown(mkd_text).encode('utf-8')
     f_htm = open(temp_htm, 'w')
     f_htm.write(html)
     f_htm.close()
@@ -447,7 +447,7 @@ def markdown_newpost():
     vim.command(":w! %s" % cur_file)
 
     mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
-    html_list = markdown.markdown(mkd_text, output_format = 'html4').encode('utf-8').split('\n')
+    html_list = markdown.markdown(mkd_text).encode('utf-8').split('\n')
 
     vim.command(":bdelete!")
     vim.current.buffer[0] = html_list[0]
