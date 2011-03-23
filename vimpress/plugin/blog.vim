@@ -93,6 +93,10 @@ command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_prev
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
 command! -nargs=0 MarkDownPreview exec('py markdown_preview()')
 command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
+command! -nargs=0 BlogPageList exec('py blog_list_pages()')
+command! -nargs=1 BlogPageOpen exec('py blog_open_page(<f-args>)')
+command! -nargs=? -complete=custom,CompletionSave BlogSavePage exec('py blog_send_page(<f-args>)')
+command! -nargs=0 BlogPageNew exec('py blog_new_page()')
 
 python <<EOF
 # -*- coding: utf-8 -*-
@@ -113,6 +117,7 @@ handler = None
 blog_conf_index = 0
 vimpress_view = 'edit'
 vimpress_temp_dir = ''
+wpapi = None
 
 class VimPressException(Exception):
     pass
@@ -191,7 +196,6 @@ def blog_send_post(pub = "draft"):
         publish = False
     else:
         raise VimPressException(":BlogSave draft|publish")
-
         
     strid = get_meta("StrID")
     title = get_meta("Title")
@@ -289,11 +293,16 @@ def blog_open_post(post_id):
 
 def blog_list_edit():
     global vimpress_view
-    vimpress_view = 'edit'
     row = vim.current.window.cursor[0]
     id = vim.current.buffer[row - 1].split()[0]
     vim.command(":bdelete!")
-    blog_open_post(int(id))
+
+    if vimpress_view == 'page_list':
+        vimpress_view = 'page_edit'
+        blog_open_page(int(id))
+    else:
+        vimpress_view = 'edit'
+        blog_open_post(int(id))
 
 @__exception_check
 @__vim_encoding_check
@@ -319,7 +328,11 @@ def blog_list_posts(count = "30"):
     vim.command("set nomodifiable")
     vim.current.window.cursor = (2, 0)
     if not vim.eval("mapcheck('<enter>')"):
-        vim.command('map <enter> :py blog_list_edit()<cr>')
+        sys.stdout.write('ok')
+    else:
+        sys.stdout.write('bad')
+
+    vim.command('map <buffer> <enter> :py blog_list_edit()<cr>')
 
 @__exception_check
 @__vim_encoding_check
@@ -384,12 +397,13 @@ def blog_preview(pub = "draft"):
 
 @__exception_check
 def blog_update_config(wp_config):
-    global blog_username, blog_password, blog_url, handler
+    global blog_username, blog_password, blog_url, handler, wpapi
     try:
         blog_username = wp_config['username']
         blog_password = wp_config['password']
         blog_url = wp_config['blog_url']
         handler = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).metaWeblog
+        wpapi = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).wp
     except vim.error:
         raise VimPressException("No Wordpress confire for Vimpress.")
     except KeyError, e:
@@ -477,6 +491,141 @@ def markdown_newpost():
     if len(html_list) > 1:
         vim.current.buffer.append(html_list[1:])
     blog_new_post(title = title)
+
+@__exception_check
+@__vim_encoding_check
+def blog_list_pages():
+    if wpapi is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
+    pages = wpapi.getPageList('', blog_username, blog_password)
+
+    global vimpress_view
+    vimpress_view = 'page_list'
+
+    vim.command("set modifiable")
+    vim.command(":bdelete!")
+    vim.command("set syntax=blogsyntax")
+    vim.current.buffer[0] = "\"====== List of Pages in %s =========" % blog_url
+
+    vim.current.buffer.append(\
+        [(u"%(page_id)s\t%(page_title)s" % p).encode('utf8') for p in pages]
+        )
+
+    vim.command('set nomodified')
+    vim.command("set nomodifiable")
+    vim.current.window.cursor = (2, 0)
+
+    vim.command('map <buffer> <enter> :py blog_list_edit()<cr>')
+
+@__exception_check
+@__vim_encoding_check
+def blog_open_page(page_id):
+    if wpapi is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
+    global vimpress_view
+    vimpress_view = 'page_edit'
+
+    page = wpapi.getPage('', page_id, blog_username, blog_password)
+    vim.command("set modifiable")
+    vim.command(":bdelete!")
+    vim.command("set syntax=blogsyntax")
+
+    meta_dict = dict(\
+            strid = str(page_id), 
+            title = page["title"].encode("utf-8"), 
+            slug = page["wp_slug"].encode("utf-8"))
+
+    blog_fill_page_meta_area(meta_dict)
+    content = (page["description"]).encode("utf-8")
+    vim.current.buffer.append(content.split('\n'))
+    text_start = 0
+
+    while not vim.current.buffer[text_start] == "\"========== Content ==========":
+        text_start +=1
+    text_start +=1
+
+    vim.current.window.cursor = (text_start+1, 0)
+    vim.command('set nomodified')
+    vim.command('set textwidth=0')
+
+    if vim.eval("mapcheck('<enter>')"):
+        vim.command('unmap <enter>')
+
+@__exception_check
+@__vim_encoding_check
+def blog_send_page(pub = "draft"):
+    if vimpress_view != 'page_edit':
+        raise VimPressException("Command is only available at page-edit view.")
+    if wpapi is None:
+        raise VimPressException("Please at lease add a blog config in your .vimrc .")
+
+    if pub == "publish":
+        publish = True
+    elif pub == "draft":
+        publish = False
+    else:
+        raise VimPressException(":BlogSavePage draft|publish")
+        
+    strid = get_meta("StrID")
+    title = get_meta("Title")
+    slug = get_meta("Slug").replace(" ", "-")
+  
+    text_start = 0
+    while not vim.current.buffer[text_start] == "\"========== Content ==========":
+        text_start +=1
+    text = '\n'.join(vim.current.buffer[text_start + 1:])
+
+    page = dict(title = title, description = text, wp_slug = slug)
+
+    if strid == '':
+        strid = wpapi.newPage('', blog_username, blog_password, page, publish)
+        vim.current.buffer[get_line("StrID")] = "\"StrID : %s" % strid
+        notify = "Blog Page %s.   ID=%s" % ("Published" if publish else "Saved as draft", strid)
+    else:
+        wpapi.editPage('', strid, blog_username, blog_password, page, publish)
+        notify = "Blog Page Edited. %s.   ID=%s" %  ("Published" if publish else "Saved", strid)
+
+    sys.stdout.write(notify)
+    vim.command('set nomodified')
+
+@__exception_check
+@__vim_encoding_check
+def blog_new_page(**args):
+    global vimpress_view
+
+    if vimpress_view == "list":
+        currentContent = ['']
+    else:
+        currentContent = vim.current.buffer[:]
+
+    vim.command("set modifiable")
+    vim.command(":bdelete!")
+    vimpress_view = 'page_edit'
+    vim.command("set syntax=blogsyntax")
+
+    meta_dict = dict(\
+        strid = "", 
+        title = "", 
+        slug = "") 
+
+    meta_dict.update(args)
+
+    blog_fill_page_meta_area(meta_dict)
+    vim.current.buffer.append(currentContent)
+    vim.current.window.cursor = (1, 0)
+    vim.command('set nomodified')
+    vim.command('set textwidth=0')
+
+def blog_fill_page_meta_area(meta_dict):
+    meta_text = \
+""""=========== Meta ============
+"StrID : %(strid)s
+"Title : %(title)s
+"Slug  : %(slug)s
+"========== Content ==========""" % meta_dict
+    meta = meta_text.split('\n')
+    vim.current.buffer[0] = meta[0]
+    vim.current.buffer.append(meta[1:])
 
 if __name__ == "__main__":
     try:
