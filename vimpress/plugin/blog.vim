@@ -327,11 +327,6 @@ def blog_list_posts(count = "30"):
     vim.command('set nomodified')
     vim.command("set nomodifiable")
     vim.current.window.cursor = (2, 0)
-    if not vim.eval("mapcheck('<enter>')"):
-        sys.stdout.write('ok')
-    else:
-        sys.stdout.write('bad')
-
     vim.command('map <buffer> <enter> :py blog_list_edit()<cr>')
 
 @__exception_check
