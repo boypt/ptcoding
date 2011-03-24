@@ -30,7 +30,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.2.8
+" Version:	1.3.0
 "
 " Configure: Add blog configure into your .vimrc
 "
@@ -44,6 +44,16 @@
 "               \}]
 "
 " Changes:  
+" 2011 Mar. 24 [by Lenin Lee]
+"               Fix: use setl instead of set to set option value;
+"               Add: Smart detect current buffer, if not None, open a split
+"               buffer to avoid conflic with other plugin.
+"               Add: Commands to manage wordpress pages.
+"               [by Preston]
+"               Add: Charset converting for non-utf8 environment.(Win)
+"               Add: Use python markdown module. Both markdown and markdown2
+"               are supported.
+"
 " 2011 Mar. 15 [by Preston]
 "               Fix: MarkdownNewPost may override original mkd source file.
 "               Add: MarkdownNewPost command detects title begins with
@@ -95,7 +105,7 @@ command! -nargs=0 MarkDownPreview exec('py markdown_preview()')
 command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
 command! -nargs=0 BlogPageList exec('py blog_list_pages()')
 command! -nargs=1 BlogPageOpen exec('py blog_open_page(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogSavePage exec('py blog_send_page(<f-args>)')
+command! -nargs=? -complete=custom,CompletionSave BlogPageSave exec('py blog_send_page(<f-args>)')
 command! -nargs=0 BlogPageNew exec('py blog_new_page()')
 
 python <<EOF
@@ -174,7 +184,7 @@ def __vim_encoding_check(func):
         orig_enc = vim.eval("&encoding") 
         if orig_enc != "utf-8":
             buf_list = '\n'.join(vim.current.buffer).decode(orig_enc).encode('utf-8').split('\n')
-            vim.command(":bdelete!")
+            blog_wise_open_view()
             vim.command("set encoding=utf-8")
             vim.current.buffer[0] = buf_list[0]
             if len(buf_list) > 1:
@@ -223,7 +233,7 @@ def blog_send_post(pub = "draft"):
         notify = "Blog Edited. %s.   ID=%s" %  ("Published" if publish else "Saved", strid)
 
     sys.stdout.write(notify)
-    vim.command('set nomodified')
+    vim.command('setl nomodified')
 
 @__exception_check
 @__vim_encoding_check
@@ -235,10 +245,9 @@ def blog_new_post(**args):
     else:
         currentContent = vim.current.buffer[:]
 
-    vim.command("set modifiable")
-    vim.command(":bdelete!")
+    blog_wise_open_view()
     vimpress_view = 'edit'
-    vim.command("set syntax=blogsyntax")
+    vim.command("setl syntax=blogsyntax")
 
     meta_dict = dict(\
         strid = "", 
@@ -252,8 +261,8 @@ def blog_new_post(**args):
     blog_fill_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
     vim.current.window.cursor = (1, 0)
-    vim.command('set nomodified')
-    vim.command('set textwidth=0')
+    vim.command('setl nomodified')
+    vim.command('setl textwidth=0')
 
 @__exception_check
 @__vim_encoding_check
@@ -264,9 +273,9 @@ def blog_open_post(post_id):
     vimpress_view = 'edit'
 
     post = handler.getPost(post_id, blog_username, blog_password)
-    vim.command("set modifiable")
-    vim.command(":bdelete!")
-    vim.command("set syntax=blogsyntax")
+
+    blog_wise_open_view()
+    vim.command("setl syntax=blogsyntax")
 
     meta_dict = dict(\
             strid = str(post_id), 
@@ -285,8 +294,8 @@ def blog_open_post(post_id):
     text_start +=1
 
     vim.current.window.cursor = (text_start+1, 0)
-    vim.command('set nomodified')
-    vim.command('set textwidth=0')
+    vim.command('setl nomodified')
+    vim.command('setl textwidth=0')
 
     if vim.eval("mapcheck('<enter>')"):
         vim.command('unmap <enter>')
@@ -295,7 +304,9 @@ def blog_list_edit():
     global vimpress_view
     row = vim.current.window.cursor[0]
     id = vim.current.buffer[row - 1].split()[0]
-    vim.command(":bdelete!")
+    vim.command("setl modifiable")
+    del vim.current.buffer[:]
+    vim.command("setl nomodified")
 
     if vimpress_view == 'page_list':
         vimpress_view = 'page_edit'
@@ -315,17 +326,16 @@ def blog_list_posts(count = "30"):
     global vimpress_view
     vimpress_view = 'list'
 
-    vim.command("set modifiable")
-    vim.command(":bdelete!")
-    vim.command("set syntax=blogsyntax")
+    blog_wise_open_view()
+    vim.command("setl syntax=blogsyntax")
     vim.current.buffer[0] = "\"====== List of Posts in %s =========" % blog_url
 
     vim.current.buffer.append(\
         [(u"%(postid)s\t%(title)s" % p).encode('utf8') for p in allposts]
         )
 
-    vim.command('set nomodified')
-    vim.command("set nomodifiable")
+    vim.command('setl nomodified')
+    vim.command("setl nomodifiable")
     vim.current.window.cursor = (2, 0)
     vim.command('map <buffer> <enter> :py blog_list_edit()<cr>')
 
@@ -481,7 +491,7 @@ def markdown_newpost():
     mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
     html_list = markdown.markdown(mkd_text).encode('utf-8').split('\n')
 
-    vim.command(":bdelete!")
+    blog_wise_open_view()
     vim.current.buffer[0] = html_list[0]
     if len(html_list) > 1:
         vim.current.buffer.append(html_list[1:])
@@ -497,17 +507,16 @@ def blog_list_pages():
     global vimpress_view
     vimpress_view = 'page_list'
 
-    vim.command("set modifiable")
-    vim.command(":bdelete!")
-    vim.command("set syntax=blogsyntax")
+    blog_wise_open_view()
+    vim.command("setl syntax=blogsyntax")
     vim.current.buffer[0] = "\"====== List of Pages in %s =========" % blog_url
 
     vim.current.buffer.append(\
         [(u"%(page_id)s\t%(page_title)s" % p).encode('utf8') for p in pages]
         )
 
-    vim.command('set nomodified')
-    vim.command("set nomodifiable")
+    vim.command('setl nomodified')
+    vim.command("setl nomodifiable")
     vim.current.window.cursor = (2, 0)
 
     vim.command('map <buffer> <enter> :py blog_list_edit()<cr>')
@@ -521,9 +530,9 @@ def blog_open_page(page_id):
     vimpress_view = 'page_edit'
 
     page = wpapi.getPage('', page_id, blog_username, blog_password)
-    vim.command("set modifiable")
-    vim.command(":bdelete!")
-    vim.command("set syntax=blogsyntax")
+
+    blog_wise_open_view()
+    vim.command("setl syntax=blogsyntax")
 
     meta_dict = dict(\
             strid = str(page_id), 
@@ -540,8 +549,8 @@ def blog_open_page(page_id):
     text_start +=1
 
     vim.current.window.cursor = (text_start+1, 0)
-    vim.command('set nomodified')
-    vim.command('set textwidth=0')
+    vim.command('setl nomodified')
+    vim.command('setl textwidth=0')
 
     if vim.eval("mapcheck('<enter>')"):
         vim.command('unmap <enter>')
@@ -581,7 +590,7 @@ def blog_send_page(pub = "draft"):
         notify = "Blog Page Edited. %s.   ID=%s" %  ("Published" if publish else "Saved", strid)
 
     sys.stdout.write(notify)
-    vim.command('set nomodified')
+    vim.command('setl nomodified')
 
 @__exception_check
 @__vim_encoding_check
@@ -593,10 +602,9 @@ def blog_new_page(**args):
     else:
         currentContent = vim.current.buffer[:]
 
-    vim.command("set modifiable")
-    vim.command(":bdelete!")
+    blog_wise_open_view()
     vimpress_view = 'page_edit'
-    vim.command("set syntax=blogsyntax")
+    vim.command("setl syntax=blogsyntax")
 
     meta_dict = dict(\
         strid = "", 
@@ -608,8 +616,8 @@ def blog_new_page(**args):
     blog_fill_page_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
     vim.current.window.cursor = (1, 0)
-    vim.command('set nomodified')
-    vim.command('set textwidth=0')
+    vim.command('setl nomodified')
+    vim.command('setl textwidth=0')
 
 def blog_fill_page_meta_area(meta_dict):
     meta_text = \
@@ -621,6 +629,17 @@ def blog_fill_page_meta_area(meta_dict):
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
     vim.current.buffer.append(meta[1:])
+
+def blog_wise_open_view():
+    '''Wisely decide whether to wipe out the content of current buffer 
+    or to open a new splited window.
+    '''
+    if vim.current.buffer.name is None and vim.eval('&modified')=='0':
+        vim.command('setl modifiable')
+        del vim.current.buffer[:]
+        vim.command('setl nomodified')
+    else:
+        vim.command(":new")
 
 if __name__ == "__main__":
     try:
