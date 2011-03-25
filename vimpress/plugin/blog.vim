@@ -143,12 +143,15 @@ def __vim_encoding_check(func):
     def __check(*args, **kw):
         orig_enc = vim.eval("&encoding") 
         if orig_enc != "utf-8":
+            modified = vim.eval("&modified")
             buf_list = '\n'.join(vim.current.buffer).decode(orig_enc).encode('utf-8').split('\n')
-            blog_wise_open_view()
-            vim.command("set encoding=utf-8")
+            del vim.current.buffer[:]
+            vim.command("setl encoding=utf-8")
             vim.current.buffer[0] = buf_list[0]
             if len(buf_list) > 1:
                 vim.current.buffer.append(buf_list[1:])
+            if modified == '0':
+                vim.command('setl nomodified')
         return func(*args, **kw)
     return __check
 
@@ -202,6 +205,8 @@ def blog_new_post(**args):
 
     if vimpress_view == "list":
         currentContent = ['']
+        if vim.eval("mapcheck('<enter>')"):
+            vim.command('unmap <buffer> <enter>')
     else:
         currentContent = vim.current.buffer[:]
 
@@ -258,7 +263,7 @@ def blog_open_post(post_id):
     vim.command('setl textwidth=0')
 
     if vim.eval("mapcheck('<enter>')"):
-        vim.command('unmap <enter>')
+        vim.command('unmap <buffer> <enter>')
 
 def blog_list_edit():
     global vimpress_view
@@ -442,12 +447,6 @@ def markdown_newpost():
     except IndexError:
         pass
 
-    cur_file = vim.eval('expand("%:p")')
-    if cur_file is None: 
-        cur_file = os.path.join(vimpress_temp_dir, "tmp_vimpress.mkd")
-        sys.stdout.write("\n\nCurrent buffer saved to %s\n\n" % cur_file)
-    vim.command(":w! %s" % cur_file)
-
     mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
     html_list = markdown.markdown(mkd_text).encode('utf-8').split('\n')
 
@@ -455,6 +454,7 @@ def markdown_newpost():
     vim.current.buffer[0] = html_list[0]
     if len(html_list) > 1:
         vim.current.buffer.append(html_list[1:])
+    vim.command('setl nomodified')
     blog_new_post(title = title)
 
 @__exception_check
@@ -513,7 +513,7 @@ def blog_open_page(page_id):
     vim.command('setl textwidth=0')
 
     if vim.eval("mapcheck('<enter>')"):
-        vim.command('unmap <enter>')
+        vim.command('unmap <buffer> <enter>')
 
 @__exception_check
 @__vim_encoding_check
@@ -559,6 +559,8 @@ def blog_new_page(**args):
 
     if vimpress_view == "list":
         currentContent = ['']
+        if vim.eval("mapcheck('<enter>')"):
+            vim.command('unmap <buffer> <enter>')
     else:
         currentContent = vim.current.buffer[:]
 
