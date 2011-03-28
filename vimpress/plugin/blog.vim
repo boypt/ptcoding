@@ -372,8 +372,8 @@ def blog_update_config(wp_config):
         blog_username = wp_config['username']
         blog_password = wp_config['password']
         blog_url = wp_config['blog_url']
-        handler = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).metaWeblog
-        wpapi = xmlrpclib.ServerProxy("%sxmlrpc.php" % blog_url).wp
+        handler = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).metaWeblog
+        wpapi = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).wp
     except vim.error:
         raise VimPressException("No Wordpress confire for Vimpress.")
     except KeyError, e:
