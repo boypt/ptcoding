@@ -63,10 +63,10 @@ Vimpress Commands:
 < Append a section of a <pre> element, which could be hilighted by wp-syntax plugin. When give a code type, will fillin the element for syntax.
 >
  :MarkdownPreview
-< Preview text in current buffer as markdown, call markdown program in your system to convert, then open a browser windows for the html. File encoding is defaultly set to utf-8.
+< Preview text in current buffer as markdown, call markdown program in your system to convert, then open a browser windows for the html. 
 >
  :MarkdownNewPost
-< Convert a markdown written post into html and drop to the new post view.(like :BlogNew command.)
+< Convert a markdown written post into html and drop to the new post view.(like :BlogNew command.) A title (in the first 10 lines) begins with '#' (syntax of header in markdown) will be copy to fill as post title.
 >
  :BlogPageList
  :BlogPageOpen
@@ -78,11 +78,11 @@ Vimpress Commands:
 
  2011 Mar. 24 [by Lenin Lee]
                Fix: use setl instead of set to set option value;
-               Add: Smart detect current buffer, if not None, open a split
-               buffer to avoid conflic with other plugin.
+               Add: Detect current buffer content before switch to vimpress                 views, open a split buffer to avoid conflic.
                Add: Commands to manage wordpress pages.
+
                [by Preston]
-               Add: Charset converting for non-utf8 environment.(Win)
+               Add: Auto charset convert for non-utf8 environment.(Win)
                Add: Use python markdown module. Both markdown and markdown2
                are supported.
 
