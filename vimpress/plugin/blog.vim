@@ -605,7 +605,11 @@ def blog_wise_open_view():
 
 if __name__ == "__main__":
     try:
+        if vim.eval('exists("VIMPRESS")') != '1':
+            raise VimPressException()
         wp = vim.eval("VIMPRESS")[0]
+    except VimPressException:
+        pass
     except IndexError:
         sys.stderr.write("Vimpress default configure index error. Check your .vimrc and review :help vimpress ")
     else:    
