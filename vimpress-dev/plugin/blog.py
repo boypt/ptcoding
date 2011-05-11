@@ -24,7 +24,7 @@ marker = dict(bg = "\"=========== Meta ============", line_bg = 0,
 
 default_format = "MarkDown"
 
-post_meta = dict()
+post_meta = dict(post_begin = 0, mkd_name = "")
 
 class VimPressException(Exception):
     pass
@@ -60,6 +60,8 @@ def blog_meta_parse():
 
     marker["line_ed"] = end
 
+    post_meta["post_begin"] = end + 1
+
     return meta
 
 def blog_meta_area_update(**kw):
@@ -80,6 +82,8 @@ def blog_meta_area_update(**kw):
         end += 1
 
     marker["line_ed"] = end
+
+    post_meta["post_begin"] = end + 1
 
 def blog_get_cats():
     if mw_api is None:
@@ -104,19 +108,18 @@ def blog_fill_meta_area(meta_dict):
     vim.current.buffer[0] = meta[0]
     vim.current.buffer.append(meta[1:])
 
-def blog_get_mkd_attachment(post_id):
-    post = mw_api.getPost(post_id, blog_username, blog_password)["description"]
+def blog_get_mkd_attachment(post):
     try:
         i = post.rindex("<!-- [VIMPRESS_TAG]")
         url = re.sub(r'<!-- \[VIMPRESS_TAG\](.+) -->', r"\1", post[i:])
         mkd_rawtext = urllib2.urlopen(url).read()
-        mkd_name = os.path.basename(url)
-
+        #post_meta["mkd_name"] = os.path.basename(url)
     except ValueError:
-        raise
-        #??
+        return dict()
+    except IOError:
+        raise VimPressException("Found but fail to get markdown text.")
 
-    return dict(mkd_rawtext = mkd_rawtext, mkd_name = mkd_name)
+    return dict(mkd_rawtext = mkd_rawtext, mkd_url = url)
 
 def blog_upload_markdown_attachment(post_id, mkd_rawtext):
     bits = xmlrpclib.Binary(mkd_rawtext)
@@ -124,9 +127,9 @@ def blog_upload_markdown_attachment(post_id, mkd_rawtext):
         time = datetime.datetime.now()
         name = "vimpress%d%d%d%d%d%dmkd.txt" % (time.year, time.month, time.day, time.hour, time.minute, time.second)
     else:
-        name = "testtest.txt" #??
+        name = post_meta["mkd_name"]
 
-    sys.stdout.write("Markdown File Uploading ...")
+    sys.stdout.write("Markdown File Uploading ...\n")
     result = mw_api.newMediaObject(1, blog_username, blog_password, 
                 dict(name = name, type = "text/plain", bits = bits, overwrite = 'true'))
 
@@ -179,18 +182,21 @@ def blog_send_post(pub = "draft"):
         raise VimPressException(":BlogSave draft|publish")
 
     meta = blog_meta_parse()
-    rawtext = '\n'.join(vim.current.buffer[marker["line_ed"] + 1:])
+
+    rawtext = '\n'.join(vim.current.buffer[post_meta["post_begin"]:])
 
 #========= ----
 
     if meta["editformat"].strip().lower() == "markdown":
         text = markdown.markdown(rawtext).encode('utf-8')
-        text += "\n<!-- [VIMPRESS_TAG]%s -->" % result["url"]
+        mkd_info = blog_upload_markdown_attachment(meta["strid"], text)
+        text += mkd_info
     else:
         text = rawtext
 
     post = dict(title = meta["title"], description = text,
-            categories = meta["cats"].split(','), mt_keywords = meta["tags"],
+            categories = meta["cats"].split(','), 
+            mt_keywords = meta["tags"],
             wp_slug = meta["slug"])
 
     strid = meta["strid"] 
@@ -246,8 +252,11 @@ def blog_open_post(post_id):
 
     post = mw_api.getPost(post_id, blog_username, blog_password)
 
+
+
     blog_wise_open_view()
     vim.command("setl syntax=blogsyntax")
+
 
     meta_dict = dict(\
             strid = str(post_id), 
@@ -257,15 +266,18 @@ def blog_open_post(post_id):
             tags = (post["mt_keywords"]).encode("utf-8"))
 
     blog_fill_meta_area(meta_dict)
-    content = (post["description"]).encode("utf-8")
-    vim.current.buffer.append(content.split('\n'))
-    text_start = 0
 
-    while not vim.current.buffer[text_start].startswith(marker["ed"]):
-        text_start +=1
-    text_start +=1
+    blog_meta_parse()
 
-    vim.current.window.cursor = (text_start+1, 0)
+    attach = blog_get_mkd_attachment(post)
+    if "mkd_url" in attach:
+        post_meta["mkd_name"] = os.path.basename(attach["mkd_url"])
+        vim.current.buffer.append(attach["mkd_text"].split("\n"))
+    else:
+        content = (post["description"]).encode("utf-8")
+        vim.current.buffer.append(content.split('\n'))
+
+    vim.current.window.cursor = (post_meta["post_begin"], 0)
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 
