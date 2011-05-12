@@ -49,26 +49,25 @@ if !has("python")
     finish
 endif
 
-function! CompletionSave(ArgLead, CmdLine, CursorPos)
+function! CompSave(ArgLead, CmdLine, CursorPos)
   return "publish\ndraft\n"
 endfunction
 
-function! CompletionPreview(ArgLead, CmdLine, CursorPos)
+function! CompPrev(ArgLead, CmdLine, CursorPos)
   return "local\npublish\ndraft\n"
 endfunction
 
-command! -nargs=0 BlogNew exec('py blog_new_post()')
-command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<f-args>)')
-command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
+function! CompEditType(ArgLead, CmdLine, CursorPos)
+  return "post\npage\n"
+endfunction
+
+command! -nargs=1 -complete=custom,CompEditType BlogNew exec('py blog_new_post(<f-args>)')
+command! -nargs=? -complete=custom,CompEditType BlogList exec('py blog_list_posts(<f-args>)')
+command! -nargs=? -complete=custom,CompSave BlogSave exec('py blog_send_post(<f-args>)')
+command! -nargs=1 -complete=custom,CompEditType BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
-command! -nargs=? -complete=custom,CompletionPreview BlogPreview exec('py blog_preview(<f-args>)')
+command! -nargs=? -complete=custom,CompPrev BlogPreview exec('py blog_preview(<f-args>)')
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
-
-command! -nargs=0 BlogPageList exec('py blog_list_pages()')
-command! -nargs=1 BlogPageOpen exec('py blog_open_page(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogPageSave exec('py blog_send_page(<f-args>)')
-command! -nargs=0 BlogPageNew exec('py blog_new_page()')
 
 python execfile("/home/boypt/.vim/plugin/blog.py")
