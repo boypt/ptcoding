@@ -7,7 +7,10 @@ except ImportError:
     try:
         import markdown2 as markdown
     except ImportError:
-        markdown = None
+        class fake_markdown(object):
+            def markdown(self, n):
+                raise VimPressException("Your Python didn't have markdown support. Refer :help vimpress for help.")
+        markdown = fake_markdown()
 
 image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
 blog_username = None
@@ -21,9 +24,10 @@ mw_api = None
 wp_api = None
 marker = ("\"=========== Meta ============", "\"========== Content ==========")
 
-default_format = "MarkDown"
+default_meta = dict(strid = "", title = "", slug = "", 
+        cats = "", tags = "", editformat = "Markdown", edittype = "Post")
 
-post_meta = dict(post_begin = 0, mkd_name = "")
+post_meta = dict(mkd_name = "")
 
 class VimPressException(Exception):
     pass
@@ -55,8 +59,7 @@ def blog_meta_parse():
             meta[k.strip().lower()] = v.strip().lower()
         end += 1
 
-    post_meta["post_begin"] = end + 1
-
+    meta["post_begin"] = end + 1
     return meta
 
 def blog_meta_area_update(**kw):
@@ -74,8 +77,6 @@ def blog_meta_area_update(**kw):
                 vim.current.buffer[end] = new_line
         end += 1
 
-    post_meta["post_begin"] = end + 1
-
 def blog_get_cats():
     if mw_api is None:
         raise VimPressException("Please at lease add a blog config in your .vimrc .")
@@ -83,8 +84,10 @@ def blog_get_cats():
     return ", ".join([i["description"].encode("utf-8") for i in l])
 
 def blog_fill_meta_area(meta_dict):
-    if "editformat" not in meta_dict:
-        meta_dict["editformat"] = default_format
+    for k in default_meta.keys():
+        if k not in meta_dict:
+            meta_dict[k] = default_meta[k]
+
     meta_dict.update(dict(bg = marker[0], ed = marker[1]))
     meta_text = \
 """%(bg)s
@@ -93,6 +96,7 @@ def blog_fill_meta_area(meta_dict):
 "Slug  : %(slug)s
 "Cats  : %(cats)s
 "Tags  : %(tags)s
+"EditType   : %(edittype)s
 "EditFormat : %(editformat)s
 %(ed)s""" % meta_dict
     meta = meta_text.split('\n')
@@ -102,9 +106,8 @@ def blog_fill_meta_area(meta_dict):
 def blog_get_mkd_attachment(post):
     try:
         i = post.rindex("<!-- [VIMPRESS_TAG]")
-        url = re.sub(r'<!-- \[VIMPRESS_TAG\](.+) -->', r"\1", post[i:])
+        url = re.sub(r'<!-- \[VIMPRESS_TAG\](\S+) -->', r"\1", post[i:])
         mkd_rawtext = urllib2.urlopen(url).read()
-        #post_meta["mkd_name"] = os.path.basename(url)
     except ValueError:
         return dict()
     except IOError:
@@ -114,10 +117,9 @@ def blog_get_mkd_attachment(post):
 
 def blog_upload_markdown_attachment(post_id, mkd_rawtext):
     bits = xmlrpclib.Binary(mkd_rawtext)
-    if post_id == '':
+    if post_id == '' or post_meta["mkd_name"] == '':
         time = datetime.datetime.now()
         name = "vimpress%d%d%d%d%d%dmkd.txt" % (time.year, time.month, time.day, time.hour, time.minute, time.second)
-        post_meta["mkd_name"] = name
     else:
         name = post_meta["mkd_name"]
     sys.stdout.write("Markdown File Uploading ... %s \n" % name)
@@ -173,10 +175,7 @@ def blog_send_post(pub = "draft"):
         raise VimPressException(":BlogSave draft|publish")
 
     meta = blog_meta_parse()
-
-    rawtext = '\n'.join(vim.current.buffer[post_meta["post_begin"]:])
-
-#========= ----
+    rawtext = '\n'.join(vim.current.buffer[meta["post_begin"]:])
 
     if meta["editformat"].strip().lower() == "markdown":
         text = markdown.markdown(rawtext).encode('utf-8')
@@ -194,6 +193,7 @@ def blog_send_post(pub = "draft"):
     if strid == '':
         strid = mw_api.newPost('', blog_username, blog_password, post, publish)
         blog_meta_area_update(strid = strid)
+        meta["strid"] = strid
         notify = "Blog %s.   ID=%s" % ("Published" if publish else "Saved as draft", strid)
     else:
         mw_api.editPost(strid, blog_username, blog_password, post, publish)
@@ -202,9 +202,11 @@ def blog_send_post(pub = "draft"):
     sys.stdout.write(notify)
     vim.command('setl nomodified')
 
+    return meta
+
 @__exception_check
 @__vim_encoding_check
-def blog_new_post(**args):
+def blog_new_post():
     global vimpress_view
 
     if vimpress_view == "list":
@@ -218,14 +220,7 @@ def blog_new_post(**args):
     vimpress_view = 'edit'
     vim.command("setl syntax=blogsyntax")
 
-    meta_dict = dict(\
-        strid = "", 
-        title = "", 
-        slug = "", 
-        cats = blog_get_cats(), 
-        tags = "")
-
-    meta_dict.update(args)
+    meta_dict = dict(cats = blog_get_cats())
 
     blog_fill_meta_area(meta_dict)
     vim.current.buffer.append(currentContent)
@@ -242,7 +237,6 @@ def blog_open_post(post_id):
     vimpress_view = 'edit'
 
     post = mw_api.getPost(post_id, blog_username, blog_password)
-
     blog_wise_open_view()
     vim.command("setl syntax=blogsyntax")
 
@@ -253,20 +247,20 @@ def blog_open_post(post_id):
             cats = ",".join(post["categories"]).encode("utf-8"), 
             tags = (post["mt_keywords"]).encode("utf-8"))
 
-    attach = blog_get_mkd_attachment(post["description"].encode('utf-8'))
+    post_content = (post["description"]).encode("utf-8")
+    attach = blog_get_mkd_attachment(post_content)
     if "mkd_url" in attach:
         post_meta["mkd_name"] = os.path.basename(attach["mkd_url"])
-        meta_dict['editformat'] = "MarkDown"
+        meta_dict['editformat'] = "Markdown"
         content = attach["mkd_rawtext"]
     else:
         meta_dict['editformat'] = "HTML"
-        content = (post["description"]).encode("utf-8")
+        content = post_content
 
     blog_fill_meta_area(meta_dict)
-    blog_meta_parse()
+    meta = blog_meta_parse()
     vim.current.buffer.append(content.split('\n'))
-
-    vim.current.window.cursor = (post_meta["post_begin"], 0)
+    vim.current.window.cursor = (meta["post_begin"], 0)
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 
@@ -360,17 +354,23 @@ def blog_append_code(code_type = ""):
 
 @__exception_check
 @__vim_encoding_check
-def blog_preview(pub = "draft"):
+def blog_preview(pub = "local"):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
-    blog_send_post(pub)
-    strid = get_meta("StrID")
-    if strid == "":
-        raise VimPressException("Save Post before Preview :BlogSave")
-    url = "%s?p=%s&preview=true" % (blog_url, strid)
-    webbrowser.open(url)
-    if pub == "draft":
-        sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
+    meta = blog_meta_parse()
+    rawtext = '\n'.join(vim.current.buffer[meta["post_begin"]:])
+
+    if pub == "local":
+        if meta["editformat"].strip().lower() == "markdown":
+            html = markdown.markdown(rawtext).encode('utf-8')
+            html_preview(html)
+        else:
+            html_preview(rawtext)
+    elif pub == "publish" or pub == "draft":
+        meta = blog_send_post(pub)
+        webbrowser.open("%s?p=%s&preview=true" % (blog_url, meta["strid"]))
+        if pub == "draft":
+            sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
 
 
 @__exception_check
@@ -403,18 +403,12 @@ def blog_config_switch():
         blog_list_posts()
     sys.stdout.write("Vimpress switched to %s" % blog_url)
 
-
-@__exception_check
-@__vim_encoding_check
-def markdown_preview():
-    if markdown is None:
-        raise VimPressException("python-markdown module not installed.")
-
+def html_preview(text_html):
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
     temp_htm = os.path.join(vimpress_temp_dir, "vimpress_temp.htm")
-    html_templeate = \
+    html = \
 """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
@@ -424,46 +418,10 @@ def markdown_preview():
 %s
 </body>
 </html>
-"""
-    mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
-    html = html_templeate % markdown.markdown(mkd_text).encode('utf-8')
-    f_htm = open(temp_htm, 'w')
-    f_htm.write(html)
-    f_htm.close()
-    
+""" % text_html
+    with open(temp_htm, 'w') as f:
+        f.write(html)
     webbrowser.open("file://%s" % temp_htm)
-
-@__exception_check
-@__vim_encoding_check
-def markdown_newpost():
-    if markdown is None:
-        raise VimPressException("python-markdown module not installed.")
-
-    global vimpress_temp_dir
-    if vimpress_temp_dir == '':
-        vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
-    temp_htm = os.path.join(vimpress_temp_dir, "vimpress_post.htm")
-
-    title = ""
-    title_s = 0
-    try:
-        while title_s < 10:
-            if vim.current.buffer[title_s].startswith("#"):
-                title = vim.current.buffer[title_s].strip('#')
-                break
-            title_s += 1
-    except IndexError:
-        pass
-
-    mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
-    html_list = markdown.markdown(mkd_text).encode('utf-8').split('\n')
-
-    blog_wise_open_view()
-    vim.current.buffer[0] = html_list[0]
-    if len(html_list) > 1:
-        vim.current.buffer.append(html_list[1:])
-    vim.command('setl nomodified')
-    blog_new_post(title = title)
 
 @__exception_check
 @__vim_encoding_check
@@ -510,9 +468,9 @@ def blog_open_page(page_id):
     blog_fill_page_meta_area(meta_dict)
     content = (page["description"]).encode("utf-8")
     vim.current.buffer.append(content.split('\n'))
-    text_start = 0
 
-    vim.current.window.cursor = (post_meta["post_begin"], 0)
+    meta = blog_meta_parse()
+    vim.current.window.cursor = (meta["post_begin"], 0)
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 

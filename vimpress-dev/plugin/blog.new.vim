@@ -53,16 +53,19 @@ function! CompletionSave(ArgLead, CmdLine, CursorPos)
   return "publish\ndraft\n"
 endfunction
 
+function! CompletionPreview(ArgLead, CmdLine, CursorPos)
+  return "local\npublish\ndraft\n"
+endfunction
+
 command! -nargs=0 BlogNew exec('py blog_new_post()')
 command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<f-args>)')
 command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_preview(<f-args>)')
+command! -nargs=? -complete=custom,CompletionPreview BlogPreview exec('py blog_preview(<f-args>)')
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
-command! -nargs=0 MarkDownPreview exec('py markdown_preview()')
-command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
+
 command! -nargs=0 BlogPageList exec('py blog_list_pages()')
 command! -nargs=1 BlogPageOpen exec('py blog_open_page(<f-args>)')
 command! -nargs=? -complete=custom,CompletionSave BlogPageSave exec('py blog_send_page(<f-args>)')
