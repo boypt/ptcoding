@@ -61,8 +61,8 @@ function! CompEditType(ArgLead, CmdLine, CursorPos)
   return "post\npage\n"
 endfunction
 
-command! -nargs=1 -complete=custom,CompEditType BlogNew exec('py blog_new_post(<f-args>)')
-command! -nargs=? -complete=custom,CompEditType BlogList exec('py blog_list_posts(<f-args>)')
+command! -nargs=? -complete=custom,CompEditType BlogNew exec('py blog_new_post(<f-args>)')
+command! -nargs=* -complete=custom,CompEditType BlogList exec('py blog_list_posts(<f-args>)')
 command! -nargs=? -complete=custom,CompSave BlogSave exec('py blog_send_post(<f-args>)')
 command! -nargs=1 -complete=custom,CompEditType BlogOpen exec('py blog_open_post(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
