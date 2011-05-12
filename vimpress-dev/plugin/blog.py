@@ -19,8 +19,7 @@ vimpress_temp_dir = ''
 
 mw_api = None
 wp_api = None
-marker = dict(bg = "\"=========== Meta ============", line_bg = 0,
-                        ed = "\"========== Content ==========", line_ed = 0)
+marker = ("\"=========== Meta ============", "\"========== Content ==========")
 
 default_format = "MarkDown"
 
@@ -45,20 +44,16 @@ def get_meta(what):
 def blog_meta_parse():
     meta = dict()
     start = 0
-    while not vim.current.buffer[start].startswith(marker["bg"]):
+    while not vim.current.buffer[start].startswith(marker[0]):
         start +=1
 
-    marker["line_bg"] = start
-
     end = start + 1
-    while not vim.current.buffer[end].startswith(marker["ed"]):
+    while not vim.current.buffer[end].startswith(marker[1]):
         if vim.current.buffer[end].startswith('"'):
             line = vim.current.buffer[end][1:].strip().split(":")
             k, v = line[0].strip().lower(), ':'.join(line[1:])
             meta[k.strip().lower()] = v.strip().lower()
         end += 1
-
-    marker["line_ed"] = end
 
     post_meta["post_begin"] = end + 1
 
@@ -66,13 +61,11 @@ def blog_meta_parse():
 
 def blog_meta_area_update(**kw):
     start = 0
-    while not vim.current.buffer[start].startswith(marker["bg"]):
+    while not vim.current.buffer[start].startswith(marker[0]):
         start +=1
 
-    marker["line_bg"] = start
-
     end = start + 1
-    while not vim.current.buffer[end].startswith(marker["ed"]):
+    while not vim.current.buffer[end].startswith(marker[1]):
         if vim.current.buffer[end].startswith('"'):
             line = vim.current.buffer[end][1:].strip().split(":")
             k, v = line[0].strip().lower(), ':'.join(line[1:])
@@ -80,8 +73,6 @@ def blog_meta_area_update(**kw):
                 new_line = "\"%s: %s" % (line[0], kw[k])
                 vim.current.buffer[end] = new_line
         end += 1
-
-    marker["line_ed"] = end
 
     post_meta["post_begin"] = end + 1
 
@@ -92,9 +83,9 @@ def blog_get_cats():
     return ", ".join([i["description"].encode("utf-8") for i in l])
 
 def blog_fill_meta_area(meta_dict):
-    if "format" not in meta_dict:
-        meta_dict["format"] = default_format
-    meta_dict.update(marker) 
+    if "editformat" not in meta_dict:
+        meta_dict["editformat"] = default_format
+    meta_dict.update(dict(bg = marker[0], ed = marker[1]))
     meta_text = \
 """%(bg)s
 "StrID : %(strid)s
@@ -102,7 +93,7 @@ def blog_fill_meta_area(meta_dict):
 "Slug  : %(slug)s
 "Cats  : %(cats)s
 "Tags  : %(tags)s
-"EditFormat : %(format)s
+"EditFormat : %(editformat)s
 %(ed)s""" % meta_dict
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
@@ -126,14 +117,14 @@ def blog_upload_markdown_attachment(post_id, mkd_rawtext):
     if post_id == '':
         time = datetime.datetime.now()
         name = "vimpress%d%d%d%d%d%dmkd.txt" % (time.year, time.month, time.day, time.hour, time.minute, time.second)
+        post_meta["mkd_name"] = name
     else:
         name = post_meta["mkd_name"]
-
-    sys.stdout.write("Markdown File Uploading ...\n")
+    sys.stdout.write("Markdown File Uploading ... %s \n" % name)
     result = mw_api.newMediaObject(1, blog_username, blog_password, 
-                dict(name = name, type = "text/plain", bits = bits, overwrite = 'true'))
-
-    return "\n<!-- [VIMPRESS_TAG]%s -->" % result["url"]
+                dict(name = name, type = "text/plain", bits = bits, overwrite = True))
+    post_meta["mkd_name"] = result["file"]
+    return result
 
 def __exception_check(func):
     def __check(*args, **kwargs):
@@ -189,8 +180,8 @@ def blog_send_post(pub = "draft"):
 
     if meta["editformat"].strip().lower() == "markdown":
         text = markdown.markdown(rawtext).encode('utf-8')
-        mkd_info = blog_upload_markdown_attachment(meta["strid"], text)
-        text += mkd_info
+        upload = blog_upload_markdown_attachment(meta["strid"], rawtext)
+        text += "\n<!-- [VIMPRESS_TAG]%s -->" % upload["url"]
     else:
         text = rawtext
 
@@ -252,11 +243,8 @@ def blog_open_post(post_id):
 
     post = mw_api.getPost(post_id, blog_username, blog_password)
 
-
-
     blog_wise_open_view()
     vim.command("setl syntax=blogsyntax")
-
 
     meta_dict = dict(\
             strid = str(post_id), 
@@ -265,17 +253,18 @@ def blog_open_post(post_id):
             cats = ",".join(post["categories"]).encode("utf-8"), 
             tags = (post["mt_keywords"]).encode("utf-8"))
 
-    blog_fill_meta_area(meta_dict)
-
-    blog_meta_parse()
-
-    attach = blog_get_mkd_attachment(post)
+    attach = blog_get_mkd_attachment(post["description"].encode('utf-8'))
     if "mkd_url" in attach:
         post_meta["mkd_name"] = os.path.basename(attach["mkd_url"])
-        vim.current.buffer.append(attach["mkd_text"].split("\n"))
+        meta_dict['editformat'] = "MarkDown"
+        content = attach["mkd_rawtext"]
     else:
+        meta_dict['editformat'] = "HTML"
         content = (post["description"]).encode("utf-8")
-        vim.current.buffer.append(content.split('\n'))
+
+    blog_fill_meta_area(meta_dict)
+    blog_meta_parse()
+    vim.current.buffer.append(content.split('\n'))
 
     vim.current.window.cursor = (post_meta["post_begin"], 0)
     vim.command('setl nomodified')
@@ -523,11 +512,7 @@ def blog_open_page(page_id):
     vim.current.buffer.append(content.split('\n'))
     text_start = 0
 
-    while not vim.current.buffer[text_start].startswith(marker["ed"]):
-        text_start +=1
-    text_start +=1
-
-    vim.current.window.cursor = (text_start+1, 0)
+    vim.current.window.cursor = (post_meta["post_begin"], 0)
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 
@@ -601,13 +586,13 @@ def blog_new_page(**args):
     vim.command('setl textwidth=0')
 
 def blog_fill_page_meta_area(meta_dict):
-    meta_dict.update(marker) 
+    meta_dict.update(dict(bg = marker[0], ed = marker[1]))
     meta_text = \
 """%(bg)s
 "StrID : %(strid)s
 "Title : %(title)s
 "Slug  : %(slug)s
-%(en)s""" % meta_dict
+%(ed)s""" % meta_dict
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
     vim.current.buffer.append(meta[1:])
