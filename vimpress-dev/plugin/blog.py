@@ -24,10 +24,10 @@ mw_api = None
 wp_api = None
 marker = ("=========== Meta ============", "=============================", "========== Content ==========")
 
-default_meta = dict(strid = "", title = "", slug = "", 
-        cats = "", tags = "", editformat = "Markdown", edittype = "Post")
+tag_string = "<!-- [VIMPRESS_TAG] %(url)s %(file)s -->"
 
-post_meta = dict(mkd_name = "")
+default_meta = dict(strid = "", title = "", slug = "", 
+        cats = "", tags = "", editformat = "Markdown", edittype = "post", textattach = '')
 
 class VimPressException(Exception):
     pass
@@ -82,7 +82,7 @@ def blog_fill_meta_area(meta, edit_type):
             meta[k] = default_meta[k]
 
     meta.update(dict(bg = marker[0], mid = marker[1], ed = marker[2]), edittype = edit_type)
-    post_meta_text = \
+    template = dict(post = \
 """"%(bg)s
 "StrID : %(strid)s
 "Title : %(title)s
@@ -92,9 +92,9 @@ def blog_fill_meta_area(meta, edit_type):
 "%(mid)s
 "EditType   : %(edittype)s
 "EditFormat : %(editformat)s
-"%(ed)s""" % meta
-
-    page_meta_text = \
+"TextAttach : %(textattach)s
+"%(ed)s""", 
+        page = \
 """"%(bg)s
 "StrID : %(strid)s
 "Title : %(title)s
@@ -102,16 +102,12 @@ def blog_fill_meta_area(meta, edit_type):
 "%(mid)s
 "EditType   : %(edittype)s
 "EditFormat : %(editformat)s
-"%(ed)s""" % meta
+"TextAttach : %(textattach)s
+"%(ed)s""") 
 
     if edit_type.lower() not in ("post", "page"):
         raise VimPressException("Fail to work with edit type %s " % edit_type)
-
-    if edit_type.lower() == "post":
-        meta_text = post_meta_text
-    elif edit_type.lower() == "page":
-        meta_text = page_meta_text
-
+    meta_text = template[edit_type.lower()] % meta
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
     vim.current.buffer.append(meta[1:])
@@ -120,28 +116,40 @@ def blog_get_mkd_attachment(post):
     """
     Find the vimpress tag in the post content. And parse for the attachment url, then return a dict with attached markdown file content and its url.
     """
+
+    # Calculate postistions to avoid writing ugly magic numbers
+    markers = (tag_string % dict(url = '', file = '')).split()
+    lead = ' '.join(markers[:2])
+    tail = markers[-1]
     try:
-        i = post.rindex("<!-- [VIMPRESS_TAG]")
-        url = re.sub(r'<!-- \[VIMPRESS_TAG\](\S+) -->', r"\1", post[i:])
+        start = post.rindex(lead)
+        end = post[start:].index(tail)
+        data = post[start + len(lead): start + end].strip()
+        url, name = data.split(' ')
         mkd_rawtext = urllib2.urlopen(url).read()
-    except ValueError:
+    except ValueError, e:
         return dict()
     except IOError:
         raise VimPressFailedGetMkd("Attachment url found but fail to get markdown text.")
 
-    return dict(mkd_rawtext = mkd_rawtext, mkd_url = url)
+    return dict(mkd_rawtext = mkd_rawtext, mkd_url = url, mkd_name = name)
 
-def blog_upload_markdown_attachment(post_id, mkd_rawtext):
+def blog_upload_markdown_attachment(post_id, attach_name, mkd_rawtext):
     bits = xmlrpclib.Binary(mkd_rawtext)
-    if post_id == '' or post_meta["mkd_name"] == '':
-        name = "vimpress_%s_mkd.txt" % hex(int(time.time()))[2:]
+
+    # New Post, new file
+    if post_id == '' or attach_name == '':
+        attach_name = "vimpress_%s_mkd.txt" % hex(int(time.time()))[2:]
+        overwrite = False
     else:
-        name = post_meta["mkd_name"]
+        overwrite = True
+
     sys.stdout.write("Markdown File Uploading ... ")
     result = mw_api.newMediaObject(1, blog_username, blog_password, 
-                dict(name = name, type = "text/plain", bits = bits, overwrite = True))
+                dict(name = attach_name, 
+                    type = "text/plain", bits = bits, 
+                    overwrite = overwrite))
     sys.stdout.write("%s\n" % result["file"])
-    post_meta["mkd_name"] = result["file"]
     return result
 
 def __exception_check(func):
@@ -191,55 +199,63 @@ def blog_send_post(pub = "draft"):
     if pub not in ("publish", "draft"):
         raise VimPressException(":BlogSave draft|publish")
 
-    publish = (pub == "publish")
+    is_publish = (pub == "publish")
 
     meta = blog_meta_parse()
     rawtext = '\n'.join(vim.current.buffer[meta["post_begin"]:])
 
+    #Translate markdown and upload as attachment if text written in it.
     if meta["editformat"].strip().lower() == "markdown":
-        text = markdown.markdown(rawtext).encode('utf-8')
-        upload = blog_upload_markdown_attachment(meta["strid"], rawtext)
-        text += "\n<!-- [VIMPRESS_TAG]%s -->" % upload["url"]
+        attach = blog_upload_markdown_attachment(
+                meta["strid"], meta["textattach"], rawtext)
+        blog_meta_area_update(textattach = attach["file"])
+        text = markdown.markdown(rawtext.decode('utf-8')).encode('utf-8')
+
+        # Add tag string at the last of the post.
+        text += tag_string % attach
     else:
         text = rawtext
 
     edit_type = meta["edittype"]
-    if edit_type.lower() not in ("post", "page"):
-        raise VimPressException("Fail to work with edit type %s " % edit_type)
-
     strid = meta["strid"] 
-    if edit_type == "post":
-        post_struct = dict(title = meta["title"], description = text,
-                        categories = meta["cats"].split(','), 
-                        mt_keywords = meta["tags"], wp_slug = meta["slug"])
-    elif edit_type == "page":
-        post_struct = dict(title = meta["title"], wp_slug = meta["slug"], 
-                        description = text)
 
+    if edit_type.lower() not in ("post", "page"):
+        raise VimPressException(
+                "Fail to work with edit type %s " % edit_type)
+
+    post_struct = dict(title = meta["title"], wp_slug = meta["slug"], 
+                    description = text)
+    if edit_type == "post":
+        post_struct.update(categories = meta["cats"].split(','), 
+                        mt_keywords = meta["tags"])
+
+    # New posts
     if strid == '':
         if edit_type == "post":
             strid = mw_api.newPost('', blog_username, blog_password, 
-                    post_struct, publish)
+                    post_struct, is_publish)
         elif edit_type == "page":
             strid = wp_api.newPage('', blog_username, blog_password, 
-                    post_struct, publish)
+                    post_struct, is_publish)
 
         blog_meta_area_update(strid = strid)
         meta["strid"] = strid
 
         notify = "%s %s.   ID=%s" % \
                 (edit_type.capitalize(), 
-                        "Published" if publish else "Saved as draft", strid)
+                        "Published" if is_publish else "Saved as draft", strid)
+
+    # Old posts
     else:
         if edit_type == "post":
             mw_api.editPost(strid, blog_username, blog_password, 
-                    post_struct, publish)
+                    post_struct, is_publish)
         elif edit_type == "page":
             wp_api.editPage('', strid, blog_username, blog_password, 
-                    post_struct, publish)
+                    post_struct, is_publish)
 
         notify = "%s Edited. %s.   ID=%s" % \
-                (edit_type.capitalize(), "Published" if publish else "Saved", strid)
+                (edit_type.capitalize(), "Published" if is_publish else "Saved", strid)
 
     sys.stdout.write(notify)
     vim.command('setl nomodified')
@@ -310,17 +326,16 @@ def blog_open_post(edit_type, post_id):
                 slug = page["wp_slug"].encode("utf-8"))
         content = (page["description"]).encode("utf-8")
 
+    meta_dict['editformat'] = "HTML"
+
     try:
         attach = blog_get_mkd_attachment(content)
-        if "mkd_url" in attach:
-            post_meta["mkd_name"] = os.path.basename(attach["mkd_url"])
+        if "mkd_name" in attach:
             meta_dict['editformat'] = "Markdown"
+            meta_dict['textattach'] = attach["mkd_name"]
             content = attach["mkd_rawtext"]
-        else:
-            meta_dict['editformat'] = "HTML"
     except VimPressFailedGetMkd:
-        meta_dict['editformat'] = "HTML"
-        content = post_content
+        pass
 
     blog_fill_meta_area(meta_dict, edit_type)
     meta = blog_meta_parse()
@@ -435,7 +450,7 @@ def blog_preview(pub = "local"):
 
     if pub == "local":
         if meta["editformat"].strip().lower() == "markdown":
-            html = markdown.markdown(rawtext).encode('utf-8')
+            html = markdown.markdown(rawtext.decode('utf-8')).encode('utf-8')
             html_preview(html)
         else:
             html_preview(rawtext)
