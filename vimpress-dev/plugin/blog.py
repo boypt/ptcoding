@@ -295,9 +295,7 @@ def blog_new_post(edit_type = "post"):
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 
-@__exception_check
-@__vim_encoding_check
-@__xmlrpc_api_check
+
 def blog_open_post(edit_type, post_id):
     global vimpress_view
     vimpress_view = 'edit'
@@ -463,6 +461,41 @@ def blog_preview(pub = "local"):
         webbrowser.open(prev_url)
         if pub == "draft":
             sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
+
+
+@__exception_check
+def blog_guess_open(what):
+    post_id = ''
+    if type(what) is str:
+        if what.startswith(blog_url):
+            guess_id = re.search(r"\S+?p=(\d+)$", what)
+
+            # permantlinks, try get full link from headers
+            if guess_id is None:
+                headers = urllib.urlopen(what).headers.headers
+                for link in headers:
+                    if link.startswith("Link:"):
+                        full_link = re.sub(r"Link: <(\S+)>.+\n", r"\1", link)
+                        post_id = re.sub(r"\S+?p=(\d+)$", r"\1", full_link)
+
+                # fail, just give up
+                if post_id == '':
+                    raise VimPressException("Failed to get post id from url: %s " % what)
+
+            # full link with ID (http://blog.url/?p=ID)
+            else:
+                post_id = guess_id.group(1)
+
+        else:
+            try:
+                post_id = str(int(what))
+            except ValueError:
+                pass
+
+    if post_id != '':
+        blog_open_post("post", post_id)
+    else:
+        raise VimPressException("Failed to get post id from url: %s " % what)
 
 
 @__exception_check
