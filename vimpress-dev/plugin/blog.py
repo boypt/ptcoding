@@ -49,7 +49,7 @@ def blog_meta_parse():
         if not vim.current.buffer[end].startswith('"===='):
             line = vim.current.buffer[end][1:].strip().split(":")
             k, v = line[0].strip().lower(), ':'.join(line[1:])
-            meta[k.strip().lower()] = v.strip().lower()
+            meta[k.strip().lower()] = v.strip()
         end += 1
 
     meta["post_begin"] = end + 1
@@ -270,7 +270,7 @@ def blog_new_post(edit_type = "post"):
     if edit_type.lower() not in ("post", "page"):
         raise VimPressException("Fail to work with edit type %s " % edit_type)
 
-    if vimpress_view == "list":
+    if vimpress_view.startswith("list"):
         currentContent = ['']
         if vim.eval("mapcheck('<enter>')"):
             vim.command('unmap <buffer> <enter>')
@@ -491,7 +491,7 @@ def blog_config_switch():
         wp = vim.eval("VIMPRESS")[blog_conf_index]
 
     blog_update_config(wp)
-    if vimpress_view == 'list':
+    if vimpress_view.startswith('list'):
         blog_list_posts()
     sys.stdout.write("Vimpress switched to %s" % blog_url)
 
