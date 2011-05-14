@@ -193,7 +193,7 @@ def __xmlrpc_api_check(func):
 @__exception_check
 @__vim_encoding_check
 @__xmlrpc_api_check
-def blog_send_post(pub = "draft"):
+def blog_send_post(pub = "publish"):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
     if pub not in ("publish", "draft"):
@@ -465,22 +465,30 @@ def blog_preview(pub = "local"):
 
 @__exception_check
 def blog_guess_open(what):
+    """ Try for some methods to get the post id from anything user inputs as args, url, postid etc.  """ 
     post_id = ''
     if type(what) is str:
         if what.startswith(blog_url):
             guess_id = re.search(r"\S+?p=(\d+)$", what)
 
-            # permantlinks, try get full link from headers
+            # permantlinks
             if guess_id is None:
-                headers = urllib.urlopen(what).headers.headers
-                for link in headers:
-                    if link.startswith("Link:"):
-                        full_link = re.sub(r"Link: <(\S+)>.+\n", r"\1", link)
-                        post_id = re.sub(r"\S+?p=(\d+)$", r"\1", full_link)
 
-                # fail, just give up
-                if post_id == '':
-                    raise VimPressException("Failed to get post id from url: %s " % what)
+                # try again for /archives/%post_id%
+                guess_id = re.search(r"\S+/archives/(\d+)", what)
+
+                # fail,  try get full link from headers
+                if guess_id is None:
+                    headers = urllib.urlopen(what).headers.headers
+                    for link in headers:
+                        if link.startswith("Link:"):
+                            post_id = re.sub(r"Link: <\S+?p=(\d+)>.+\n", r"\1", link)
+
+                    # fail, just give up
+                    if post_id == '':
+                        raise VimPressException("Failed to get post id from: %s " % what)
+                else:
+                    post_id = guess_id.group(1)
 
             # full link with ID (http://blog.url/?p=ID)
             else:
@@ -495,7 +503,7 @@ def blog_guess_open(what):
     if post_id != '':
         blog_open_post("post", post_id)
     else:
-        raise VimPressException("Failed to get post id from url: %s " % what)
+        raise VimPressException("Failed to get post id from: %s " % what)
 
 
 @__exception_check
