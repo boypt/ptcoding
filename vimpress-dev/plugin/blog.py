@@ -24,7 +24,8 @@ mw_api = None
 wp_api = None
 marker = ("=========== Meta ============", "=============================", "========== Content ==========")
 
-tag_string = "<!-- [VIMPRESS_TAG] %(url)s %(file)s -->"
+tag_string = "<!-- #VIMPRESS_TAG# %(url)s %(file)s -->"
+tag_re = re.compile(tag_string % dict(url = '(?P<mkd_url>\S+)', file = '(?P<mkd_name>\S+)'))
 
 default_meta = dict(strid = "", title = "", slug = "", 
         cats = "", tags = "", editformat = "Markdown", edittype = "post", textattach = '')
@@ -117,22 +118,21 @@ def blog_get_mkd_attachment(post):
     Find the vimpress tag in the post content. And parse for the attachment url, then return a dict with attached markdown file content and its url.
     """
 
-    # Calculate postistions to avoid writing ugly magic numbers
-    markers = (tag_string % dict(url = '', file = '')).split()
-    lead = ' '.join(markers[:2])
-    tail = markers[-1]
+    attach = dict()
     try:
-        start = post.rindex(lead)
-        end = post[start:].index(tail)
-        data = post[start + len(lead): start + end].strip()
-        url, name = data.split(' ')
-        mkd_rawtext = urllib2.urlopen(url).read()
+        lead = post.rindex("<!-- ")
+        data = re.match(tag_re, post[lead:])
+        if data is None:
+            raise ValueError()
+        attach.update(data.groupdict())
+        mkd_rawtext = urllib2.urlopen(attach["mkd_url"]).read()
+        attach["mkd_rawtext"] = mkd_rawtext
     except ValueError, e:
         return dict()
     except IOError:
         raise VimPressFailedGetMkd("Attachment url found but fail to get markdown text.")
 
-    return dict(mkd_rawtext = mkd_rawtext, mkd_url = url, mkd_name = name)
+    return attach
 
 def blog_upload_markdown_attachment(post_id, attach_name, mkd_rawtext):
     bits = xmlrpclib.Binary(mkd_rawtext)
