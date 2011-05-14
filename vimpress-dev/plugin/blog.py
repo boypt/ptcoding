@@ -12,7 +12,7 @@ except ImportError:
                 raise VimPressException("Your Python didn't have markdown support. Refer :help vimpress for help.")
         markdown = fake_markdown()
 
-image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
+image_template = '<a href="%(url)s"><img title="%(file)s" alt="%(file)s" src="%(url)s" class="aligncenter" width="100%%" /></a>'
 blog_username = None
 blog_password = None
 blog_url = None
@@ -121,12 +121,11 @@ def blog_get_mkd_attachment(post):
     attach = dict()
     try:
         lead = post.rindex("<!-- ")
-        data = re.match(tag_re, post[lead:])
+        data = re.search(tag_re, post[lead:])
         if data is None:
             raise ValueError()
         attach.update(data.groupdict())
-        mkd_rawtext = urllib2.urlopen(attach["mkd_url"]).read()
-        attach["mkd_rawtext"] = mkd_rawtext
+        attach["mkd_rawtext"] = urllib2.urlopen(attach["mkd_url"]).read()
     except ValueError, e:
         return dict()
     except IOError:
@@ -204,7 +203,7 @@ def blog_send_post(pub = "publish"):
     meta = blog_meta_parse()
     rawtext = '\n'.join(vim.current.buffer[meta["post_begin"]:])
 
-    #Translate markdown and upload as attachment if text written in it.
+    #Translate markdown and upload as attachment 
     if meta["editformat"].strip().lower() == "markdown":
         attach = blog_upload_markdown_attachment(
                 meta["strid"], meta["textattach"], rawtext)
@@ -516,7 +515,7 @@ def blog_update_config(wp_config):
         mw_api = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).metaWeblog
         wp_api = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).wp
     except vim.error:
-        raise VimPressException("No Wordpress confire for Vimpress.")
+        raise VimPressException("No Wordpress configured for Vimpress.")
     except KeyError, e:
         raise VimPressException("Configure Error: %s" % e)
 
@@ -560,7 +559,9 @@ def blog_wise_open_view():
     '''Wisely decide whether to wipe out the content of current buffer 
     or to open a new splited window.
     '''
-    if vim.current.buffer.name is None and vim.eval('&modified')=='0':
+    if vim.current.buffer.name is None and \
+            (vim.eval('&modified') == '0' or \
+                len(vim.current.buffer) == 1):
         vim.command('setl modifiable')
         del vim.current.buffer[:]
         vim.command('setl nomodified')
