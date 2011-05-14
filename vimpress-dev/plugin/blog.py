@@ -448,9 +448,9 @@ def blog_preview(pub = "local"):
     if pub == "local":
         if meta["editformat"].strip().lower() == "markdown":
             html = markdown.markdown(rawtext.decode('utf-8')).encode('utf-8')
-            html_preview(html)
+            html_preview(html, meta)
         else:
-            html_preview(rawtext)
+            html_preview(rawtext, meta)
     elif pub == "publish" or pub == "draft":
         meta = blog_send_post(pub)
         if meta["edittype"] == "page":
@@ -535,25 +535,34 @@ def blog_config_switch():
         blog_list_posts()
     sys.stdout.write("Vimpress switched to %s" % blog_url)
 
-def html_preview(text_html):
+def html_preview(text_html, meta):
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
-    temp_htm = os.path.join(vimpress_temp_dir, "vimpress_temp.html")
+    
     html = \
-"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Vimpress Local Preview: %(title)s</title>
+<style type="text/css">
+ul, li { margin: 1em; }
+:link,:visited { text-decoration:none }
+h1,h2,h3,h4,h5,h6,pre,code { font-size:1em; }
+a img,:link img,:visited img { border:none }
+address { font-style:normal }
+body { margin:0 auto; width:770px; font-family: Helvetica, Arial, Sans-serif; font-size:12px; color:#444; }
+</style>
+</meta>
 </head>
-<body>
-%s
+<body> 
+%(content)s 
 </body>
 </html>
-""" % text_html
-    with open(temp_htm, 'w') as f:
+""" % dict(content = text_html, title = meta["title"])
+    with open(os.path.join(vimpress_temp_dir, "vimpress_temp.html"), 'w') as f:
         f.write(html)
-    webbrowser.open("file://%s" % temp_htm)
+    webbrowser.open("file://%s" % f.name)
 
 def blog_wise_open_view():
     '''Wisely decide whether to wipe out the content of current buffer 
