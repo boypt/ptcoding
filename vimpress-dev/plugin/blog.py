@@ -74,7 +74,7 @@ def blog_meta_area_update(**kw):
                 vim.current.buffer[end] = new_line
         end += 1
 
-def blog_fill_meta_area(meta, edit_type):
+def blog_fill_meta_area(meta):
     """
     Fill in a meta data section in current buffer, with a meta dict, and edit_type in "post" and "page"
     """
@@ -82,8 +82,9 @@ def blog_fill_meta_area(meta, edit_type):
         if k not in meta:
             meta[k] = default_meta[k]
 
-    meta.update(dict(bg = marker[0], mid = marker[1], ed = marker[2]), edittype = edit_type)
-    template = dict(post = \
+    meta.update(dict(bg = marker[0], mid = marker[1], ed = marker[2]))
+    template = dict( \
+        post = \
 """"%(bg)s
 "StrID : %(strid)s
 "Title : %(title)s
@@ -106,9 +107,9 @@ def blog_fill_meta_area(meta, edit_type):
 "TextAttach : %(textattach)s
 "%(ed)s""") 
 
-    if edit_type.lower() not in ("post", "page"):
-        raise VimPressException("Fail to work with edit type %s " % edit_type)
-    meta_text = template[edit_type.lower()] % meta
+    if meta["edittype"] not in ("post", "page"):
+        raise VimPressException("Fail to work with edit type %(edittype)s " % meta)
+    meta_text = template[meta["edittype"].lower()] % meta
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
     vim.current.buffer.append(meta[1:])
@@ -287,7 +288,8 @@ def blog_new_post(edit_type = "post"):
         meta_dict["cats"] = ", ".join([i["description"].encode("utf-8")
                         for i in cat_info])
 
-    blog_fill_meta_area(meta_dict, edit_type)
+    meta_dict["edittype"] = edit_type
+    blog_fill_meta_area(meta_dict)
 
     vim.current.buffer.append(currentContent)
     vim.current.window.cursor = (1, 0)
@@ -306,35 +308,33 @@ def blog_open_post(edit_type, post_id):
         raise VimPressException("Fail to work with edit type %s " % edit_type)
 
     if edit_type.lower() == "post":
-        post = mw_api.getPost(post_id, blog_username, blog_password)
-        meta_dict = dict(\
-                strid = str(post_id), 
-                title = post["title"].encode("utf-8"), 
-                slug = post["wp_slug"].encode("utf-8"), 
-                cats = ",".join(post["categories"]).encode("utf-8"), 
-                tags = (post["mt_keywords"]).encode("utf-8"))
-        content = (post["description"]).encode("utf-8")
+        data = mw_api.getPost(post_id, blog_username, blog_password)
+    else: 
+        data = wp_api.getPage('', post_id, blog_username, blog_password)
 
-    elif edit_type.lower() == "page":
-        page = wp_api.getPage('', post_id, blog_username, blog_password)
-        meta_dict = dict(\
-                strid = str(post_id), 
-                title = page["title"].encode("utf-8"), 
-                slug = page["wp_slug"].encode("utf-8"))
-        content = (page["description"]).encode("utf-8")
+    meta_dict = dict(\
+            strid = str(post_id), 
+            title = data["title"].encode("utf-8"), 
+            slug = data["wp_slug"].encode("utf-8"))
+    content = data["description"].encode("utf-8")
+
+    if edit_type.lower() == "post":
+        meta_dict["cats"] = ",".join(data["categories"]).encode("utf-8") 
+        meta_dict["tags"] = data["mt_keywords"].encode("utf-8")
 
     meta_dict['editformat'] = "HTML"
+    meta_dict['edittype'] = edit_type
 
     try:
         attach = blog_get_mkd_attachment(content)
-        if "mkd_name" in attach:
+        if "mkd_rawtext" in attach:
             meta_dict['editformat'] = "Markdown"
             meta_dict['textattach'] = attach["mkd_name"]
             content = attach["mkd_rawtext"]
     except VimPressFailedGetMkd:
         pass
 
-    blog_fill_meta_area(meta_dict, edit_type)
+    blog_fill_meta_area(meta_dict)
     meta = blog_meta_parse()
     vim.current.buffer.append(content.split('\n'))
     vim.current.window.cursor = (meta["post_begin"], 0)
