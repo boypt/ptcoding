@@ -18,7 +18,7 @@
 "               Pigeond <http://pigeond.net/blog/>
 "               Preston M.[BOYPT] <pentie@gmail.com>
 "               Justin Sattery <justin.slattery@fzysqr.com>
-"               Lenin Lee <>
+"               Lenin Lee <http://sinolog.it/>
 "
 " URL:		http://www.friggeri.net/projets/vimblog/
 "           http://pigeond.net/blog/2009/05/07/vimpress-again/
@@ -30,7 +30,7 @@
 "    - A mod of a mod of a mod of Vimpress.   
 "    - A vim plugin fot writting your wordpress blog.
 "
-" Version:	1.3.0
+" Version:	2.0.0 beta
 "
 " Configure: Add blog configure into your .vimrc
 "
@@ -49,80 +49,180 @@ if !has("python")
     finish
 endif
 
-function! CompletionSave(ArgLead, CmdLine, CursorPos)
+function! CompSave(ArgLead, CmdLine, CursorPos)
   return "publish\ndraft\n"
 endfunction
 
-command! -nargs=0 BlogNew exec('py blog_new_post()')
-command! -nargs=? BlogList exec('py blog_list_posts(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogSave exec('py blog_send_post(<f-args>)')
-command! -nargs=1 BlogOpen exec('py blog_open_post(<f-args>)')
+function! CompPrev(ArgLead, CmdLine, CursorPos)
+  return "local\npublish\ndraft\n"
+endfunction
+
+function! CompEditType(ArgLead, CmdLine, CursorPos)
+  return "post\npage\n"
+endfunction
+
+command! -nargs=? -complete=custom,CompEditType BlogNew exec('py blog_new_post(<f-args>)')
+command! -nargs=* -complete=custom,CompEditType BlogList exec('py blog_list_posts(<f-args>)')
+command! -nargs=? -complete=custom,CompSave BlogSave exec('py blog_send_post(<f-args>)')
+command! -nargs=1 BlogOpen exec('py blog_guess_open(<f-args>)')
 command! -nargs=1 -complete=file BlogUpload exec('py blog_upload_media(<f-args>)')
 command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogPreview exec('py blog_preview(<f-args>)')
+command! -nargs=? -complete=custom,CompPrev BlogPreview exec('py blog_preview(<f-args>)')
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
-command! -nargs=0 MarkDownPreview exec('py markdown_preview()')
-command! -nargs=0 MarkDownNewPost exec('py markdown_newpost()')
-command! -nargs=0 BlogPageList exec('py blog_list_pages()')
-command! -nargs=1 BlogPageOpen exec('py blog_open_page(<f-args>)')
-command! -nargs=? -complete=custom,CompletionSave BlogPageSave exec('py blog_send_page(<f-args>)')
-command! -nargs=0 BlogPageNew exec('py blog_new_page()')
 
-python <<EOF
+python << EOF
 # -*- coding: utf-8 -*-
-import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser, tempfile
+import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser, tempfile, time
 try:
     import markdown
 except ImportError:
     try:
         import markdown2 as markdown
     except ImportError:
-        markdown = None
+        class fake_markdown(object):
+            def markdown(self, n):
+                raise VimPressException("Your Python didn't have markdown support. Refer :help vimpress for help.")
+        markdown = fake_markdown()
 
-image_template = '<img title="%(file)s" src="%(url)s" class="aligncenter" />'
+image_template = '<a href="%(url)s"><img title="%(file)s" alt="%(file)s" src="%(url)s" class="aligncenter" width="100%%" /></a>'
 blog_username = None
 blog_password = None
 blog_url = None
-handler = None
 blog_conf_index = 0
 vimpress_view = 'edit'
 vimpress_temp_dir = ''
-wpapi = None
+
+mw_api = None
+wp_api = None
+marker = ("=========== Meta ============", "=============================", "========== Content ==========")
+
+tag_string = "<!-- #VIMPRESS_TAG# %(url)s %(file)s -->"
+tag_re = re.compile(tag_string % dict(url = '(?P<mkd_url>\S+)', file = '(?P<mkd_name>\S+)'))
+
+default_meta = dict(strid = "", title = "", slug = "", 
+        cats = "", tags = "", editformat = "Markdown", edittype = "post", textattach = '')
 
 class VimPressException(Exception):
     pass
 
-def get_line(what):
+class VimPressFailedGetMkd(VimPressException):
+    pass
+
+def blog_meta_parse():
+    """
+    parse meta data section in current buffer, return dict.
+    """
+    meta = dict()
     start = 0
-    while not vim.current.buffer[start].startswith('"'+what):
+    while not vim.current.buffer[start][1:].startswith(marker[0]):
         start +=1
-    return start
 
-def get_meta(what): 
-    start = get_line(what)
     end = start + 1
-    while not vim.current.buffer[end][0] == '"':
-        end +=1
-    return ':'.join(" ".join(vim.current.buffer[start:end]).split(":")[1:]).strip()
+    while not vim.current.buffer[end][1:].startswith(marker[2]):
+        if not vim.current.buffer[end].startswith('"===='):
+            line = vim.current.buffer[end][1:].strip().split(":")
+            k, v = line[0].strip().lower(), ':'.join(line[1:])
+            meta[k.strip().lower()] = v.strip()
+        end += 1
 
-def blog_get_cats():
-    if handler is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
-    l = handler.getCategories('', blog_username, blog_password)
-    return ", ".join([i["description"].encode("utf-8") for i in l])
+    meta["post_begin"] = end + 1
+    return meta
 
-def blog_fill_meta_area(meta_dict):
-    meta_text = \
-""""=========== Meta ============
+def blog_meta_area_update(**kw):
+    """
+    update meta data section with args. only keyword args taken.
+    """
+    start = 0
+    while not vim.current.buffer[start][1:].startswith(marker[0]):
+        start +=1
+
+    end = start + 1
+    while not vim.current.buffer[end][1:].startswith(marker[2]):
+        if not vim.current.buffer[end].startswith('"===='):
+            line = vim.current.buffer[end][1:].strip().split(":")
+            k, v = line[0].strip().lower(), ':'.join(line[1:])
+            if k in kw:
+                new_line = "\"%s: %s" % (line[0], kw[k])
+                vim.current.buffer[end] = new_line
+        end += 1
+
+def blog_fill_meta_area(meta):
+    """
+    Fill in a meta data section in current buffer, with a meta dict, and edit_type in "post" and "page"
+    """
+    for k in default_meta.keys():
+        if k not in meta:
+            meta[k] = default_meta[k]
+
+    meta.update(dict(bg = marker[0], mid = marker[1], ed = marker[2]))
+    template = dict( \
+        post = \
+""""%(bg)s
 "StrID : %(strid)s
 "Title : %(title)s
 "Slug  : %(slug)s
 "Cats  : %(cats)s
 "Tags  : %(tags)s
-"========== Content ==========""" % meta_dict
+"%(mid)s
+"EditType   : %(edittype)s
+"EditFormat : %(editformat)s
+"TextAttach : %(textattach)s
+"%(ed)s""", 
+        page = \
+""""%(bg)s
+"StrID : %(strid)s
+"Title : %(title)s
+"Slug  : %(slug)s
+"%(mid)s
+"EditType   : %(edittype)s
+"EditFormat : %(editformat)s
+"TextAttach : %(textattach)s
+"%(ed)s""") 
+
+    if meta["edittype"] not in ("post", "page"):
+        raise VimPressException("Fail to work with edit type %(edittype)s " % meta)
+    meta_text = template[meta["edittype"].lower()] % meta
     meta = meta_text.split('\n')
     vim.current.buffer[0] = meta[0]
     vim.current.buffer.append(meta[1:])
+
+def blog_get_mkd_attachment(post):
+    """
+    Find the vimpress tag in the post content. And parse for the attachment url, then return a dict with attached markdown file content and its url.
+    """
+
+    attach = dict()
+    try:
+        lead = post.rindex("<!-- ")
+        data = re.search(tag_re, post[lead:])
+        if data is None:
+            raise ValueError()
+        attach.update(data.groupdict())
+        attach["mkd_rawtext"] = urllib2.urlopen(attach["mkd_url"]).read()
+    except ValueError, e:
+        return dict()
+    except IOError:
+        raise VimPressFailedGetMkd("Attachment url found but fail to get markdown text.")
+
+    return attach
+
+def blog_upload_markdown_attachment(post_id, attach_name, mkd_rawtext):
+    bits = xmlrpclib.Binary(mkd_rawtext)
+
+    # New Post, new file
+    if post_id == '' or attach_name == '':
+        attach_name = "vimpress_%s_mkd.txt" % hex(int(time.time()))[2:]
+        overwrite = False
+    else:
+        overwrite = True
+
+    sys.stdout.write("Markdown File Uploading ... ")
+    result = mw_api.newMediaObject(1, blog_username, blog_password, 
+                dict(name = attach_name, 
+                    type = "text/plain", bits = bits, 
+                    overwrite = overwrite))
+    sys.stdout.write("%s\n" % result["file"])
+    return result
 
 def __exception_check(func):
     def __check(*args, **kwargs):
@@ -155,55 +255,94 @@ def __vim_encoding_check(func):
         return func(*args, **kw)
     return __check
 
+def __xmlrpc_api_check(func):
+    def __check(*args, **kw):
+        if wp_api is None or mw_api is None:
+            raise VimPressException("Please at lease add a blog config in your .vimrc .")
+        return func(*args, **kw)
+    return __check
+
 @__exception_check
 @__vim_encoding_check
-def blog_send_post(pub = "draft"):
+@__xmlrpc_api_check
+def blog_send_post(pub = "publish"):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
-    if handler is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
-
-    if pub == "publish":
-        publish = True
-    elif pub == "draft":
-        publish = False
-    else:
+    if pub not in ("publish", "draft"):
         raise VimPressException(":BlogSave draft|publish")
-        
-    strid = get_meta("StrID")
-    title = get_meta("Title")
-    slug = get_meta("Slug").replace(" ", "-")
-    cats = [i.strip() for i in get_meta("Cats").split(",")]
-    tags = get_meta("Tags")
-  
-    text_start = 0
-    while not vim.current.buffer[text_start] == "\"========== Content ==========":
-        text_start +=1
-    text = '\n'.join(vim.current.buffer[text_start + 1:])
 
-    post = dict(title = title, description = text,
-            categories = cats, mt_keywords = tags,
-            wp_slug = slug)
+    is_publish = (pub == "publish")
 
-    if strid == '':
-        strid = handler.newPost('', blog_username,
-            blog_password, post, publish)
-        vim.current.buffer[get_line("StrID")] = "\"StrID : %s" % strid
-        notify = "Blog %s.   ID=%s" % ("Published" if publish else "Saved as draft", strid)
+    meta = blog_meta_parse()
+    rawtext = '\n'.join(vim.current.buffer[meta["post_begin"]:])
+
+    #Translate markdown and upload as attachment 
+    if meta["editformat"].strip().lower() == "markdown":
+        attach = blog_upload_markdown_attachment(
+                meta["strid"], meta["textattach"], rawtext)
+        blog_meta_area_update(textattach = attach["file"])
+        text = markdown.markdown(rawtext.decode('utf-8')).encode('utf-8')
+
+        # Add tag string at the last of the post.
+        text += tag_string % attach
     else:
-        handler.editPost(strid, blog_username,
-            blog_password, post, publish)
-        notify = "Blog Edited. %s.   ID=%s" %  ("Published" if publish else "Saved", strid)
+        text = rawtext
+
+    edit_type = meta["edittype"]
+    strid = meta["strid"] 
+
+    if edit_type.lower() not in ("post", "page"):
+        raise VimPressException(
+                "Fail to work with edit type %s " % edit_type)
+
+    post_struct = dict(title = meta["title"], wp_slug = meta["slug"], 
+                    description = text)
+    if edit_type == "post":
+        post_struct.update(categories = meta["cats"].split(','), 
+                        mt_keywords = meta["tags"])
+
+    # New posts
+    if strid == '':
+        if edit_type == "post":
+            strid = mw_api.newPost('', blog_username, blog_password, 
+                    post_struct, is_publish)
+        elif edit_type == "page":
+            strid = wp_api.newPage('', blog_username, blog_password, 
+                    post_struct, is_publish)
+
+        blog_meta_area_update(strid = strid)
+        meta["strid"] = strid
+
+        notify = "%s %s.   ID=%s" % \
+                (edit_type.capitalize(), 
+                        "Published" if is_publish else "Saved as draft", strid)
+
+    # Old posts
+    else:
+        if edit_type == "post":
+            mw_api.editPost(strid, blog_username, blog_password, 
+                    post_struct, is_publish)
+        elif edit_type == "page":
+            wp_api.editPage('', strid, blog_username, blog_password, 
+                    post_struct, is_publish)
+
+        notify = "%s Edited. %s.   ID=%s" % \
+                (edit_type.capitalize(), "Published" if is_publish else "Saved", strid)
 
     sys.stdout.write(notify)
     vim.command('setl nomodified')
 
+    return meta
+
 @__exception_check
 @__vim_encoding_check
-def blog_new_post(**args):
+def blog_new_post(edit_type = "post"):
     global vimpress_view
 
-    if vimpress_view == "list":
+    if edit_type.lower() not in ("post", "page"):
+        raise VimPressException("Fail to work with edit type %s " % edit_type)
+
+    if vimpress_view.startswith("list"):
         currentContent = ['']
         if vim.eval("mapcheck('<enter>')"):
             vim.command('unmap <buffer> <enter>')
@@ -214,51 +353,63 @@ def blog_new_post(**args):
     vimpress_view = 'edit'
     vim.command("setl syntax=blogsyntax")
 
-    meta_dict = dict(\
-        strid = "", 
-        title = "", 
-        slug = "", 
-        cats = blog_get_cats(), 
-        tags = "")
+    meta_dict = dict()
 
-    meta_dict.update(args)
+    if edit_type.lower() == "post":
+        cat_info = mw_api.getCategories('', blog_username, blog_password)
+        meta_dict["cats"] = ", ".join([i["description"].encode("utf-8")
+                        for i in cat_info])
 
+    meta_dict["edittype"] = edit_type
     blog_fill_meta_area(meta_dict)
+
     vim.current.buffer.append(currentContent)
     vim.current.window.cursor = (1, 0)
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 
-@__exception_check
-@__vim_encoding_check
-def blog_open_post(post_id):
-    if handler is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
+
+def blog_open_post(edit_type, post_id):
     global vimpress_view
     vimpress_view = 'edit'
-
-    post = handler.getPost(post_id, blog_username, blog_password)
 
     blog_wise_open_view()
     vim.command("setl syntax=blogsyntax")
 
+    if edit_type.lower() not in ("post", "page"):
+        raise VimPressException("Fail to work with edit type %s " % edit_type)
+
+    if edit_type.lower() == "post":
+        data = mw_api.getPost(post_id, blog_username, blog_password)
+    else: 
+        data = wp_api.getPage('', post_id, blog_username, blog_password)
+
     meta_dict = dict(\
             strid = str(post_id), 
-            title = post["title"].encode("utf-8"), 
-            slug = post["wp_slug"].encode("utf-8"), 
-            cats = ",".join(post["categories"]).encode("utf-8"), 
-            tags = (post["mt_keywords"]).encode("utf-8"))
+            title = data["title"].encode("utf-8"), 
+            slug = data["wp_slug"].encode("utf-8"))
+    content = data["description"].encode("utf-8")
+
+    if edit_type.lower() == "post":
+        meta_dict["cats"] = ",".join(data["categories"]).encode("utf-8") 
+        meta_dict["tags"] = data["mt_keywords"].encode("utf-8")
+
+    meta_dict['editformat'] = "HTML"
+    meta_dict['edittype'] = edit_type
+
+    try:
+        attach = blog_get_mkd_attachment(content)
+        if "mkd_rawtext" in attach:
+            meta_dict['editformat'] = "Markdown"
+            meta_dict['textattach'] = attach["mkd_name"]
+            content = attach["mkd_rawtext"]
+    except VimPressFailedGetMkd:
+        pass
 
     blog_fill_meta_area(meta_dict)
-    content = (post["description"]).encode("utf-8")
+    meta = blog_meta_parse()
     vim.current.buffer.append(content.split('\n'))
-    text_start = 0
-
-    while not vim.current.buffer[text_start] == "\"========== Content ==========":
-        text_start +=1
-    text_start +=1
-
-    vim.current.window.cursor = (text_start+1, 0)
+    vim.current.window.cursor = (meta["post_begin"], 0)
     vim.command('setl nomodified')
     vim.command('setl textwidth=0')
 
@@ -273,31 +424,40 @@ def blog_list_edit():
     del vim.current.buffer[:]
     vim.command("setl nomodified")
 
-    if vimpress_view == 'page_list':
-        vimpress_view = 'page_edit'
-        blog_open_page(int(id))
+    if vimpress_view == 'list_page':
+        edit_type = 'page'
+    elif vimpress_view == 'list_post':
+        edit_type = 'post'
     else:
-        vimpress_view = 'edit'
-        blog_open_post(int(id))
+        raise VimPressException("Don't know what to edit : %s" % vimpress_view)
+
+    blog_open_post(edit_type, int(id))
 
 @__exception_check
 @__vim_encoding_check
-def blog_list_posts(count = "30"):
-    if handler is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
-    allposts = handler.getRecentPosts('',blog_username, 
-            blog_password, int(count))
+@__xmlrpc_api_check
+def blog_list_posts(edit_type = "post", count = "30"):
 
     global vimpress_view
     vimpress_view = 'list'
 
     blog_wise_open_view()
     vim.command("setl syntax=blogsyntax")
-    vim.current.buffer[0] = "\"====== List of Posts in %s =========" % blog_url
+    vim.current.buffer[0] = "\"====== List of %ss in %s =========" % (edit_type.capitalize(), blog_url)
 
-    vim.current.buffer.append(\
-        [(u"%(postid)s\t%(title)s" % p).encode('utf8') for p in allposts]
-        )
+    if edit_type.lower() not in ("post", "page"):
+        raise VimPressException("Fail to work with edit type %s " % edit_type)
+
+    if edit_type.lower() == "post":
+        vimpress_view = 'list_post'
+        allposts = mw_api.getRecentPosts('',blog_username, blog_password, int(count))
+        vim.current.buffer.append(\
+            [(u"%(postid)s\t%(title)s" % p).encode('utf8') for p in allposts])
+    elif edit_type.lower() == "page":
+        vimpress_view = 'list_page'
+        pages = wp_api.getPageList('', blog_username, blog_password)
+        vim.current.buffer.append(\
+            [(u"%(page_id)s\t%(page_title)s" % p).encode('utf8') for p in pages])
 
     vim.command('setl nomodified')
     vim.command("setl nomodifiable")
@@ -306,11 +466,10 @@ def blog_list_posts(count = "30"):
 
 @__exception_check
 @__vim_encoding_check
+@__xmlrpc_api_check
 def blog_upload_media(file_path):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
-    if handler is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
     if not os.path.exists(file_path):
         raise VimPressException("File does not exist: %s" % file_path)
 
@@ -320,7 +479,7 @@ def blog_upload_media(file_path):
     bits = xmlrpclib.Binary(f.read())
     f.close()
 
-    result = handler.newMediaObject(1, blog_username, blog_password, 
+    result = mw_api.newMediaObject(1, blog_username, blog_password, 
             dict(name = name, type = filetype, bits = bits))
 
     ran = vim.current.range
@@ -352,30 +511,83 @@ def blog_append_code(code_type = ""):
 
 @__exception_check
 @__vim_encoding_check
-def blog_preview(pub = "draft"):
+def blog_preview(pub = "local"):
     if vimpress_view != 'edit':
         raise VimPressException("Command not available at list view")
-    blog_send_post(pub)
-    strid = get_meta("StrID")
-    if strid == "":
-        raise VimPressException("Save Post before Preview :BlogSave")
-    url = "%s?p=%s&preview=true" % (blog_url, strid)
-    webbrowser.open(url)
-    if pub == "draft":
-        sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
+    meta = blog_meta_parse()
+    rawtext = '\n'.join(vim.current.buffer[meta["post_begin"]:])
+
+    if pub == "local":
+        if meta["editformat"].strip().lower() == "markdown":
+            html = markdown.markdown(rawtext.decode('utf-8')).encode('utf-8')
+            html_preview(html, meta)
+        else:
+            html_preview(rawtext, meta)
+    elif pub == "publish" or pub == "draft":
+        meta = blog_send_post(pub)
+        if meta["edittype"] == "page":
+            prev_url = "%s?pageid=%s&preview=true" % (blog_url, meta["strid"])
+        else:
+            prev_url = "%s?p=%s&preview=true" % (blog_url, meta["strid"])
+        webbrowser.open(prev_url)
+        if pub == "draft":
+            sys.stdout.write("\nYou have to login in the browser to preview the post when save as draft.")
+
+
+@__exception_check
+def blog_guess_open(what):
+    """ Try for some methods to get the post id from anything user inputs as args, url, postid etc.  """ 
+    post_id = ''
+    if type(what) is str:
+        if what.startswith(blog_url):
+            guess_id = re.search(r"\S+?p=(\d+)$", what)
+
+            # permantlinks
+            if guess_id is None:
+
+                # try again for /archives/%post_id%
+                guess_id = re.search(r"\S+/archives/(\d+)", what)
+
+                # fail,  try get full link from headers
+                if guess_id is None:
+                    headers = urllib.urlopen(what).headers.headers
+                    for link in headers:
+                        if link.startswith("Link:"):
+                            post_id = re.sub(r"Link: <\S+?p=(\d+)>.+\n", r"\1", link)
+
+                    # fail, just give up
+                    if post_id == '':
+                        raise VimPressException("Failed to get post id from: %s " % what)
+                else:
+                    post_id = guess_id.group(1)
+
+            # full link with ID (http://blog.url/?p=ID)
+            else:
+                post_id = guess_id.group(1)
+
+        else:
+            try:
+                post_id = str(int(what))
+            except ValueError:
+                pass
+
+    if post_id != '':
+        blog_open_post("post", post_id)
+    else:
+        raise VimPressException("Failed to get post id from: %s " % what)
 
 
 @__exception_check
 def blog_update_config(wp_config):
-    global blog_username, blog_password, blog_url, handler, wpapi
+    global blog_username, blog_password, blog_url, mw_api, wp_api
     try:
         blog_username = wp_config['username']
         blog_password = wp_config['password']
         blog_url = wp_config['blog_url']
-        handler = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).metaWeblog
-        wpapi = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).wp
+        mw_api = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).metaWeblog
+        wp_api = xmlrpclib.ServerProxy("%s/xmlrpc.php" % blog_url).wp
     except vim.error:
-        raise VimPressException("No Wordpress confire for Vimpress.")
+        raise VimPressException("No Wordpress configured for Vimpress.")
     except KeyError, e:
         raise VimPressException("Configure Error: %s" % e)
 
@@ -391,212 +603,46 @@ def blog_config_switch():
         wp = vim.eval("VIMPRESS")[blog_conf_index]
 
     blog_update_config(wp)
-    if vimpress_view == 'list':
+    if vimpress_view.startswith('list'):
         blog_list_posts()
     sys.stdout.write("Vimpress switched to %s" % blog_url)
 
-
-@__exception_check
-@__vim_encoding_check
-def markdown_preview():
-    if markdown is None:
-        raise VimPressException("python-markdown module not installed.")
-
+def html_preview(text_html, meta):
     global vimpress_temp_dir
     if vimpress_temp_dir == '':
         vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
-    temp_htm = os.path.join(vimpress_temp_dir, "vimpress_temp.htm")
-    html_templeate = \
-"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    html = \
+"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Vimpress Local Preview: %(title)s</title>
+<style type="text/css">
+ul, li { margin: 1em; }
+:link,:visited { text-decoration:none }
+h1,h2,h3,h4,h5,h6,pre,code { font-size:1em; }
+a img,:link img,:visited img { border:none }
+address { font-style:normal }
+body { margin:0 auto; width:770px; font-family: Helvetica, Arial, Sans-serif; font-size:12px; color:#444; }
+</style>
+</meta>
 </head>
-<body>
-%s
+<body> 
+%(content)s 
 </body>
 </html>
-"""
-    mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
-    html = html_templeate % markdown.markdown(mkd_text).encode('utf-8')
-    f_htm = open(temp_htm, 'w')
-    f_htm.write(html)
-    f_htm.close()
-    
-    webbrowser.open("file://%s" % temp_htm)
-
-@__exception_check
-@__vim_encoding_check
-def markdown_newpost():
-    if markdown is None:
-        raise VimPressException("python-markdown module not installed.")
-
-    global vimpress_temp_dir
-    if vimpress_temp_dir == '':
-        vimpress_temp_dir = tempfile.mkdtemp(suffix="vimpress")
-    temp_htm = os.path.join(vimpress_temp_dir, "vimpress_post.htm")
-
-    title = ""
-    title_s = 0
-    try:
-        while title_s < 10:
-            if vim.current.buffer[title_s].startswith("#"):
-                title = vim.current.buffer[title_s].strip('#')
-                break
-            title_s += 1
-    except IndexError:
-        pass
-
-    mkd_text = '\n'.join(vim.current.buffer).decode('utf-8')
-    html_list = markdown.markdown(mkd_text).encode('utf-8').split('\n')
-
-    blog_wise_open_view()
-    vim.current.buffer[0] = html_list[0]
-    if len(html_list) > 1:
-        vim.current.buffer.append(html_list[1:])
-    vim.command('setl nomodified')
-    blog_new_post(title = title)
-
-@__exception_check
-@__vim_encoding_check
-def blog_list_pages():
-    if wpapi is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
-    pages = wpapi.getPageList('', blog_username, blog_password)
-
-    global vimpress_view
-    vimpress_view = 'page_list'
-
-    blog_wise_open_view()
-    vim.command("setl syntax=blogsyntax")
-    vim.current.buffer[0] = "\"====== List of Pages in %s =========" % blog_url
-
-    vim.current.buffer.append(\
-        [(u"%(page_id)s\t%(page_title)s" % p).encode('utf8') for p in pages]
-        )
-
-    vim.command('setl nomodified')
-    vim.command("setl nomodifiable")
-    vim.current.window.cursor = (2, 0)
-
-    vim.command('map <buffer> <enter> :py blog_list_edit()<cr>')
-
-@__exception_check
-@__vim_encoding_check
-def blog_open_page(page_id):
-    if wpapi is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
-    global vimpress_view
-    vimpress_view = 'page_edit'
-
-    page = wpapi.getPage('', page_id, blog_username, blog_password)
-
-    blog_wise_open_view()
-    vim.command("setl syntax=blogsyntax")
-
-    meta_dict = dict(\
-            strid = str(page_id), 
-            title = page["title"].encode("utf-8"), 
-            slug = page["wp_slug"].encode("utf-8"))
-
-    blog_fill_page_meta_area(meta_dict)
-    content = (page["description"]).encode("utf-8")
-    vim.current.buffer.append(content.split('\n'))
-    text_start = 0
-
-    while not vim.current.buffer[text_start] == "\"========== Content ==========":
-        text_start +=1
-    text_start +=1
-
-    vim.current.window.cursor = (text_start+1, 0)
-    vim.command('setl nomodified')
-    vim.command('setl textwidth=0')
-
-    if vim.eval("mapcheck('<enter>')"):
-        vim.command('unmap <buffer> <enter>')
-
-@__exception_check
-@__vim_encoding_check
-def blog_send_page(pub = "draft"):
-    if vimpress_view != 'page_edit':
-        raise VimPressException("Command is only available at page-edit view.")
-    if wpapi is None:
-        raise VimPressException("Please at lease add a blog config in your .vimrc .")
-
-    if pub == "publish":
-        publish = True
-    elif pub == "draft":
-        publish = False
-    else:
-        raise VimPressException(":BlogSavePage draft|publish")
-        
-    strid = get_meta("StrID")
-    title = get_meta("Title")
-    slug = get_meta("Slug").replace(" ", "-")
-  
-    text_start = 0
-    while not vim.current.buffer[text_start] == "\"========== Content ==========":
-        text_start +=1
-    text = '\n'.join(vim.current.buffer[text_start + 1:])
-
-    page = dict(title = title, description = text, wp_slug = slug)
-
-    if strid == '':
-        strid = wpapi.newPage('', blog_username, blog_password, page, publish)
-        vim.current.buffer[get_line("StrID")] = "\"StrID : %s" % strid
-        notify = "Blog Page %s.   ID=%s" % ("Published" if publish else "Saved as draft", strid)
-    else:
-        wpapi.editPage('', strid, blog_username, blog_password, page, publish)
-        notify = "Blog Page Edited. %s.   ID=%s" %  ("Published" if publish else "Saved", strid)
-
-    sys.stdout.write(notify)
-    vim.command('setl nomodified')
-
-@__exception_check
-@__vim_encoding_check
-def blog_new_page(**args):
-    global vimpress_view
-
-    if vimpress_view == "list":
-        currentContent = ['']
-        if vim.eval("mapcheck('<enter>')"):
-            vim.command('unmap <buffer> <enter>')
-    else:
-        currentContent = vim.current.buffer[:]
-
-    blog_wise_open_view()
-    vimpress_view = 'page_edit'
-    vim.command("setl syntax=blogsyntax")
-
-    meta_dict = dict(\
-        strid = "", 
-        title = "", 
-        slug = "") 
-
-    meta_dict.update(args)
-
-    blog_fill_page_meta_area(meta_dict)
-    vim.current.buffer.append(currentContent)
-    vim.current.window.cursor = (1, 0)
-    vim.command('setl nomodified')
-    vim.command('setl textwidth=0')
-
-def blog_fill_page_meta_area(meta_dict):
-    meta_text = \
-""""=========== Meta ============
-"StrID : %(strid)s
-"Title : %(title)s
-"Slug  : %(slug)s
-"========== Content ==========""" % meta_dict
-    meta = meta_text.split('\n')
-    vim.current.buffer[0] = meta[0]
-    vim.current.buffer.append(meta[1:])
+""" % dict(content = text_html, title = meta["title"])
+    with open(os.path.join(vimpress_temp_dir, "vimpress_temp.html"), 'w') as f:
+        f.write(html)
+    webbrowser.open("file://%s" % f.name)
 
 def blog_wise_open_view():
     '''Wisely decide whether to wipe out the content of current buffer 
     or to open a new splited window.
     '''
-    if vim.current.buffer.name is None and vim.eval('&modified')=='0':
+    if vim.current.buffer.name is None and \
+            (vim.eval('&modified') == '0' or \
+                len(vim.current.buffer) == 1):
         vim.command('setl modifiable')
         del vim.current.buffer[:]
         vim.command('setl nomodified')
