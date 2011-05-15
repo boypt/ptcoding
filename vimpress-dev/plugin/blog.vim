@@ -70,6 +70,7 @@ command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
 command! -nargs=? -complete=custom,CompPrev BlogPreview exec('py blog_preview(<f-args>)')
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
 
+python << EOF
 # -*- coding: utf-8 -*-
 import urllib , urllib2 , vim , xml.dom.minidom , xmlrpclib , sys , string , re, os, mimetypes, webbrowser, tempfile, time
 try:
