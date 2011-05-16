@@ -70,4 +70,4 @@ command! -nargs=? BlogCode exec('py blog_append_code(<f-args>)')
 command! -nargs=? -complete=custom,CompPrev BlogPreview exec('py blog_preview(<f-args>)')
 command! -nargs=0 BlogSwitch exec('py blog_config_switch()')
 
-python execfile("/home/boypt/.vim/plugin/blog.py")
+python import os; execfile(os.path.expanduser('~/.vim/plugin/blog.py'))
