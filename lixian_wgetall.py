@@ -5,22 +5,23 @@ import subprocess
 import logging
 
 LOG_FILE = "/tmp/lixian_wgetall.log"
+log = None
 
-def log_init(log_file):
+def log_init(log_file, quiet = False):
     logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
     hdlr = logging.FileHandler(log_file)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
-    hdlr = logging.StreamHandler()
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-    logger.setLevel(logging.DEBUG)
+    if not quiet:
+        hdlr = logging.StreamHandler()
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr)
     return logger
 
-log = log_init(LOG_FILE)
 
-def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False):
+def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False, quiet = False):
 
     urls = []
 
@@ -44,6 +45,8 @@ def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False):
             continue
         url = url.replace("&amp;", "&")
         cmd = ["wget", "--load-cookies", cookies_file, "-c", "-t", "5", "-O", os.path.join(output_dir, name), url]
+        if quiet:
+            cmd.insert(1, "-q")
         log.info("wget cmd: '%s'" % ' '.join(cmd))
         ret = subprocess.call(cmd)
         if ret != 0:
@@ -64,14 +67,18 @@ if __name__ == "__main__":
     import sys
 
     help_info = """Usage:
--p  page file 
--c  cookie file
--o  output dir
+-p  page file.
+-c  cookie file.
+-o  output dir.
+
+-b  bt files only.
+-q  quiet, only log to file.
 """
 
     bt_url = False
+    quiet = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'p:c:o:b')
+        opts, args = getopt.getopt(sys.argv[1:], 'p:c:o:bq')
 
         only_bturls = False
 
@@ -84,12 +91,17 @@ if __name__ == "__main__":
                 output_dir = os.path.expanduser(val)
             elif op == "-b":
                 only_bturls = True
+            elif op == "-q":
+                quiet =  True
 
+        log = log_init(LOG_FILE, quiet = quiet)
         with open(page_file) as f:
             page_html = f.read()
-            wget_all_lixian(page_html, cookies_file, output_dir, only_bturls)
+        wget_all_lixian(page_html, cookies_file, 
+                output_dir, only_bturls, quiet)
 
-    except (getopt.GetoptError, NameError):
+    except (getopt.GetoptError, NameError), e:
+        print e
         print help_info
 
 
