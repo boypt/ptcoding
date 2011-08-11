@@ -51,11 +51,11 @@ def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False, quiet =
         ret = subprocess.call(cmd)
         if ret != 0:
             log.debug("wget returned %d." % ret)
-            if ret == 8:
-                log.info("Give up %s, may be already finished download." % name)
+            if ret in (3, 8):
+                log.error("Give up '%s', may be already finished download, or something wrong with disk." % name)
             else:
                 urls.append((name, url))
-                log.debug("will retry for %s later." % name)
+                log.error("will retry for %s later." % name)
             continue
         else:
             log.info("Finished %s" % name)
@@ -75,12 +75,10 @@ if __name__ == "__main__":
 -q  quiet, only log to file.
 """
 
-    bt_url = False
+    only_bturls = False
     quiet = False
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'p:c:o:bq')
-
-        only_bturls = False
 
         for op, val in opts:
             if op == "-p":
