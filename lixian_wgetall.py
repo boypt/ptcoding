@@ -2,9 +2,11 @@ import re
 import os
 import time
 import subprocess
+from subprocess import PIPE
 import logging
 
 LOG_FILE = "/tmp/lixian_wgetall.log"
+COOKIE_FILE = "/tmp/lixian_cookie.txt"
 log = None
 
 def log_init(log_file, quiet = False):
@@ -75,8 +77,12 @@ if __name__ == "__main__":
 -q  quiet, only log to file.
 """
 
+    page_file = None
+    cookies_file = None
+    output_dir = None
     only_bturls = False
     quiet = False
+
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'p:c:o:bq')
 
@@ -93,9 +99,34 @@ if __name__ == "__main__":
                 quiet =  True
 
         log = log_init(LOG_FILE, quiet = quiet)
-        with open(page_file) as f:
-            page_html = f.read()
-        wget_all_lixian(page_html, cookies_file, 
+
+        if page_file is None:
+            p = subprocess.Popen(["zenity", "--entry", "--title=Paste your Lixian HTML"], 
+                    stdout=PIPE, stderr=PIPE)
+            stdo, stdi = p.communicate()
+            page_html = stdo
+        else:
+            with open(page_file) as f:
+                page_html = f.read()
+
+        if not os.path.exists(COOKIE_FILE):
+            if cookies_file is None:
+                p = subprocess.Popen(["zenity", "--entry", "--title=Paste your Cookies"], 
+                        stdout=PIPE, stderr=PIPE)
+                stdo, stdi = p.communicate()
+                with open(COOKIE_FILE, 'w') as f:
+                    f.write(stdo)
+
+            else:
+                COOKIE_FILE =  cookies_file
+
+        if output_dir is None:
+            p = subprocess.Popen(["zenity", "--file-selection", "--directory", "--save"], 
+                    stdout=PIPE, stderr=PIPE)
+            stdo, stdi = p.communicate()
+            output_dir = stdo.strip()
+
+        wget_all_lixian(page_html, COOKIE_FILE, 
                 output_dir, only_bturls, quiet)
 
     except (getopt.GetoptError, NameError), e:
