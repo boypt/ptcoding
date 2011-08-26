@@ -101,7 +101,7 @@ if __name__ == "__main__":
         log = log_init(LOG_FILE, quiet = quiet)
 
         if page_file is None:
-            p = subprocess.Popen(["zenity", "--entry", "--title=Paste your Lixian HTML"], 
+            p = subprocess.Popen(["zenity", "--entry", "--text=Paste your Lixian HTML"], 
                     stdout=PIPE, stderr=PIPE)
             stdo, stdi = p.communicate()
             page_html = stdo
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
         if not os.path.exists(COOKIE_FILE):
             if cookies_file is None:
-                p = subprocess.Popen(["zenity", "--entry", "--title=Paste your Cookies"], 
+                p = subprocess.Popen(["zenity", "--entry", "--text=Paste your Cookies"], 
                         stdout=PIPE, stderr=PIPE)
                 stdo, stdi = p.communicate()
                 with open(COOKIE_FILE, 'w') as f:
