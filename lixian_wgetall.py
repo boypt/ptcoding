@@ -6,7 +6,7 @@ from subprocess import PIPE
 import logging
 
 LOG_FILE = "/tmp/lixian_wgetall.log"
-COOKIE_FILE = "/tmp/lixian_cookie.txt"
+COOKIE_FILE = os.path.expanduser("~/.lixian_cookie.txt")
 log = None
 
 def log_init(log_file, quiet = False):
@@ -23,7 +23,7 @@ def log_init(log_file, quiet = False):
     return logger
 
 
-def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False, quiet = False):
+def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False, quiet = False, list_callback = None):
 
     urls = []
 
@@ -41,6 +41,10 @@ def wget_all_lixian(html, cookies_file, output_dir, only_bturls = False, quiet =
             urls.append((name, url))
 
     log.info("Filter get %d links" % len(urls))
+
+    if callable(list_callback):
+        list_callback(urls)
+
     for name, url in urls:
         if len(url) == 0:
             log.debug("Empty Link, Name: " + name)
@@ -75,6 +79,7 @@ if __name__ == "__main__":
 
 -b  bt files only.
 -q  quiet, only log to file.
+-s  not to show names in a list after parse HTML.
 """
 
     page_file = None
@@ -82,9 +87,10 @@ if __name__ == "__main__":
     output_dir = None
     only_bturls = False
     quiet = False
+    show_list = True
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'p:c:o:bq')
+        opts, args = getopt.getopt(sys.argv[1:], 'p:c:o:bqs')
 
         for op, val in opts:
             if op == "-p":
@@ -97,12 +103,15 @@ if __name__ == "__main__":
                 only_bturls = True
             elif op == "-q":
                 quiet =  True
+            elif op == "-s":
+                show_list = not show_list 
 
         log = log_init(LOG_FILE, quiet = quiet)
 
         if page_file is None:
-            p = subprocess.Popen(["zenity", "--entry", "--text=Paste your Lixian HTML"], 
-                    stdout=PIPE, stderr=PIPE)
+            subprocess.call(["zenity", "--info", "--text", "Copy Lixian HTML into clipboard."])
+            p = subprocess.Popen(["xclip", "-selection", "c", "-o"],
+                        stdout=PIPE, stderr=PIPE)
             stdo, stdi = p.communicate()
             page_html = stdo
         else:
@@ -111,8 +120,10 @@ if __name__ == "__main__":
 
         if not os.path.exists(COOKIE_FILE):
             if cookies_file is None:
-                p = subprocess.Popen(["zenity", "--entry", "--text=Paste your Cookies"], 
-                        stdout=PIPE, stderr=PIPE)
+                subprocess.call(["zenity", "--info", "--text", 
+                    "Copy Lixian Cookies into clipboard."])
+                p = subprocess.Popen(["xclip", "-selection", "c", "-o"],
+                            stdout=PIPE, stderr=PIPE)
                 stdo, stdi = p.communicate()
                 with open(COOKIE_FILE, 'w') as f:
                     f.write(stdo)
@@ -126,8 +137,20 @@ if __name__ == "__main__":
             stdo, stdi = p.communicate()
             output_dir = stdo.strip()
 
+        
+        if show_list:
+            def show_list(urls):
+                names = [u[0] for u in urls]
+                args = ["zenity", "--list", "--title", "Files", "--column", "Files to Downlaod"]
+                args.extend(names)
+                if subprocess.call(args) == 1:
+                    log.info("User Cancled download.")
+                    sys.exit(0)
+        else:
+            show_list = None
+
         wget_all_lixian(page_html, COOKIE_FILE, 
-                output_dir, only_bturls, quiet)
+                output_dir, only_bturls, quiet, list_callback = show_list)
 
     except (getopt.GetoptError, NameError), e:
         print e
