@@ -4,7 +4,9 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Control Panel</title>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.0/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="http://jquery.offput.ca/js/jquery.timers.js" type="text/javascript" charset="utf-8"></script>
 <style type="text/css">
+
 
 * {
     margin: 0;
@@ -65,14 +67,37 @@ a:link, a:visited {
 </style>
 <script type="text/javascript">
 
+API_BASE = "http://localhost:8080"
+
+
+function update_tasks() {
+    $.get(API_BASE + "/list_all_tasks").success(function (data) {
+        $("#tasks ul li").remove();
+        $.each(data.tasks, function () {
+            var filename = this[0];
+            var status = this[1] ? "Running" : "Stoped";
+            var task = $('<li><a href="#">' + filename + '<em>' + status + '</em></a></li>').appendTo("#tasks ul");
+            $(task).children("a").click(function () {
+
+                console.log("click");
+                return false;
+            });
+        });
+    });
+};
+
+
+
+
 $(function () {
 
-    $.get("http://localhost:8080/list_all_tasks", function(data){console.log(data);}).success(function (data) {
-        console.log(data);
-    });
+    $("#update_tasks").click(update_tasks);
+    
+    
+});
     //$("#tasks ul").append($("<li>test</li>"));
 
-});
+//});
 
 </script>
 </head>
@@ -80,27 +105,17 @@ $(function () {
 <body>
 
 <div id="tasks">
+    <div><p><a id="update_tasks" href="#">Update Task</a></p></div>
     <ul>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
-        <li><a href="#">TaskName <em>Runnging</em></a></li>
+        <li>No task. Click 'Updata Tasks'.</li>
     </ul>
 </div>
 
 <div id="control">
     <div id="taskinfo">
         <h2>TaskName</h2>
-        <div class="logwindow">
-            <p>
-            test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br /> test <br />
-            </p>
+        <div style="display: none;" class="logwindow">
+            <p></p>
         </div>
     </div>
 </div>

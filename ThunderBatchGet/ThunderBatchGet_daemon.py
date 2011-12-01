@@ -12,7 +12,7 @@ from tempfile import NamedTemporaryFile
 import bottle
 bottle.debug(True)
 
-from bottle import route, run, redirect, request, abort, get
+from bottle import route, run, redirect, request, abort, get, view
 import Cookie
 import json
 
@@ -91,7 +91,7 @@ class ThunderTaskManager(object):
     def __init__(self):
         self.logger = logging.getLogger(type(self).__name__)
         self.cookies_pool = {}
-        self.thread_pool = {}
+        self.thread_pool = []
 
     def make_cookies_file(self, gdriveid):
         if gdriveid in self.cookies_pool:
@@ -115,11 +115,14 @@ class ThunderTaskManager(object):
 
         dl_thread = DownloadThread(wget_cmd, self.DOWNLOAD_DIR)
         dl_thread.start()
-        self.thread_pool[dl_thread.ident] = dl_thread
+
+        self.thread_pool.append((filename, dl_url, gdriveid, cookies_file, dl_thread))
 
         log.debug("thread id :" + str(dl_thread.ident))
-
         return dl_thread.ident
+
+    def list_all_tasks(self):
+        return map(lambda t:(t[0], t[4].is_alive()), self.thread_pool)
 
 
 
@@ -135,14 +138,13 @@ def new_single_file_task():
 
 @route("/list_all_tasks")
 def list_all_tasks():
-    keys = task_mgr.thread_pool.keys()
-    return dict(task_id = keys)
+    tasks = task_mgr.list_all_tasks()
+    return dict(tasks = tasks)
 
 @route("/test_json")
 def test_json():
     cb = request.GET.get("callback")
     return cb + "(%s)" %json.dumps(dict(platform = sys.platform, ls = [1,2]))
-    #return "longlongonlXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxxxx"
 
 
 @route("/query_task_log/:tid")
@@ -159,6 +161,11 @@ def query_task_log(tid = None):
             code, line = "EMPTY", ""
 
     return dict(code = code, line = line)
+
+@route("/")
+@view('mointor')
+def root():
+    return {}
 
 if __name__ == "__main__":
     task_mgr = ThunderTaskManager()
