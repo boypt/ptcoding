@@ -1,4 +1,5 @@
 import os
+import sys
 import fcntl
 import time
 import logging
@@ -13,6 +14,7 @@ bottle.debug(True)
 
 from bottle import route, run, redirect, request, abort, get
 import Cookie
+import json
 
 logging.basicConfig(filename = "/tmp/thunderbatch.log",
         format = "%(asctime)s %(threadName)s(%(thread)s):%(name)s:%(message)s",
@@ -135,6 +137,13 @@ def new_single_file_task():
 def list_all_tasks():
     keys = task_mgr.thread_pool.keys()
     return dict(task_id = keys)
+
+@route("/test_json")
+def test_json():
+    cb = request.GET.get("callback")
+    return cb + "(%s)" %json.dumps(dict(platform = sys.platform, ls = [1,2]))
+    #return "longlongonlXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxxxx"
+
 
 @route("/query_task_log/:tid")
 def query_task_log(tid = None):
