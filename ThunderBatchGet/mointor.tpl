@@ -57,9 +57,12 @@ a:link, a:visited {
     min-height:480px;
 }
 
+.filename_head {
+    font-size: 1.2em;
+}
+
 .filename_head em{
     float: right;
-
 }
 
 
@@ -99,22 +102,27 @@ function update_tasks() {
                                 "task_control_" + uid).appendTo("#control");
                         $(tc).children("h2").html($(this).html());
 
-                        var logtext = $(tc).find(".logtext")[0];
-                        $(logtext).everyTime(1000, "timer"+uid, function (){
-                            $.getJSON(API_BASE + "/query_task_log/" + uid).success(function (data){
-                                console.log(data);
-                                if (data.is_ended) {
-                                    $(logtext).stopTime("timer"+uid);
-                                    update_tasks();
-                                    $(tc).children("h2").children("em").text("ENDED");
-                                    return;
-                                }
-                                if (data.line.length == 0) return;
-                                $(logtext).append(data.line);
-                                $(tc).prop({ "scrollTop": $(tc).prop("scrollHeight") });
-                            }).error(function (err) {
-                                console.log(err);
-                                $(logtext).stopTime("timer"+uid);
+                        $(tc).everyTime(1000, "timer"+uid, function (){
+                            $.getJSON(API_BASE + "/query_task_log/" + uid)
+                                .success(function (data){
+                                    console.log(data);
+                                    var logwindow = $(tc).children("div.logwindow");
+
+                                    if (data.is_ended) {
+                                        $(tc).stopTime("timer"+uid);
+                                        update_tasks();
+                                        $(tc).children("h2").children("em").text("ENDED");
+                                        $(logwindow).append("subprocess ended.<br />");
+                                        return;
+                                    }
+                                    if (data.line.length == 0) return;
+                                    $(logwindow).append(data.line);
+                                    $(logwindow).animate(
+                                        { "scrollTop": $(logwindow).prop("scrollHeight") }, 100);
+                            })
+                                .error(function (err) {
+                                    console.log(err);
+                                    $(tc).stopTime("timer"+uid);
                             });
                         });
 
@@ -163,7 +171,6 @@ $(function () {
     <div id="task_control_tpl" style="display:none;" class="taskinfo">
         <h2 class="filename_head"></h2>
         <div class="logwindow">
-            <p class="logtext"></p>
         </div>
     </div>
 </div>

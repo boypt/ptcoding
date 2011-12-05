@@ -55,9 +55,6 @@ class DownloadThread(Thread):
                 rlist, wl, el = select(wait_list, [], [], 8)
                 for fd in rlist:
                     o = fd.read()
-                    if not isinstance(o, str):
-                        logger("o not str!!: " + str(o))
-                        continue
                     self.deque.append(o)
 
             except IOError, e:
@@ -106,7 +103,7 @@ class ThunderTaskManager(object):
         log = self.logger
 
         cookies_file = self.make_cookies_file(gdriveid)
-        wget_cmd = ['/usr/bin/wget', '-O', filename, 
+        wget_cmd = ['/usr/bin/wget', '--continue', '-O', filename, 
                 '--progress=dot', '--load-cookies', cookies_file,  dl_url]
 
         log.debug("cmd shell: " + str(wget_cmd))
