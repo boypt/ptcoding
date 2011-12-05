@@ -41,6 +41,7 @@ a:link, a:visited {
     margin-left: 3px;
     font-size: 12px;
 }
+
 #tasks ul li a em{
     margin: 3px;
     float: right;
@@ -56,6 +57,12 @@ a:link, a:visited {
     min-height:480px;
 }
 
+.filename_head em{
+    float: right;
+
+}
+
+
 .logwindow {
     margin: 10px 0;
     font-family:monospace;
@@ -67,21 +74,61 @@ a:link, a:visited {
 </style>
 <script type="text/javascript">
 
-API_BASE = "http://localhost:8080"
+API_BASE = "http://127.0.0.1:8080"
 
 
 function update_tasks() {
     $.get(API_BASE + "/list_all_tasks").success(function (data) {
-        $("#tasks ul li").remove();
+        //$("#tasks ul li").remove();
         $.each(data.tasks, function () {
-            var filename = this[0];
-            var status = this[1] ? "Running" : "Stoped";
-            var task = $('<li><a href="#">' + filename + '<em>' + status + '</em></a></li>').appendTo("#tasks ul");
-            $(task).children("a").click(function () {
+            var uid = this[0];
+            var filename = this[1];
+            var status = this[2] ? "Running" : "Stoped";
 
-                console.log("click");
-                return false;
-            });
+            if ($("#empty_task").is(":visible")) {$("#empty_task").hide();}
+
+            if ($("#uid" + uid).length == 0) {
+
+                var task = $('<li id="uid' + uid + '"><a href="#">' + filename + '<em>' + status + '</em></a></li>').appendTo("#tasks ul");
+                $(task).children("a").attr("uid", uid).click(function () {
+
+                    console.log("click", $(this).attr("uid"));
+                    var uid = $(this).attr("uid");
+                    if ($("#task_control_" + uid).length == 0){
+                        var tc = $("#task_control_tpl").clone().attr("id", 
+                                "task_control_" + uid).appendTo("#control");
+                        $(tc).children("h2").html($(this).html());
+
+                        var logtext = $(tc).find(".logtext")[0];
+                        $(logtext).everyTime(1000, "timer"+uid, function (){
+                            $.getJSON(API_BASE + "/query_task_log/" + uid).success(function (data){
+                                console.log(data);
+                                if (data.is_ended) {
+                                    $(logtext).stopTime("timer"+uid);
+                                    update_tasks();
+                                    $(tc).children("h2").children("em").text("ENDED");
+                                    return;
+                                }
+                                if (data.line.length == 0) return;
+                                $(logtext).append(data.line);
+                                $(tc).prop({ "scrollTop": $(tc).prop("scrollHeight") });
+                            }).error(function (err) {
+                                console.log(err);
+                                $(logtext).stopTime("timer"+uid);
+                            });
+                        });
+
+
+                    }
+
+                    $(".taskinfo:visible").hide();
+                    var tc = $("#task_control_" + uid).show();
+                    return false;
+                });
+            }
+            else {
+                $("#uid" + uid).children("a").children("em").text(status);
+            }
         });
     });
 };
@@ -91,7 +138,8 @@ function update_tasks() {
 
 $(function () {
 
-    $("#update_tasks").click(update_tasks);
+    $("#update_tasks").click(function (){update_tasks(); return false;});
+    update_tasks();
     
     
 });
@@ -107,15 +155,15 @@ $(function () {
 <div id="tasks">
     <div><p><a id="update_tasks" href="#">Update Task</a></p></div>
     <ul>
-        <li>No task. Click 'Updata Tasks'.</li>
+        <li id="empty_task">No task. Click 'Updata Tasks'.</li>
     </ul>
 </div>
 
 <div id="control">
-    <div id="taskinfo">
-        <h2>TaskName</h2>
-        <div style="display: none;" class="logwindow">
-            <p></p>
+    <div id="task_control_tpl" style="display:none;" class="taskinfo">
+        <h2 class="filename_head"></h2>
+        <div class="logwindow">
+            <p class="logtext"></p>
         </div>
     </div>
 </div>

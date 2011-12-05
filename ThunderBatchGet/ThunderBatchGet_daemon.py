@@ -3,7 +3,7 @@ import sys
 import fcntl
 import time
 import logging
-from collections import deque
+from collections import deque, namedtuple
 from threading import Thread
 from subprocess import Popen, PIPE
 from select import select
@@ -15,12 +15,16 @@ bottle.debug(True)
 from bottle import route, run, redirect, request, abort, get, view
 import Cookie
 import json
+import StringIO
 
 logging.basicConfig(filename = "/tmp/thunderbatch.log",
         format = "%(asctime)s %(threadName)s(%(thread)s):%(name)s:%(message)s",
                             level = logging.DEBUG)
 
+
 logger = logging.getLogger()
+
+THREAD_OBJ = namedtuple('Point', ['uid', 'filename', 'dl_url', 'gdriveid', 'cookies_file', 'dl_thread'])
 
 class DownloadThread(Thread):
 
@@ -30,7 +34,8 @@ class DownloadThread(Thread):
         self.daemon = True
         self.cmd_args = cmd_args
         self.cwd = cwd
-        self.deque = deque(maxlen = 100)
+        self.deque = deque(maxlen = 8192)
+        self.retcode = None
 
     def run(self):
         logger = self.logger
@@ -40,45 +45,38 @@ class DownloadThread(Thread):
         wait_list = [out, err]
          
         #async
-#        fcntl.fcntl(out, fcntl.F_SETFL, os.O_NONBLOCK)
-#        fcntl.fcntl(err, fcntl.F_SETFL, os.O_NONBLOCK)
+        fcntl.fcntl(out, fcntl.F_SETFL, os.O_NONBLOCK)
+        fcntl.fcntl(err, fcntl.F_SETFL, os.O_NONBLOCK)
 
         logger.debug("run cmd: " + str(self.cmd_args))
-
-        line_cache = []
 
         while True:
             try:
                 rlist, wl, el = select(wait_list, [], [], 8)
                 for fd in rlist:
-                    o = fd.readline(80)
-                    if o.endswith('\n'):
-                        if len(line_cache) > 0:
-                            line_cache.append(o)
-                            o = ''.join(line_cache)
-                            line_cache = []
-                        logger.debug("read out:" + o)
-                        self.deque.append(("OUT", o))
-                    else:
-                        line_cache.append(o)
+                    o = fd.read()
+                    if not isinstance(o, str):
+                        logger("o not str!!: " + str(o))
+                        continue
+                    self.deque.append(o)
 
             except IOError, e:
                 logger.debug("IOError" + str(e))
                 continue
 
             if p.poll() is not None:
+                o = out.read()
+                self.deque.append(o)
+                o = err.read()
+                self.deque.append(o)
+                out.close()
+                err.close()
                 logger.debug("subprocess end.")
-                if len(line_cache) > 0:
-                    o = ''.join(line_cache)
-                    self.deque.append(("OUT", o))
                 break
 
-            logger.debug("next line")
+        self.retcode = p.returncode
 
-        ret = p.returncode
-        self.deque.append(("RETCODE", ret))
-
-        logger.debug("wget returned %d." % ret)
+        logger.debug("wget returned %d." % self.retcode)
 
     pop = lambda s:s.deque.popleft()
 
@@ -116,14 +114,15 @@ class ThunderTaskManager(object):
         dl_thread = DownloadThread(wget_cmd, self.DOWNLOAD_DIR)
         dl_thread.start()
 
-        self.thread_pool.append((filename, dl_url, gdriveid, cookies_file, dl_thread))
+        tid = len(self.thread_pool) + 1
+
+        self.thread_pool.append(THREAD_OBJ(tid, filename, dl_url, gdriveid, cookies_file, dl_thread))
 
         log.debug("thread id :" + str(dl_thread.ident))
-        return dl_thread.ident
+        return tid
 
     def list_all_tasks(self):
-        return map(lambda t:(t[0], t[4].is_alive()), self.thread_pool)
-
+        return map(lambda t:(t.uid, t.filename, t.dl_thread.is_alive()), self.thread_pool)
 
 
 @route("/new_single_file_task")
@@ -146,21 +145,27 @@ def test_json():
     cb = request.GET.get("callback")
     return cb + "(%s)" %json.dumps(dict(platform = sys.platform, ls = [1,2]))
 
-
 @route("/query_task_log/:tid")
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
+    tid = int(tid) - 1
+    assert tid < len(task_mgr.thread_pool), "tid index error"
+    thread = task_mgr.thread_pool[tid]
+    output = StringIO.StringIO()
 
-    thread = task_mgr.thread_pool.get(int(tid))
-    if thread is None:
-        code, line = "EMPTY", ""
-    else:
+    while True:
         try:
-            code, line = thread.pop()
+            line = thread.dl_thread.pop()
+            output.write(line)
         except IndexError:
-            code, line = "EMPTY", ""
+            break
+   
+    line = output.getvalue()
+    output.close()
 
-    return dict(code = code, line = line)
+    is_ended = len(line) == 0 and not thread.dl_thread.is_alive()
+
+    return dict(is_ended = is_ended, line = line.replace("\n", "<br />"))
 
 @route("/")
 @view('mointor')
@@ -169,6 +174,9 @@ def root():
 
 if __name__ == "__main__":
     task_mgr = ThunderTaskManager()
+
+    import webbrowser
+    webbrowser.open_new_tab("http://127.0.0.1:8080")
     run(host='localhost', port=8080)
 
 
@@ -214,13 +222,16 @@ class test_wget(unittest.TestCase):
         gdriveid = "7617B8D05D955EA55C05EF3908D8162F"
 
         m = ThunderTaskManager()
-        tid = m.new_thunder_task(filename, dl_url, "/tmp", gdriveid)
-        t = m.thread_pool[tid]
+        tid = m.new_thunder_task(filename, dl_url, gdriveid)
+        t = m.thread_pool[tid - 1].dl_thread
 
         while True:
             try:
                 c, o = t.pop()
-                print c, o
+                if c == "OUT":
+                    sys.stdout.write(o)
+                else:
+                    print c, o
 
             except IndexError:
                 if not t.is_alive():
