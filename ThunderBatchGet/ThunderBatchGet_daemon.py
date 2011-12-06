@@ -15,7 +15,7 @@ bottle.debug(True)
 from bottle import route, run, redirect, request, abort, get, view
 import Cookie
 import json
-import StringIO
+import cStringIO
 
 logging.basicConfig(filename = "/tmp/thunderbatch.log",
         format = "%(asctime)s %(threadName)s(%(thread)s):%(name)s:%(message)s",
@@ -34,7 +34,7 @@ class DownloadThread(Thread):
         self.daemon = True
         self.cmd_args = cmd_args
         self.cwd = cwd
-        self.deque = deque(maxlen = 8192)
+        self.deque = deque(maxlen = 2048)
         self.retcode = None
 
     def run(self):
@@ -62,20 +62,41 @@ class DownloadThread(Thread):
                 continue
 
             if p.poll() is not None:
+
                 o = out.read()
                 self.deque.append(o)
+                out.close()
+
                 o = err.read()
                 self.deque.append(o)
-                out.close()
                 err.close()
+
                 logger.debug("subprocess end.")
                 break
 
         self.retcode = p.returncode
-
         logger.debug("wget returned %d." % self.retcode)
 
     pop = lambda s:s.deque.popleft()
+
+    @property
+    def status(self):
+        status = ''
+        if self.is_alive():
+            status = "Running"
+        else:
+            if self.retcode == 0:
+                status = "Ended"
+            elif self.retcode in (3,8):
+                status = "HD Error"
+            else:
+                status = "Error"
+
+        return status
+
+
+
+
 
 
 
@@ -119,7 +140,7 @@ class ThunderTaskManager(object):
         return tid
 
     def list_all_tasks(self):
-        return map(lambda t:(t.uid, t.filename, t.dl_thread.is_alive()), self.thread_pool)
+        return map(lambda t:(t.uid, t.filename, t.dl_thread.status), self.thread_pool)
 
 
 @route("/new_single_file_task")
@@ -148,7 +169,7 @@ def query_task_log(tid = None):
     tid = int(tid) - 1
     assert tid < len(task_mgr.thread_pool), "tid index error"
     thread = task_mgr.thread_pool[tid]
-    output = StringIO.StringIO()
+    output = cStringIO.StringIO()
 
     while True:
         try:
@@ -160,9 +181,7 @@ def query_task_log(tid = None):
     line = output.getvalue()
     output.close()
 
-    is_ended = len(line) == 0 and not thread.dl_thread.is_alive()
-
-    return dict(is_ended = is_ended, line = line.replace("\n", "<br />"))
+    return dict(status = thread.dl_thread.status, line = line)
 
 @route("/")
 @view('mointor')

@@ -23,6 +23,7 @@ a:link, a:visited {
     text-decoration:none;
 }
 
+
 #tasks {
     margin: 5px;
     padding: 5px;
@@ -33,11 +34,11 @@ a:link, a:visited {
 }
 
 #tasks ul li{
-    margin: 10px 5px 5px 20px;
+    margin: 10px 5px 10px 20px;
     background-color: #ccc;
 }
 
-#tasks ul li a{
+a.taskbuttom {
     margin-left: 3px;
     font-size: 12px;
 }
@@ -86,13 +87,13 @@ function update_tasks() {
         $.each(data.tasks, function () {
             var uid = this[0];
             var filename = this[1];
-            var status = this[2] ? "Running" : "Stoped";
+            var status = this[2];
 
             if ($("#empty_task").is(":visible")) {$("#empty_task").hide();}
 
             if ($("#uid" + uid).length == 0) {
 
-                var task = $('<li id="uid' + uid + '"><a href="#">' + filename + '<em>' + status + '</em></a></li>').appendTo("#tasks ul");
+                var task = $('<li id="uid' + uid + '"><a class="taskbuttom" href="#">' + filename + '<em>' + status + '</em></a></li>').appendTo("#tasks ul");
                 $(task).children("a").attr("uid", uid).click(function () {
 
                     console.log("click", $(this).attr("uid"));
@@ -108,15 +109,17 @@ function update_tasks() {
                                     console.log(data);
                                     var logwindow = $(tc).children("div.logwindow");
 
-                                    if (data.is_ended) {
+                                    if (data.line.length != 0) {;
+                                        $(logwindow).append(data.line.replace(/\n/g, '<br /> \n'));
+                                    }
+                                    if (data.status != "Running") {
                                         $(tc).stopTime("timer"+uid);
                                         update_tasks();
-                                        $(tc).children("h2").children("em").text("ENDED");
+                                        $(tc).children("h2").children("em").text(data.status);
                                         $(logwindow).append("subprocess ended.<br />");
-                                        return;
                                     }
-                                    if (data.line.length == 0) return;
-                                    $(logwindow).append(data.line);
+
+                                    // scroll to buttom
                                     $(logwindow).animate(
                                         { "scrollTop": $(logwindow).prop("scrollHeight") }, 100);
                             })
@@ -147,6 +150,15 @@ function update_tasks() {
 $(function () {
 
     $("#update_tasks").click(function (){update_tasks(); return false;});
+    $("#clear_ended").click(function (){
+
+        $("li[id^=uid]:visible").each(function() {
+            if ($(this).children("a").children("em").text() == "Ended") {
+                $(this).fadeOut();
+            }
+        });
+        return false;
+    });
     update_tasks();
     
     
@@ -165,6 +177,7 @@ $(function () {
     <ul>
         <li id="empty_task">No task. Click 'Updata Tasks'.</li>
     </ul>
+    <div><p><a id="clear_ended" href="#">Clear Ended</a></p></div>
 </div>
 
 <div id="control">
