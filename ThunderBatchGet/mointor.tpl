@@ -69,6 +69,7 @@ a.taskbuttom {
 
 .logwindow {
     margin: 10px 0;
+    padding: 3px 5px;
     font-family:monospace;
     overflow-y: scroll;
     background-color: #ccc;
@@ -97,16 +98,22 @@ function update_tasks() {
                 $(task).children("a").attr("uid", uid).click(function () {
 
                     console.log("click", $(this).attr("uid"));
-                    var uid = $(this).attr("uid");
-                    if ($("#task_control_" + uid).length == 0){
-                        var tc = $("#task_control_tpl").clone().attr("id", 
-                                "task_control_" + uid).appendTo("#control");
-                        $(tc).children("h2").html($(this).html());
 
-                        $(tc).everyTime(1000, "timer"+uid, function (){
+                    var uid = $(this).attr("uid");
+
+                    if ($("#task_control_" + uid).length == 0){
+                        $("#task_control_tpl").clone()
+                                .attr("id","task_control_" + uid).appendTo("#control")
+                                .children("h2").html($(this).html());
+                    }
+
+                    $(".taskinfo:visible").stopTime().slideUp();
+                    $("#task_control_" + uid).slideDown()
+                        .everyTime(500, "timer"+uid, function (){
                             $.getJSON(API_BASE + "/query_task_log/" + uid)
                                 .success(function (data){
                                     console.log(data);
+                                    var tc = $("#task_control_" + uid);
                                     var logwindow = $(tc).children("div.logwindow");
 
                                     if (data.line.length != 0) {;
@@ -128,12 +135,6 @@ function update_tasks() {
                                     $(tc).stopTime("timer"+uid);
                             });
                         });
-
-
-                    }
-
-                    $(".taskinfo:visible").hide();
-                    var tc = $("#task_control_" + uid).show();
                     return false;
                 });
             }
