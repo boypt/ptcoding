@@ -8,6 +8,7 @@ from threading import Thread
 from subprocess import Popen, PIPE
 from select import select
 from tempfile import NamedTemporaryFile
+import hashlib
 
 import bottle
 bottle.debug(True)
@@ -24,7 +25,7 @@ logging.basicConfig(filename = "/tmp/thunderbatch.log",
 
 logger = logging.getLogger()
 
-THREAD_OBJ = namedtuple('Point', ['uid', 'filename', 'dl_url', 'gdriveid', 'cookies_file', 'dl_thread'])
+THREAD_OBJ = namedtuple('Point', ['uid', 'tasktype', 'filename', 'dl_url', 'gdriveid', 'cookies_file', 'dl_thread'])
 
 class DownloadThread(Thread):
 
@@ -62,20 +63,21 @@ class DownloadThread(Thread):
                 continue
 
             if p.poll() is not None:
+                ret = self.retcode = p.returncode
+                last_log = ''
 
-                o = out.read()
-                self.deque.append(o)
-                out.close()
+                for pipe in wait_list:
+                    o = pipe.read()
+                    if len(o) > 0:
+                        self.deque.append(o)
+                        last_log += o
+                    pipe.close()
 
-                o = err.read()
-                self.deque.append(o)
-                err.close()
+                logger.debug("wget ended. exit code: '%d'" % ret)
+                if ret != 0:
+                    logger.debug("wget lastlog: " + last_log)
 
-                logger.debug("subprocess end.")
                 break
-
-        self.retcode = p.returncode
-        logger.debug("wget returned %d." % self.retcode)
 
     pop = lambda s:s.deque.popleft()
 
@@ -86,7 +88,7 @@ class DownloadThread(Thread):
             status = "Running"
         else:
             if self.retcode == 0:
-                status = "Ended"
+                status = "Done"
             elif self.retcode in (3,8):
                 status = "HD Error"
             else:
@@ -107,23 +109,28 @@ class ThunderTaskManager(object):
     def __init__(self):
         self.logger = logging.getLogger(type(self).__name__)
         self.cookies_pool = {}
-        self.thread_pool = []
+        self.thread_pool = {}
 
-    def make_cookies_file(self, gdriveid):
-        if gdriveid in self.cookies_pool:
-            return self.cookies_pool[gdriveid]
+    def make_cookies_file(self, tasktype, cookies_values):
+        cookie_line = {"thunder":".vip.xunlei.com\tTRUE\t/\tFALSE\t0\t%s\t%s\n",
+                        "qq":".qq.com\tTRUE\t/\tFALSE\t0\t%s\t%s\n"}
 
-        cookie_line = ".vip.xunlei.com\tTRUE\t/\tFALSE\t0\tgdriveid\t%s\n" % gdriveid 
-        tmp_file = NamedTemporaryFile(suffix='.txt', delete=False)
-        tmp_file.write(cookie_line)
-        tmp_file.close()
-        self.cookies_pool[gdriveid] = tmp_file.name
-        return tmp_file.name
+        key = hashlib.md5(tasktype + "".join(map(lambda l:l[1], cookies_values))).hexdigest()
 
-    def new_thunder_task(self, filename, dl_url, gdriveid):
+        if key not in self.cookies_pool:
+
+            tmp_file = NamedTemporaryFile(suffix='.txt', delete=False)
+            for k, v in cookies_values:
+                line = cookie_line[tasktype] % (k, v)
+                tmp_file.write(line)
+            tmp_file.close()
+            self.cookies_pool[key] = tmp_file.name
+
+        return self.cookies_pool[key]
+
+    def new_thunder_task(self, tasktype, filename, dl_url, cookies_values):
         log = self.logger
-
-        cookies_file = self.make_cookies_file(gdriveid)
+        cookies_file = self.make_cookies_file(tasktype, cookies_values)
         wget_cmd = ['/usr/bin/wget', '--continue', '-O', filename, 
                 '--progress=dot', '--load-cookies', cookies_file,  dl_url]
 
@@ -132,42 +139,61 @@ class ThunderTaskManager(object):
         dl_thread = DownloadThread(wget_cmd, self.DOWNLOAD_DIR)
         dl_thread.start()
 
-        tid = len(self.thread_pool) + 1
+        uid = str(time.time()).replace('.', '')
 
-        self.thread_pool.append(THREAD_OBJ(tid, filename, dl_url, gdriveid, cookies_file, dl_thread))
+        self.thread_pool[uid] = (THREAD_OBJ(uid, tasktype, filename, dl_url, cookies_values, cookies_file, dl_thread))
 
         log.debug("thread id :" + str(dl_thread.ident))
-        return tid
+        return uid
 
     def list_all_tasks(self):
-        return map(lambda t:(t.uid, t.filename, t.dl_thread.status), self.thread_pool)
+        p = self.thread_pool
+        self.logger.debug(self.thread_pool.keys())
+        return map(lambda k:dict(uid = p[k].uid, 
+            tasktype = p[k].tasktype,
+            filename = p[k].filename, 
+            status = p[k].dl_thread.status), 
+            sorted(self.thread_pool.keys()))
 
 
-@route("/new_single_file_task")
-def new_single_file_task():
-    filename = request.GET.get("name")
-    dl_url = request.GET.get("url")
-    cookies_str = request.GET.get("cookies")
-    cookie = Cookie.BaseCookie(cookies_str)
-    gdriveid = cookie["gdriveid"].value
-    tid = task_mgr.new_thunder_task(filename, dl_url, gdriveid)
-    return dict(tid = tid)
+@route("/thunder_single_task")
+def thunder_single_task():
+    try:
+        filename = request.GET.get("name")
+        dl_url = request.GET.get("url")
+        cookies_str = request.GET.get("cookies")
+        cookie = Cookie.BaseCookie(cookies_str)
+        gdriveid = cookie["gdriveid"].value
+        tid = task_mgr.new_thunder_task("thunder", filename, dl_url, [("gdriveid", gdriveid)])
+        return dict(tid = tid)
+    except:
+        logger.debug("/thunder_single_task", exc_info = True)
+        raise
+
+@route("/qq_single_task")
+def qq_single_task():
+    try:
+        filename = request.GET.get("name")
+        dl_url = request.GET.get("url")
+        cookies_str = request.GET.get("cookies")
+        cookie = Cookie.BaseCookie(cookies_str)
+
+        tid = task_mgr.new_thunder_task("qq", filename, dl_url, 
+                [("FTN5K", cookie["FTN5K"].value)])
+
+        return dict(tid = tid)
+    except:
+        logger.debug("/qq_single_task", exc_info = True)
+        raise
 
 @route("/list_all_tasks")
 def list_all_tasks():
-    tasks = task_mgr.list_all_tasks()
-    return dict(tasks = tasks)
+    return dict(tasks = task_mgr.list_all_tasks())
 
-@route("/test_json")
-def test_json():
-    cb = request.GET.get("callback")
-    return cb + "(%s)" %json.dumps(dict(platform = sys.platform, ls = [1,2]))
 
 @route("/query_task_log/:tid")
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
-    tid = int(tid) - 1
-    assert tid < len(task_mgr.thread_pool), "tid index error"
     thread = task_mgr.thread_pool[tid]
     output = cStringIO.StringIO()
 
@@ -239,7 +265,7 @@ class test_wget(unittest.TestCase):
 
         m = ThunderTaskManager()
         tid = m.new_thunder_task(filename, dl_url, gdriveid)
-        t = m.thread_pool[tid - 1].dl_thread
+        t = m.thread_pool[tid].dl_thread
 
         while True:
             try:

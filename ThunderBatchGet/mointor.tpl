@@ -35,7 +35,6 @@ a:link, a:visited {
 
 #tasks ul li{
     margin: 10px 5px 10px 20px;
-    background-color: #ccc;
 }
 
 a.taskbuttom {
@@ -76,6 +75,29 @@ a.taskbuttom {
     height: 380px;
 }
 
+#ctl_buttons {
+    list-style: none outside;
+}
+
+
+#ctl_buttons li {
+    display: inline;
+    margin: 10px;
+}
+
+#tasks div {
+    margin: 5px 0;
+
+}
+
+.qq_task {
+    background-color: #d1bbbb;
+}
+
+.thunder_task {
+    background-color: #bcc;
+}
+
 </style>
 <script type="text/javascript">
 
@@ -86,24 +108,25 @@ function update_tasks() {
     $.get(API_BASE + "/list_all_tasks").success(function (data) {
         //$("#tasks ul li").remove();
         $.each(data.tasks, function () {
-            var uid = this[0];
-            var filename = this[1];
-            var status = this[2];
+            var uid = this.uid;
+            var tasktype = this.tasktype;
+            var filename = this.filename;
+            var status = this.status;
 
             if ($("#empty_task").is(":visible")) {$("#empty_task").hide();}
 
             if ($("#uid" + uid).length == 0) {
 
-                var task = $('<li id="uid' + uid + '"><a class="taskbuttom" href="#">' + filename + '<em>' + status + '</em></a></li>').appendTo("#tasks ul");
+                var task = $('<li id="uid' + uid + '"><a class="taskbuttom" href="#">' + filename + '<em>' + status + '</em></a></li>').addClass(tasktype + "_task").appendTo("#tasks ul");
                 $(task).children("a").attr("uid", uid).click(function () {
-
-                    console.log("click", $(this).attr("uid"));
 
                     var uid = $(this).attr("uid");
 
+                    console.log("click", uid);
+
                     if ($("#task_control_" + uid).length == 0){
                         $("#task_control_tpl").clone()
-                                .attr("id","task_control_" + uid).appendTo("#control")
+                                .attr("id","task_control_" + uid).appendTo("#taskcontainer")
                                 .children("h2").html($(this).html());
                     }
 
@@ -151,22 +174,28 @@ function update_tasks() {
 $(function () {
 
     $("#update_tasks").click(function (){update_tasks(); return false;});
-    $("#clear_ended").click(function (){
+    $("#clear_done").click(function (){
 
         $("li[id^=uid]:visible").each(function() {
-            if ($(this).children("a").children("em").text() == "Ended") {
-                $(this).fadeOut();
+            if ($(this).children("a").children("em").text() == "Done") {
+                $(this).slideUp();
             }
         });
+        return false;
+    });
+
+    $("#pauselog").click(function (){
+        $(".taskinfo:visible").stopTime();
+        return false;
+    });
+    $("#clearlog").click(function (){
+        $(".taskinfo:visible div.logwindow").empty();
         return false;
     });
     update_tasks();
     
     
 });
-    //$("#tasks ul").append($("<li>test</li>"));
-
-//});
 
 </script>
 </head>
@@ -174,19 +203,25 @@ $(function () {
 <body>
 
 <div id="tasks">
-    <div><p><a id="update_tasks" href="#">Update Task</a></p></div>
+    <div><a id="update_tasks" href="#">Update Task</a></div>
     <ul>
         <li id="empty_task">No task. Click 'Updata Tasks'.</li>
     </ul>
-    <div><p><a id="clear_ended" href="#">Clear Ended</a></p></div>
+    <div><a id="clear_done" href="#">Clear</a></div>
 </div>
 
 <div id="control">
-    <div id="task_control_tpl" style="display:none;" class="taskinfo">
-        <h2 class="filename_head"></h2>
-        <div class="logwindow">
+    <div id="taskcontainer">
+        <div id="task_control_tpl" style="display:none;" class="taskinfo">
+            <h2 class="filename_head"></h2>
+            <div class="logwindow">
+            </div>
         </div>
     </div>
+    <ul id="ctl_buttons">
+        <li><a id="pauselog" href="#">PauseLog</a></li>
+        <li><a id="clearlog" href="#">ClearLog</a></li>
+    </ul>
 </div>
 
 </body>
