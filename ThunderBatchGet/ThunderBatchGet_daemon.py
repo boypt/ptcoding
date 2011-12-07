@@ -27,6 +27,16 @@ logger = logging.getLogger()
 
 THREAD_OBJ = namedtuple('Point', ['uid', 'tasktype', 'filename', 'dl_url', 'gdriveid', 'cookies_file', 'dl_thread'])
 
+def LogException(func):
+    def __check(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            logger.debug("Exception", exc_info = True)
+            raise
+    return __check
+
+
 class DownloadThread(Thread):
 
     def __init__(self, cmd_args, cwd = None):
@@ -96,12 +106,6 @@ class DownloadThread(Thread):
 
         return status
 
-
-
-
-
-
-
 class ThunderTaskManager(object):
 
     DOWNLOAD_DIR = "/home/boypt/Downloads"
@@ -157,41 +161,35 @@ class ThunderTaskManager(object):
 
 
 @route("/thunder_single_task")
+@LogException
 def thunder_single_task():
-    try:
-        filename = request.GET.get("name")
-        dl_url = request.GET.get("url")
-        cookies_str = request.GET.get("cookies")
-        cookie = Cookie.BaseCookie(cookies_str)
-        gdriveid = cookie["gdriveid"].value
-        tid = task_mgr.new_thunder_task("thunder", filename, dl_url, [("gdriveid", gdriveid)])
-        return dict(tid = tid)
-    except:
-        logger.debug("/thunder_single_task", exc_info = True)
-        raise
+    filename = request.GET.get("name")
+    dl_url = request.GET.get("url")
+    cookies_str = request.GET.get("cookies")
+    cookie = Cookie.BaseCookie(cookies_str)
+    gdriveid = cookie["gdriveid"].value
+    tid = task_mgr.new_thunder_task("thunder", filename, dl_url, [("gdriveid", gdriveid)])
+    return dict(tid = tid)
 
 @route("/qq_single_task")
+@LogException
 def qq_single_task():
-    try:
-        filename = request.GET.get("name")
-        dl_url = request.GET.get("url")
-        cookies_str = request.GET.get("cookies")
-        cookie = Cookie.BaseCookie(cookies_str)
-
-        tid = task_mgr.new_thunder_task("qq", filename, dl_url, 
-                [("FTN5K", cookie["FTN5K"].value)])
-
-        return dict(tid = tid)
-    except:
-        logger.debug("/qq_single_task", exc_info = True)
-        raise
+    filename = request.GET.get("name")
+    dl_url = request.GET.get("url")
+    cookies_str = request.GET.get("cookies")
+    cookie = Cookie.BaseCookie(cookies_str)
+    tid = task_mgr.new_thunder_task("qq", filename, dl_url, 
+            [("FTN5K", cookie["FTN5K"].value)])
+    return dict(tid = tid)
 
 @route("/list_all_tasks")
+@LogException
 def list_all_tasks():
     return dict(tasks = task_mgr.list_all_tasks())
 
 
 @route("/query_task_log/:tid")
+@LogException
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
     thread = task_mgr.thread_pool[tid]
@@ -214,13 +212,13 @@ def query_task_log(tid = None):
 def root():
     return {}
 
+
 if __name__ == "__main__":
     task_mgr = ThunderTaskManager()
 
     import webbrowser
     webbrowser.open_new_tab("http://127.0.0.1:8080")
-    run(host='localhost', port=8080)
-
+    run(host='0.0.0.0', port=8080)
 
 
 import unittest
