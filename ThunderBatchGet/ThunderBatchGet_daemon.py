@@ -22,6 +22,13 @@ logging.basicConfig(filename = "/tmp/thunderbatch.log",
         format = "%(asctime)s %(threadName)s(%(thread)s):%(name)s:%(message)s",
                             level = logging.DEBUG)
 
+DEFAULT_DOWN_DIR = os.path.expanduser("~/Downloads")
+
+if not os.path.isdir(DEFAULT_DOWN_DIR):
+    DEFAULT_DOWN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Downloads")
+    if not os.path.exists(DEFAULT_DOWN_DIR):
+        os.mkdir(DEFAULT_DOWN_DIR)
+
 
 logger = logging.getLogger()
 
@@ -108,8 +115,6 @@ class DownloadThread(Thread):
 
 class ThunderTaskManager(object):
 
-    DOWNLOAD_DIR = "/home/boypt/Downloads"
-
     def __init__(self):
         self.logger = logging.getLogger(type(self).__name__)
         self.cookies_pool = {}
@@ -140,7 +145,7 @@ class ThunderTaskManager(object):
 
         log.debug("cmd shell: " + str(wget_cmd))
 
-        dl_thread = DownloadThread(wget_cmd, self.DOWNLOAD_DIR)
+        dl_thread = DownloadThread(wget_cmd, DEFAULT_DOWN_DIR)
         dl_thread.start()
 
         uid = str(time.time()).replace('.', '')
@@ -214,6 +219,9 @@ def root():
 
 
 if __name__ == "__main__":
+
+    print "Default Download Dir: '%s'" % DEFAULT_DOWN_DIR
+
     task_mgr = ThunderTaskManager()
 
     import webbrowser
