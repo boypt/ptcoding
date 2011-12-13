@@ -1,0 +1,13 @@
+{
+  "name": "CloudBatchget",
+  "version": "1.0",
+  "description": "batch wget for thunder cloud",
+  "content_scripts": [
+    {
+      "matches": ["http://*.vip.xunlei.com/*", "http://lixian.qq.com/*"],
+      "js": ["jquery-1.7.1.min.js", "cloudbatchget.user.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": [ "cookies", "tabs", "http://*.vip.xunlei.com/*", "http://lixian.qq.com/*" ]
+}

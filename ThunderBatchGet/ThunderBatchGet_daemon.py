@@ -32,7 +32,7 @@ if not os.path.isdir(DEFAULT_DOWN_DIR):
 
 logger = logging.getLogger()
 
-THREAD_OBJ = namedtuple('Point', ['uid', 'tasktype', 'filename', 'dl_url', 'gdriveid', 'cookies_file', 'dl_thread'])
+task_mgr = None
 
 def LogException(func):
     def __check(*args, **kwargs):
@@ -47,15 +47,17 @@ def LogException(func):
 class DownloadThread(Thread):
 
     def __init__(self, cmd_args, cwd = None):
-        super(DownloadThread, self).__init__()
+        super(DownloadThread, self).__init__(name = type(self).__name__)
         self.logger = logging.getLogger(type(self).__name__)
         self.daemon = True
         self.cmd_args = cmd_args
         self.cwd = cwd
         self.deque = deque(maxlen = 2048)
         self.retcode = None
+        self.retry_time = 0
 
     def run(self):
+        self.retry_time += 1
         logger = self.logger
         logger.debug("init")
         p = Popen(self.cmd_args, bufsize = 4096, cwd = self.cwd, stdout=PIPE, stderr=PIPE, close_fds=True)
@@ -106,12 +108,63 @@ class DownloadThread(Thread):
         else:
             if self.retcode == 0:
                 status = "Done"
-            elif self.retcode in (3,8):
-                status = "HD Error"
+            elif self.retcode == 3:
+                status = "IO Error"
             else:
                 status = "Error"
 
         return status
+
+    @property
+    def need_retry(self):
+        retcode = self.retcode
+        retry_time = self.retry_time
+        if not self.is_alive() and (retcode is not None) and (retcode != 0) and (retcode != 3) and (retry_time < 10):
+            return True
+        else:
+            return False
+
+    is_finished = property(lambda s:s.retcode == 0)
+
+class TaskMointorThread(Thread):
+
+    def __init__(self, task_mgr):
+        super(TaskMointorThread, self).__init__(name = type(self).__name__)
+        self.logger = logging.getLogger(type(self).__name__)
+        self.daemon = True
+        self.task_mgr = task_mgr
+
+    def run(self):
+        logger = self.logger
+        task_pool = self.task_mgr.thread_pool
+
+        logger.info("init")
+
+        while True:
+            keys = tuple(task_pool.keys())
+            for k in keys:
+                t = task_pool[k]
+
+                if "dl_thread" not in t:
+                    logger.info("skiped " + str(k))
+                    continue
+
+                dl_thread = t["dl_thread"]
+
+                if dl_thread.is_finished:
+                    logger.info("task finished, remove thread obj" + str(k))
+                    del t["dl_thread"]
+
+                if dl_thread.need_retry:
+                    filepath = os.path.join(t["dl_dir"], t["filename"])
+                    if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                        logger.info("task '%s' might finished. if not, try remove this file: '%s'" % (k, filepath))
+                    else:
+                        logger.info("retry task " + str(k))
+                        t["dl_thread"] = dl_thread = self.task_mgr.new_task_thread(t)
+
+            time.sleep(3)
+
 
 class ThunderTaskManager(object):
 
@@ -137,31 +190,51 @@ class ThunderTaskManager(object):
 
         return self.cookies_pool[key]
 
-    def new_thunder_task(self, tasktype, filename, dl_url, cookies_values):
+    def new_wget_task(self, tasktype, filename, dl_url, cookies_values):
         log = self.logger
+
+        uid = str(time.time()).replace('.', '')
         cookies_file = self.make_cookies_file(tasktype, cookies_values)
+
+        taskinfo = dict(uid = uid,
+                        tasktype = tasktype,
+                        filename = filename,
+                        dl_dir = DEFAULT_DOWN_DIR,
+                        dl_url = dl_url,
+                        cookies_file = cookies_file,
+                        )
+
+        dl_thread = self.new_task_thread(taskinfo)
+        taskinfo["dl_thread"] = dl_thread
+
+        self.thread_pool[uid] = taskinfo
+
+        log.debug("task %s thread id :%s" % (uid, str(dl_thread.ident)))
+
+        return uid
+
+    def new_task_thread(self, taskinfo):
+        filename = taskinfo["filename"]
+        dl_url = taskinfo["dl_url"]
+        dl_dir = taskinfo["dl_dir"]
+        cookies_file = taskinfo["cookies_file"]
+
         wget_cmd = ['/usr/bin/wget', '--continue', '-O', filename, 
                 '--progress=dot', '--load-cookies', cookies_file,  dl_url]
 
-        log.debug("cmd shell: " + str(wget_cmd))
-
-        dl_thread = DownloadThread(wget_cmd, DEFAULT_DOWN_DIR)
+        dl_thread = DownloadThread(wget_cmd, dl_dir)
         dl_thread.start()
 
-        uid = str(time.time()).replace('.', '')
+        return dl_thread
 
-        self.thread_pool[uid] = (THREAD_OBJ(uid, tasktype, filename, dl_url, cookies_values, cookies_file, dl_thread))
-
-        log.debug("thread id :" + str(dl_thread.ident))
-        return uid
 
     def list_all_tasks(self):
         p = self.thread_pool
-        self.logger.debug(self.thread_pool.keys())
-        return map(lambda k:dict(uid = p[k].uid, 
-            tasktype = p[k].tasktype,
-            filename = p[k].filename, 
-            status = p[k].dl_thread.status), 
+        self.logger.debug("list all keys: " + str(self.thread_pool.keys()))
+        return map(lambda k:dict(uid = p[k]["uid"], 
+            tasktype = p[k]["tasktype"],
+            filename = p[k]["filename"], 
+            status = p[k]["dl_thread"].status if "dl_thread" in p[k] else "Done"), 
             sorted(self.thread_pool.keys()))
 
 
@@ -173,7 +246,7 @@ def thunder_single_task():
     cookies_str = request.GET.get("cookies")
     cookie = Cookie.BaseCookie(cookies_str)
     gdriveid = cookie["gdriveid"].value
-    tid = task_mgr.new_thunder_task("thunder", filename, dl_url, [("gdriveid", gdriveid)])
+    tid = task_mgr.new_wget_task("thunder", filename, dl_url, [("gdriveid", gdriveid)])
     return dict(tid = tid)
 
 @route("/qq_single_task")
@@ -183,8 +256,7 @@ def qq_single_task():
     dl_url = request.GET.get("url")
     cookies_str = request.GET.get("cookies")
     cookie = Cookie.BaseCookie(cookies_str)
-    tid = task_mgr.new_thunder_task("qq", filename, dl_url, 
-            [("FTN5K", cookie["FTN5K"].value)])
+    tid = task_mgr.new_wget_task("qq", filename, dl_url, [("FTN5K", cookie["FTN5K"].value)])
     return dict(tid = tid)
 
 @route("/list_all_tasks")
@@ -197,20 +269,25 @@ def list_all_tasks():
 @LogException
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
-    thread = task_mgr.thread_pool[tid]
-    output = cStringIO.StringIO()
 
-    while True:
-        try:
-            line = thread.dl_thread.pop()
-            output.write(line)
-        except IndexError:
-            break
-   
-    line = output.getvalue()
-    output.close()
+    if "dl_thread" in task_mgr.thread_pool[tid]:
+        thread = task_mgr.thread_pool[tid]["dl_thread"]
+        output = cStringIO.StringIO()
 
-    return dict(status = thread.dl_thread.status, line = line)
+        while True:
+            try:
+                line = thread.pop()
+                output.write(line)
+            except IndexError:
+                break
+       
+        line = output.getvalue()
+        output.close()
+        ret = dict(status = thread.status, line = line)
+    else:
+        ret = dict(status = "Done", line = "")
+
+    return ret
 
 @route("/")
 @view('mointor')
@@ -220,12 +297,15 @@ def root():
 
 if __name__ == "__main__":
 
-    print "Default Download Dir: '%s'" % DEFAULT_DOWN_DIR
 
     task_mgr = ThunderTaskManager()
+    mointor = TaskMointorThread(task_mgr)
+    mointor.start()
 
     import webbrowser
     webbrowser.open_new_tab("http://127.0.0.1:8080")
+    print "Default Download Dir: '%s'" % DEFAULT_DOWN_DIR
+
     run(host='0.0.0.0', port=8080)
 
 
