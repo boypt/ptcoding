@@ -53,10 +53,8 @@ class DownloadThread(Thread):
         self.cwd = cwd
         self.deque = deque(maxlen = 2048)
         self.retcode = None
-        self.retry_time = 0
 
     def run(self):
-        self.retry_time += 1
         logger = self.logger
         logger.debug("init")
         p = Popen(self.cmd_args, bufsize = 4096, cwd = self.cwd, stdout=PIPE, stderr=PIPE, close_fds=True)
@@ -117,8 +115,7 @@ class DownloadThread(Thread):
     @property
     def need_retry(self):
         retcode = self.retcode
-        retry_time = self.retry_time
-        if not self.is_alive() and (retcode is not None) and (retcode != 0) and (retcode != 3) and (retry_time < 10):
+        if not self.is_alive() and (retcode is not None) and (retcode != 0) and (retcode != 3):
             return True
         else:
             return False
@@ -156,10 +153,13 @@ class TaskMointorThread(Thread):
 
                 if dl_thread.need_retry:
                     filepath = os.path.join(t["dl_dir"], t["filename"])
-                    if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                    if os.path.exists(filepath) and os.path.getsize(filepath) > 0 and t["retry_time"] > 2:
                         logger.info("task '%s' might finished. if not, try remove this file: '%s'" % (k, filepath))
+                    elif t["retry_time"] > 10:
+                        logger.info("task '%s' failed for 10 times. skip forever" % k)
                     else:
                         logger.info("retry task " + str(k))
+                        t["retry_time"] += 1
                         t["dl_thread"] = dl_thread = self.task_mgr.new_task_thread(t)
 
             time.sleep(3)
@@ -201,6 +201,7 @@ class ThunderTaskManager(object):
                         dl_dir = DEFAULT_DOWN_DIR,
                         dl_url = dl_url,
                         cookies_file = cookies_file,
+                        retry_time = 0,
                         )
 
         dl_thread = self.new_task_thread(taskinfo)
@@ -269,8 +270,10 @@ def list_all_tasks():
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
 
-    if "dl_thread" in task_mgr.thread_pool[tid]:
-        thread = task_mgr.thread_pool[tid]["dl_thread"]
+    taskinfo = task_mgr.thread_pool[tid]
+
+    if "dl_thread" in taskinfo:
+        thread = taskinfo["dl_thread"]
         output = cStringIO.StringIO()
 
         while True:
@@ -282,9 +285,9 @@ def query_task_log(tid = None):
        
         line = output.getvalue()
         output.close()
-        ret = dict(status = thread.status, line = line)
+        ret = dict(status = thread.status, line = line, retry_time = taskinfo["retry_time"])
     else:
-        ret = dict(status = "Done", line = "")
+        ret = dict(status = "Done", line = "", retry_time = taskinfo["retry_time"])
 
     return ret
 

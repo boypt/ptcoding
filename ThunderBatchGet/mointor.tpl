@@ -147,6 +147,8 @@ function update_tasks() {
                                         update_tasks();
                                         $(tc).children("h2").children("em").text(data.status);
                                         $(logwindow).append("subprocess ended.<br />");
+                                        if (data.retry_time > 0) 
+                                            $(logwindow).append("Task Retried " + data.retry_time + " time(s).<br />");
                                     }
 
                                     // scroll to buttom
