@@ -3,7 +3,7 @@ import sys
 import fcntl
 import time
 import logging
-from collections import deque, namedtuple
+from collections import deque 
 from threading import Thread
 from subprocess import Popen, PIPE
 from select import select
@@ -13,9 +13,8 @@ import hashlib
 import bottle
 bottle.debug(True)
 
-from bottle import route, run, redirect, request, abort, get, view
+from bottle import route, run, request, view
 import Cookie
-import json
 import cStringIO
 
 logging.basicConfig(filename = "/tmp/thunderbatch.log",
