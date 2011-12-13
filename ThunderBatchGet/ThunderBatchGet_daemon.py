@@ -13,7 +13,7 @@ import hashlib
 import bottle
 bottle.debug(True)
 
-from bottle import route, run, request, view
+from bottle import route, run, request, view, abort
 import Cookie
 import cStringIO
 
@@ -270,7 +270,9 @@ def list_all_tasks():
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
 
-    taskinfo = task_mgr.thread_pool[tid]
+    taskinfo = task_mgr.thread_pool.get(tid)
+    if taskinfo is None:
+        abort(404, "taskid not found, " + tid)
 
     if "dl_thread" in taskinfo:
         thread = taskinfo["dl_thread"]
