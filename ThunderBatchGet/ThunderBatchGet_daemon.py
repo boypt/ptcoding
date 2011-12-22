@@ -153,7 +153,7 @@ class TaskMointorThread(Thread):
 
                 if dl_thread.need_retry:
                     filepath = os.path.join(t["dl_dir"], t["filename"])
-                    if os.path.exists(filepath) and os.path.getsize(filepath) > 0 and t["retry_time"] > 2:
+                    if os.path.exists(filepath) and os.path.getsize(filepath) > 0 and t["retry_time"] > 5:
                         logger.info("task '%s' might finished. if not, try remove this file: '%s'" % (k, filepath))
                     elif t["retry_time"] > 10:
                         logger.info("task '%s' failed for 10 times. skip forever" % k)
@@ -169,38 +169,19 @@ class ThunderTaskManager(object):
 
     def __init__(self):
         self.logger = logging.getLogger(type(self).__name__)
-        self.cookies_pool = {}
         self.thread_pool = {}
-
-    def make_cookies_file(self, tasktype, cookies_values):
-        cookie_line = {"thunder":".vip.xunlei.com\tTRUE\t/\tFALSE\t0\t%s\t%s\n",
-                        "qq":".qq.com\tTRUE\t/\tFALSE\t0\t%s\t%s\n"}
-
-        key = hashlib.md5(tasktype + "".join(map(lambda l:l[1], cookies_values))).hexdigest()
-
-        if key not in self.cookies_pool:
-
-            tmp_file = NamedTemporaryFile(suffix='.txt', delete=False)
-            for k, v in cookies_values:
-                line = cookie_line[tasktype] % (k, v)
-                tmp_file.write(line)
-            tmp_file.close()
-            self.cookies_pool[key] = tmp_file.name
-
-        return self.cookies_pool[key]
 
     def new_wget_task(self, tasktype, filename, dl_url, cookies_values):
         log = self.logger
 
         uid = str(time.time()).replace('.', '')
-        cookies_file = self.make_cookies_file(tasktype, cookies_values)
 
         taskinfo = dict(uid = uid,
                         tasktype = tasktype,
                         filename = filename,
                         dl_dir = DEFAULT_DOWN_DIR,
                         dl_url = dl_url,
-                        cookies_file = cookies_file,
+                        dl_headers = "Cookie: " + "".join(map(lambda s:"%s=%s; " % s, cookies_values)),
                         retry_time = 0,
                         )
 
@@ -217,10 +198,10 @@ class ThunderTaskManager(object):
         filename = taskinfo["filename"]
         dl_url = taskinfo["dl_url"]
         dl_dir = taskinfo["dl_dir"]
-        cookies_file = taskinfo["cookies_file"]
+        dl_headers = taskinfo["dl_headers"]
 
-        wget_cmd = ['/usr/bin/wget', '--continue', '-O', filename, 
-                '--progress=dot', '--load-cookies', cookies_file,  dl_url]
+        wget_cmd = ['/usr/bin/wget', '--continue', '--header', dl_headers, '-O', filename, 
+                '--progress=dot', dl_url]
 
         dl_thread = DownloadThread(wget_cmd, dl_dir)
         dl_thread.start()
