@@ -126,7 +126,7 @@ function update_tasks() {
 
                     if ($("#task_control_" + uid).length == 0){
                         $("#task_control_tpl").clone()
-                                .attr("id","task_control_" + uid).appendTo("#taskcontainer")
+                                .attr("id","task_control_" + uid).attr("taskuid", uid).appendTo("#taskcontainer")
                                 .children("h2").html($(this).html());
                     }
 
@@ -143,7 +143,8 @@ function update_tasks() {
                                         $(logwindow).append(data.line.replace(/\n/g, '<br /> \n'));
                                     }
                                     if (data.status != "Running") {
-                                        $(tc).stopTime("timer"+uid);
+                                        if (data.need_retry == false)
+                                            $(tc).stopTime("timer"+uid);
                                         update_tasks();
                                         $(tc).children("h2").children("em").text(data.status);
                                         $(logwindow).append("subprocess ended.<br />");
@@ -194,6 +195,14 @@ $(function () {
         $(".taskinfo:visible div.logwindow").empty();
         return false;
     });
+    $("#forcerestart").click(function (){
+        var uid = $("div[id^=task_control_]:visible").attr('taskuid');
+        $.get(API_BASE + "/force_restart/" + uid).success(function (data) {
+        });
+        update_tasks();
+        $("a[uid=" + uid + "]").click();
+        return false;
+    });
     update_tasks();
     
     
@@ -223,6 +232,7 @@ $(function () {
     <ul id="ctl_buttons">
         <li><a id="pauselog" href="#">PauseLog</a></li>
         <li><a id="clearlog" href="#">ClearLog</a></li>
+        <li><a id="forcerestart" href="#">ForceRestart</a></li>
     </ul>
 </div>
 
