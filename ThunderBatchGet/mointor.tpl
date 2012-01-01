@@ -143,7 +143,7 @@ function update_tasks() {
                                         $(logwindow).append(data.line.replace(/\n/g, '<br /> \n'));
                                     }
                                     if (data.status != "Running") {
-                                        if (data.need_retry == false)
+                                        if (data.is_task_finished == false)
                                             $(tc).stopTime("timer"+uid);
                                         update_tasks();
                                         $(tc).children("h2").children("em").text(data.status);

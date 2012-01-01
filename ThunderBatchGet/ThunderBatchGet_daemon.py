@@ -8,8 +8,6 @@ import threading
 from threading import Thread
 from subprocess import Popen, PIPE
 from select import select
-from tempfile import NamedTemporaryFile
-import hashlib
 
 import bottle
 bottle.debug(True)
@@ -46,13 +44,14 @@ def LogException(func):
 
 class DownloadThread(Thread):
 
-    def __init__(self, cmd_args, cwd = None):
+    def __init__(self, cmd_args, queue, cwd = None):
         super(DownloadThread, self).__init__(name = type(self).__name__)
         self.logger = logging.getLogger(type(self).__name__)
         self.daemon = True
+
         self.cmd_args = cmd_args
         self.cwd = cwd
-        self.deque = deque(maxlen = 2048)
+        self.deque = queue
         self.retcode = None
         self.subprocess = None
 
@@ -97,32 +96,13 @@ class DownloadThread(Thread):
 
                 break
 
-    pop = lambda s:s.deque.popleft()
 
     @property
-    def status(self):
-        status = ''
-        if self.is_alive():
-            status = "Running"
-        else:
-            if self.retcode == 0:
-                status = "Done"
-            elif self.retcode == 3:
-                status = "IO Error"
-            else:
-                status = "Error"
-
-        return status
-
-    @property
-    def need_retry(self):
+    def is_wget_error(self):
         retcode = self.retcode
-        if not self.is_alive() and (retcode is not None) and (retcode != 0) and (retcode != 3):
-            return True
-        else:
-            return False
+        return (not self.is_alive()) and (retcode is not None) and (retcode != 0) and (retcode != 3)
 
-    is_finished = property(lambda s:s.retcode == 0)
+    is_subprocess_finished = property(lambda s:s.retcode == 0)
 
     def suicide(self):
         log = self.logger
@@ -134,6 +114,98 @@ class DownloadThread(Thread):
                 while self.subprocess.poll() is None:
                     log.debug("wait for subprocess end.")
                     time.sleep(0.5)
+
+class DownloadTask(object):
+
+    uid = None
+    tasktype = None
+    filename = None
+    dl_dir = None
+    dl_url = None
+    dl_headers = None
+    cookies_values = None
+    retry_time = 0
+    dl_thread = None
+
+    def __init__(self, *args, **kw):
+        self.__dict__.update(**kw)
+        self.logger = logging.getLogger(type(self).__name__)
+
+        self.uid = str(time.time()).replace('.', '')
+        self.dl_headers = "Cookie: " + "".join(map(lambda s:"%s=%s; " % s, self.cookies_values))
+        self.deque = deque(maxlen = 8 * 1024)
+
+    def start_thread(self):
+        self.retry_time += 1
+        self.logger.info("thread start")
+        wget_cmd = ['/usr/bin/wget', '--continue', '--header', self.dl_headers, '-O', self.filename, 
+                '--progress=dot', self.dl_url]
+        self.dl_thread = DownloadThread(wget_cmd, self.deque, self.dl_dir)
+        self.dl_thread.start()
+
+    def force_restart(self):
+        log = self.logger
+
+        if self.dl_thread is not None and self.dl_thread.is_alive():
+            self.dl_thread.suicide()
+            log.debug("thread is alive, join")
+            self.dl_thread.join()
+
+        self.dl_thread = None
+        self.retry_time = 0
+        self.start_thread()
+        log.debug("thread restarted, id :%s" % str(self.dl_thread.ident))
+
+    @property
+    def need_retry(self):
+        wget_err = self.dl_thread.is_wget_error
+        filepath = os.path.join(self.dl_dir, self.filename)
+        log = self.logger
+        if wget_err:
+            if os.path.exists(filepath) and os.path.getsize(filepath) > 0 and self.retry_time > 5:
+                log.info("task '%s' might finished. if not, try remove this file: '%s'" % (self.uid, filepath))
+                return False
+            elif self.retry_time > 10:
+                log.info("task '%s' failed for 10 times. skip forever" % str(self.uid))
+                return False
+
+        return wget_err
+
+    @property
+    def is_task_finished(self):
+        if (self.dl_thread is None):
+            return True
+        elif self.dl_thread.is_subprocess_finished and not self.dl_thread.is_alive():
+            self.dl_thread = None
+            self.logger.info("task %d finished, remove thread obj" % self.uid)
+            return True
+        else:
+            return False
+
+    @property
+    def status(self):
+        thread = self.dl_thread
+        if thread is None:
+            return "Done"
+
+        retcode = self.dl_thread.retcode
+        status = ''
+        if thread.is_alive():
+            status = "Running"
+        else:
+            if retcode == 0:
+                status = "Done"
+            elif retcode == 3:
+                status = "IO Error"
+            else:
+                status = "Error"
+
+        return status
+
+    report_dict = property(lambda s:dict(status = s.status, 
+                                        retry_time = s.retry_time, 
+                                        is_task_finished = s.is_task_finished))
+
 
 class TaskMointorThread(Thread):
 
@@ -153,28 +225,9 @@ class TaskMointorThread(Thread):
             keys = tuple(task_pool.keys())
             for k in keys:
                 t = task_pool[k]
-
-                if "dl_thread" not in t:
-                    logger.info("skiped " + str(k))
-                    continue
-
-                dl_thread = t["dl_thread"]
-
-                if dl_thread.is_finished:
-                    logger.info("task finished, remove thread obj" + str(k))
-                    del t["dl_thread"]
-
-                if dl_thread.need_retry:
-                    filepath = os.path.join(t["dl_dir"], t["filename"])
-                    if os.path.exists(filepath) and os.path.getsize(filepath) > 0 and t["retry_time"] > 5:
-                        logger.info("task '%s' might finished. if not, try remove this file: '%s'" % (k, filepath))
-                    elif t["retry_time"] > 10:
-                        logger.info("task '%s' failed for 10 times. skip forever" % k)
-                    else:
-                        logger.info("retry task " + str(k))
-                        t["retry_time"] += 1
-                        t["dl_thread"] = dl_thread = self.task_mgr.new_task_thread(t)
-
+                if t.is_task_finished and t.need_retry:
+                    logger.info("retry task " + str(t.uid))
+                    t.force_restart()
             time.sleep(3)
 
 
@@ -185,73 +238,28 @@ class ThunderTaskManager(object):
         self.thread_pool = {}
 
     def new_wget_task(self, tasktype, filename, dl_url, cookies_values):
-        log = self.logger
-
-        uid = str(time.time()).replace('.', '')
-
-        taskinfo = dict(uid = uid,
-                        tasktype = tasktype,
+        task = DownloadTask(tasktype = tasktype,
                         filename = filename,
                         dl_dir = DEFAULT_DOWN_DIR,
                         dl_url = dl_url,
-                        dl_headers = "Cookie: " + "".join(map(lambda s:"%s=%s; " % s, cookies_values)),
-                        retry_time = 0,
-                        thread_lock = threading.Lock()
+                        cookies_values = cookies_values,
                         )
-
-        dl_thread = self.new_task_thread(taskinfo)
-        taskinfo["dl_thread"] = dl_thread
-
-        self.thread_pool[uid] = taskinfo
-
-        log.debug("task %s thread id :%s" % (uid, str(dl_thread.ident)))
-
+        uid = task.uid
+        self.thread_pool[uid] = task
+        task.start_thread()
         return uid
 
-    def new_task_thread(self, taskinfo):
-        filename = taskinfo["filename"]
-        dl_url = taskinfo["dl_url"]
-        dl_dir = taskinfo["dl_dir"]
-        dl_headers = taskinfo["dl_headers"]
-
-        wget_cmd = ['/usr/bin/wget', '--continue', '--header', dl_headers, '-O', filename, 
-                '--progress=dot', dl_url]
-
-        dl_thread = DownloadThread(wget_cmd, dl_dir)
-        dl_thread.start()
-
-        return dl_thread
-
     def force_restart(self, uid):
-        log = self.logger
-        taskinfo = self.thread_pool[uid]
-
-        lock = taskinfo["thread_lock"]
-        log.debug("force restart acquire lock")
-        lock.acquire()
-
-        thread = taskinfo["dl_thread"]
-        thread.suicide()
-        if thread.is_alive():
-            log.debug("thread is alive, join")
-            thread.join()
-
-        taskinfo["dl_thread"] = None
-        taskinfo["retry_time"] = 0
-        dl_thread = taskinfo["dl_thread"] = self.new_task_thread(taskinfo)
-        lock.release()
-        log.debug("force restart release lock")
-        log.debug("thread restarted, id :%s" % str(dl_thread.ident))
-
+        self.thread_pool[uid].force_restart()
 
     def list_all_tasks(self):
         p = self.thread_pool
         self.logger.debug("list all keys: " + str(self.thread_pool.keys()))
-        return map(lambda k:dict(uid = p[k]["uid"], 
-            tasktype = p[k]["tasktype"],
-            filename = p[k]["filename"], 
-            status = p[k]["dl_thread"].status if "dl_thread" in p[k] else "Done"), 
-            sorted(self.thread_pool.keys()))
+        return map(lambda k:dict(uid = p[k].uid, 
+                                tasktype = p[k].tasktype,
+                                filename = p[k].filename, 
+                                status = p[k].status), 
+                   sorted(self.thread_pool.keys()))
 
 
 @route("/thunder_single_task")
@@ -286,34 +294,27 @@ def list_all_tasks():
 def query_task_log(tid = None):
     assert tid is not None, "need tid"
 
-    taskinfo = task_mgr.thread_pool.get(tid)
-    if taskinfo is None:
+    task = task_mgr.thread_pool.get(tid)
+    if task is None:
         abort(404, "taskid not found, " + tid)
 
-    if "dl_thread" in taskinfo:
-        lock = taskinfo["thread_lock"]
-
-        logger.debug("query acquire lock")
-
-        lock.acquire()
-        thread = taskinfo["dl_thread"]
+    line = ''
+    if not task.is_task_finished:
+        queue = task.deque
         output = cStringIO.StringIO()
 
         while True:
             try:
-                line = thread.pop()
+                line = queue.popleft()
                 output.write(line)
             except IndexError:
                 break
        
-        lock.release()
-        logger.debug("query release lock")
         line = output.getvalue()
         output.close()
-        ret = dict(status = thread.status, line = line, retry_time = taskinfo["retry_time"], need_retry = (taskinfo["retry_time"] < 6))
-    else:
-        ret = dict(status = "Done", line = "", retry_time = taskinfo["retry_time"], need_retry = False)
 
+    ret = task.report_dict
+    ret.update(line = line)
     return ret
 
 @route("/force_restart/:tid")
