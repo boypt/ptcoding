@@ -66,7 +66,7 @@ class DownloadThread(Thread):
         fcntl.fcntl(out, fcntl.F_SETFL, os.O_NONBLOCK)
         fcntl.fcntl(err, fcntl.F_SETFL, os.O_NONBLOCK)
 
-        logger.debug("run cmd: " + str(self.cmd_args))
+        logger.debug("run cmd: '%s'" % "' '".join(self.cmd_args))
 
         while True:
             try:
@@ -158,6 +158,8 @@ class DownloadTask(object):
 
     @property
     def need_retry(self):
+        if self.dl_thread is None:
+            return False
         wget_err = self.dl_thread.is_wget_error
         filepath = os.path.join(self.dl_dir, self.filename)
         log = self.logger
@@ -177,7 +179,7 @@ class DownloadTask(object):
             return True
         elif self.dl_thread.is_subprocess_finished and not self.dl_thread.is_alive():
             self.dl_thread = None
-            self.logger.info("task %d finished, remove thread obj" % self.uid)
+            self.logger.info("task %s finished, remove thread obj" % self.uid)
             return True
         else:
             return False
@@ -205,6 +207,22 @@ class DownloadTask(object):
     report_dict = property(lambda s:dict(status = s.status, 
                                         retry_time = s.retry_time, 
                                         is_task_finished = s.is_task_finished))
+
+    def log_output(self):
+        log = ''
+        queue = self.deque
+        if len(queue) > 0:
+            output = cStringIO.StringIO()
+            while True:
+                try:
+                    line = queue.popleft()
+                    output.write(line)
+                except IndexError:
+                    break
+            log = output.getvalue()
+            output.close()
+
+        return log
 
 
 class TaskMointorThread(Thread):
@@ -298,21 +316,7 @@ def query_task_log(tid = None):
     if task is None:
         abort(404, "taskid not found, " + tid)
 
-    line = ''
-    if not task.is_task_finished:
-        queue = task.deque
-        output = cStringIO.StringIO()
-
-        while True:
-            try:
-                line = queue.popleft()
-                output.write(line)
-            except IndexError:
-                break
-       
-        line = output.getvalue()
-        output.close()
-
+    line = task.log_output()
     ret = task.report_dict
     ret.update(line = line)
     return ret

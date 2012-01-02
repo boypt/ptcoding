@@ -135,7 +135,7 @@ function update_tasks() {
                         .everyTime(500, "timer"+uid, function (){
                             $.getJSON(API_BASE + "/query_task_log/" + uid)
                                 .success(function (data){
-                                    console.log(data);
+                                    //console.log(data);
                                     var tc = $("#task_control_" + uid);
                                     var logwindow = $(tc).children("div.logwindow");
 
@@ -143,13 +143,13 @@ function update_tasks() {
                                         $(logwindow).append(data.line.replace(/\n/g, '<br /> \n'));
                                     }
                                     if (data.status != "Running") {
-                                        if (data.is_task_finished == false)
+                                        if (data.status == "Done")
                                             $(tc).stopTime("timer"+uid);
                                         update_tasks();
                                         $(tc).children("h2").children("em").text(data.status);
                                         $(logwindow).append("subprocess ended.<br />");
-                                        if (data.retry_time > 0) 
-                                            $(logwindow).append("Task Retried " + data.retry_time + " time(s).<br />");
+                                        if (data.retry_time > 1) 
+                                            $(logwindow).append("Task Retried " + data.retry_time + " times.<br />");
                                     }
 
                                     // scroll to buttom
@@ -203,6 +203,7 @@ $(function () {
         $("a[uid=" + uid + "]").click();
         return false;
     });
+    $("#tasks").everyTime(5000, "timer_tasks", update_tasks);
     update_tasks();
     
     
