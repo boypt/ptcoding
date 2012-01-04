@@ -44,14 +44,15 @@ def LogException(func):
 
 class DownloadThread(Thread):
 
-    def __init__(self, cmd_args, queue, cwd = None):
+    def __init__(self, cmd_args, std_deque, err_deque, cwd = None):
         super(DownloadThread, self).__init__(name = type(self).__name__)
         self.logger = logging.getLogger(type(self).__name__)
         self.daemon = True
 
         self.cmd_args = cmd_args
         self.cwd = cwd
-        self.deque = queue
+        self.std_deque = std_deque
+        self.err_deque = err_deque
         self.retcode = None
         self.subprocess = None
 
@@ -61,19 +62,20 @@ class DownloadThread(Thread):
         self.subprocess = p = Popen(self.cmd_args, bufsize = 4096, cwd = self.cwd, stdout=PIPE, stderr=PIPE, close_fds=True)
         out, err= p.stdout, p.stderr
         wait_list = [out, err]
+        fn_dict = {out.fileno():self.std_deque, err.fileno():self.err_deque}
          
         #async
         fcntl.fcntl(out, fcntl.F_SETFL, os.O_NONBLOCK)
         fcntl.fcntl(err, fcntl.F_SETFL, os.O_NONBLOCK)
 
         logger.debug("run cmd: '%s'" % "' '".join(self.cmd_args))
-
         while True:
             try:
                 rlist, wl, el = select(wait_list, [], [], 8)
                 for fd in rlist:
-                    o = fd.read()
-                    self.deque.append(o)
+                    o = fd.read() # async read.
+                    dq = fn_dict[fd.fileno()]
+                    dq.append(o)
 
             except IOError, e:
                 logger.debug("IOError" + str(e))
@@ -81,20 +83,12 @@ class DownloadThread(Thread):
 
             if p.poll() is not None:
                 ret = self.retcode = p.returncode
-                last_log = ''
-
-                for pipe in wait_list:
-                    o = pipe.read()
-                    if len(o) > 0:
-                        self.deque.append(o)
-                        last_log += o
-                    pipe.close()
-
+                out.close()
+                err.close()
                 logger.debug("wget ended. exit code: '%d'" % ret)
-                if ret != 0:
-                    logger.debug("wget lastlog: " + last_log)
-
                 break
+
+            time.sleep(0.1)
 
 
     @property
@@ -133,14 +127,15 @@ class DownloadTask(object):
 
         self.uid = str(time.time()).replace('.', '')
         self.dl_headers = "Cookie: " + "".join(map(lambda s:"%s=%s; " % s, self.cookies_values))
-        self.deque = deque(maxlen = 8 * 1024)
+        self.std_deque = deque(maxlen = 8 * 1024)
+        self.err_deque = deque(maxlen = 8 * 1024)
 
     def start_thread(self):
         self.retry_time += 1
         self.logger.info("thread start")
         wget_cmd = ['/usr/bin/wget', '--continue', '--header', self.dl_headers, '-O', self.filename, 
                 '--progress=dot', self.dl_url]
-        self.dl_thread = DownloadThread(wget_cmd, self.deque, self.dl_dir)
+        self.dl_thread = DownloadThread(wget_cmd, self.std_deque, self.err_deque, self.dl_dir)
         self.dl_thread.start()
 
     def force_restart(self):
@@ -210,17 +205,17 @@ class DownloadTask(object):
 
     def log_output(self):
         log = ''
-        queue = self.deque
-        if len(queue) > 0:
-            output = cStringIO.StringIO()
-            while True:
-                try:
-                    line = queue.popleft()
-                    output.write(line)
-                except IndexError:
-                    break
-            log = output.getvalue()
-            output.close()
+        for queue in (self.std_deque, self.err_deque):
+            if len(queue) > 0:
+                output = cStringIO.StringIO()
+                while True:
+                    try:
+                        line = queue.popleft()
+                        output.write(line)
+                    except IndexError:
+                        break
+                log += output.getvalue()
+                output.close()
 
         return log
 
