@@ -8,6 +8,7 @@ import threading
 from threading import Thread
 from subprocess import Popen, PIPE
 from select import select
+import select
 
 import bottle
 bottle.debug(True)
@@ -59,36 +60,49 @@ class DownloadThread(Thread):
     def run(self):
         logger = self.logger
         logger.debug("init")
-        self.subprocess = p = Popen(self.cmd_args, bufsize = 4096, cwd = self.cwd, stdout=PIPE, stderr=PIPE, close_fds=True)
-        out, err= p.stdout, p.stderr
-        wait_list = [out, err]
+        self.subprocess = proc = Popen(self.cmd_args, bufsize = 4096, cwd = self.cwd, stdout=PIPE, stderr=PIPE, close_fds=True)
+        out, err= proc.stdout, proc.stderr
         fn_dict = {out.fileno():self.std_deque, err.fileno():self.err_deque}
+
+        epoll = select.epoll()
+        epoll.register(out.fileno(), select.EPOLLIN)
+        epoll.register(err.fileno(), select.EPOLLIN)
          
         #async
         fcntl.fcntl(out, fcntl.F_SETFL, os.O_NONBLOCK)
         fcntl.fcntl(err, fcntl.F_SETFL, os.O_NONBLOCK)
 
-        logger.debug("run cmd: '%s'" % "' '".join(self.cmd_args))
-        while True:
-            try:
-                rlist, wl, el = select(wait_list, [], [], 8)
-                for fd in rlist:
-                    o = fd.read() # async read.
-                    dq = fn_dict[fd.fileno()]
-                    dq.append(o)
+        try:
+            logger.debug("run cmd: '%s'" % "' '".join(self.cmd_args))
+            exit_flag = False
 
-            except IOError, e:
-                logger.debug("IOError" + str(e))
-                continue
+            while True:
+                if proc.poll() is not None:
+                    exit_flag = True
 
-            if p.poll() is not None:
-                ret = self.retcode = p.returncode
-                out.close()
-                err.close()
-                logger.debug("wget ended. exit code: '%d'" % ret)
-                break
+                events = epoll.poll()
+                for fileno, event in events:
+                    if event & select.EPOLLIN:
+                        dq = fn_dict[fileno]
+                        o = os.read(fileno, 65536)
+                        dq.append(o)
 
-            time.sleep(0.1)
+                if exit_flag:
+                    ret = self.retcode = proc.returncode
+                    logger.debug("wget ended. exit code: '%d'" % ret)
+                    break
+
+        except Exception, e:
+            logger.debug(str(e), exc_info = True)
+
+        finally:
+            epoll.unregister(err.fileno())
+            epoll.unregister(out.fileno())
+            epoll.close()
+            out.close()
+            err.close()
+
+            #time.sleep(0.1)
 
 
     @property
@@ -205,6 +219,7 @@ class DownloadTask(object):
 
     def log_output(self):
         log = ''
+        self.logger.debug("len %d,%d" % (len(self.std_deque), len(self.err_deque)))
         for queue in (self.std_deque, self.err_deque):
             if len(queue) > 0:
                 output = cStringIO.StringIO()
