@@ -94,6 +94,7 @@ class DownloadThread(Thread):
 
         except Exception, e:
             logger.debug(str(e), exc_info = True)
+            raise
 
         finally:
             epoll.unregister(err.fileno())
@@ -110,7 +111,8 @@ class DownloadThread(Thread):
         retcode = self.retcode
         return (not self.is_alive()) and (retcode is not None) and (retcode != 0) and (retcode != 3)
 
-    is_subprocess_finished = property(lambda s:s.retcode == 0)
+    is_subprocess_exit_0 = property(lambda s:s.retcode == 0)
+    is_subprocess_finished = property(lambda s:s.subprocess.poll() is not None)
 
     def suicide(self):
         log = self.logger
@@ -135,6 +137,8 @@ class DownloadTask(object):
     retry_time = 0
     dl_thread = None
 
+    __str__ = lambda s : "[uid='%s',tasktype='%s',filename='%s',retry_time='%s',dl_thread='%s',,,finished='%s',need_retry='%s']" % (s.uid, s.tasktype, s.filename, s.retry_time, s.dl_thread, s.is_task_finished, s.need_retry)
+
     def __init__(self, *args, **kw):
         self.__dict__.update(**kw)
         self.logger = logging.getLogger(type(self).__name__)
@@ -152,7 +156,8 @@ class DownloadTask(object):
         self.dl_thread = DownloadThread(wget_cmd, self.std_deque, self.err_deque, self.dl_dir)
         self.dl_thread.start()
 
-    def force_restart(self):
+    def force_restart(self, reset_cnt = False):
+        self.logger.debug("call force_restart, ")
         log = self.logger
 
         if self.dl_thread is not None and self.dl_thread.is_alive():
@@ -161,7 +166,8 @@ class DownloadTask(object):
             self.dl_thread.join()
 
         self.dl_thread = None
-        self.retry_time = 0
+        if reset_cnt:
+            self.retry_time = 0
         self.start_thread()
         log.debug("thread restarted, id :%s" % str(self.dl_thread.ident))
 
@@ -186,12 +192,12 @@ class DownloadTask(object):
     def is_task_finished(self):
         if (self.dl_thread is None):
             return True
-        elif self.dl_thread.is_subprocess_finished and not self.dl_thread.is_alive():
+        elif self.dl_thread.is_subprocess_exit_0 and not self.dl_thread.is_alive():
             self.dl_thread = None
             self.logger.info("task %s finished, remove thread obj" % self.uid)
             return True
         else:
-            return False
+            return self.dl_thread.is_subprocess_finished
 
     @property
     def status(self):
@@ -253,9 +259,10 @@ class TaskMointorThread(Thread):
             keys = tuple(task_pool.keys())
             for k in keys:
                 t = task_pool[k]
+                logger.debug(str(t))
                 if t.is_task_finished and t.need_retry:
                     logger.info("retry task " + str(t.uid))
-                    t.force_restart()
+                    t.force_restart(reset_cnt = False)
             time.sleep(3)
 
 
@@ -278,7 +285,7 @@ class ThunderTaskManager(object):
         return uid
 
     def force_restart(self, uid):
-        self.thread_pool[uid].force_restart()
+        self.thread_pool[uid].force_restart(reset_cnt = True)
 
     def list_all_tasks(self):
         p = self.thread_pool

@@ -150,6 +150,11 @@ function update_tasks() {
                                         $(logwindow).append("subprocess ended.<br />");
                                         if (data.retry_time > 1) 
                                             $(logwindow).append("Task Retried " + data.retry_time + " times.<br />");
+                                        if (data.retry_time > 5) {
+                                            $(logwindow).append("Update stoped.");
+                                            $(tc).stopTime("timer"+uid);
+                                        }
+
                                     }
 
                                     // scroll to buttom
