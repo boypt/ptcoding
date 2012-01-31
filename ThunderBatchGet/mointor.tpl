@@ -101,7 +101,7 @@ a.taskbuttom {
 </style>
 <script type="text/javascript">
 
-API_BASE = "http://127.0.0.1:8080"
+API_BASE = ""
 
 
 function update_tasks() {
