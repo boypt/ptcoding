@@ -159,7 +159,7 @@ function update_tasks() {
 
                                     // scroll to buttom
                                     $(logwindow).animate(
-                                        { "scrollTop": $(logwindow).prop("scrollHeight") }, 100);
+                                        { "scrollTop": $(logwindow).prop("scrollHeight") }, 0);
                             })
                                 .error(function (err) {
                                     console.log(err);
