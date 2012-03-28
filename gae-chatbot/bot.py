@@ -139,7 +139,7 @@ def add_twitter():
             uri = auth.get_authorization_url()
             session["request_token"] = (auth.request_token.key, auth.request_token.secret)
             session.save()
-            redirect(uri)
+            yield '<a href="{0}">Add your twitter</a>'.format(uri)
         else:
             session["request_token"] = None
             session.save()
