@@ -19,10 +19,33 @@ session_opts = {
 }
 
 
-consumer_key="4pwLIKnVUmCJipfUrsPlA"
-consumer_secret="GiV7yylfiAZ1P4qVBf6yWuaQ6BYHhJ25EjzEWRkFk"
-app_url = "http://ptchatbot.appspot.com"
-#app_url = "http://127.0.0.1:8080"
+consumer_key=None
+consumer_secret=None
+group_addr=None
+app_url = None
+
+def config_check(func):
+    def __check(*args, **kwargs):
+        global consumer_key, consumer_secret, group_addr, app_url
+        if all(map(lambda x:x is None, (consumer_key, consumer_secret, group_addr, app_url))):
+            conf_res = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "consumer_token")
+            if conf_res.count() > 0:
+                conf = conf_res[0]
+                consumer_key, consumer_secret = eval(conf.config_value)
+                conf_addr = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "group_addr")
+                addr = conf_addr[0]
+                group_addr = addr.config_value
+                conf_url = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "app_url")
+                url = conf_url[0]
+                app_url = url.config_value
+                return func(*args, **kwargs)
+            else:
+                redirect("/tasks/config")
+        else:
+            return func(*args, **kwargs)
+
+    return __check
+
 
 class TwitterUser(db.Model):
     user = db.UserProperty()
@@ -32,8 +55,48 @@ class TwitterUser(db.Model):
     last_retweeted_id = db.IntegerProperty()
     last_updated = db.DateTimeProperty(auto_now_add=True)
 
+class AppConfig(db.Model):
+    config_key = db.StringProperty()
+    config_value = db.StringProperty()
+
+
+
+@route('/tasks/config')
+def config():
+    conf_res = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "consumer_token")
+    if conf_res.count() > 1:
+        redirect("/login")
+    else:
+        html = """<form name="input" action="/tasks/config" method="post">
+        key: <input type="text" name="key" /> 
+        secret: <input type="text" name="secret" /> 
+        group_addr: <input type="text" name="group_addr" /> 
+        app_url: <input type="text" name="app_url" /> 
+        <input type="submit" value="Submit" /> </form>"""
+        return html
+
+@post("/tasks/config")
+def config_post():
+    config_key = request.POST["key"]
+    config_sec = request.POST["secret"]
+    config_addr = request.POST["group_addr"]
+    config_url = request.POST["app_url"]
+
+    conf_res = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "consumer_token")
+    if conf_res.count() < 1:
+        cosm_tkn = AppConfig(config_key = "consumer_token", config_value = repr((config_key, config_sec)))
+        cosm_tkn.put()
+        group_addr = AppConfig(config_key = "group_addr", config_value = config_addr)
+        group_addr.put()
+
+        app_url = AppConfig(config_key = "app_url", config_value = config_url)
+        app_url.put()
+
+        yield "set"
+
 
 @route('/testsend')
+@config_check
 def testsend_get():
     html = """<form name="input" action="/testsend" method="post">
 Text: <input type="text" name="msg" /> <input type="submit" value="Submit" />
@@ -41,6 +104,7 @@ Text: <input type="text" name="msg" /> <input type="submit" value="Submit" />
     return html
 
 @post("/testsend")
+@config_check
 def testsend_post():
     msg = request.POST["msg"]
     addr = "linux-party@im.partych.at"
@@ -58,6 +122,7 @@ def test_login():
         yield '<a href="{0}">Logout</a>'.format(users.create_logout_url("/login"))
 
 @route('/add_twitter')
+@config_check
 def add_twitter():
     user = users.get_current_user()
     if user is None:
@@ -99,6 +164,7 @@ def add_twitter():
             yield "Auth Succ." + usr.twitter_id
 
 @route('/tasks/newretweeted')
+@config_check
 def newretweeted():
     usr_res = db.GqlQuery("SELECT * FROM TwitterUser")
 
@@ -107,7 +173,7 @@ def newretweeted():
         auth.set_access_token(usr.twitter_access_token, usr.twitter_access_token_secret)
 
         api = tweepy.API(auth)
-        my_screen_name = api.me().screen_name
+        #my_screen_name = api.me().screen_name
         rts = api.retweeted_by_me(since_id = usr.last_retweeted_id, count = 5)
 
         if len(rts) > 0:
@@ -115,15 +181,16 @@ def newretweeted():
             usr.put()
             for i, t in enumerate(reversed(rts)):
                 tweet = u"@{0}: {1}".format(t.retweeted_status.user.screen_name, t.text).encode("utf-8")
-                taskqueue.add(url='/send_retweeted_msg', countdown = i * 60,
-                        params=dict(twid = my_screen_name, tweet = tweet))
+                taskqueue.add(url='/send_retweeted_msg', countdown = i * 120,
+                        params=dict(tweet = tweet))
 
             yield "retweeted {0}".format(len(rts))
         else:
-            yield "no new retweet for " + my_screen_name
+            yield "no new retweet "
 
 
 @route("/test_put")
+@config_check
 def test_put():
 
     twitter_id = "PT"
@@ -133,12 +200,10 @@ def test_put():
 
 
 @post("/send_retweeted_msg")
+@config_check
 def send_retweeted_msg():
     tweet = request.POST["tweet"]
-    twitter_id = request.POST["twid"]
-    msg = "{0} RT: {1}".format(twitter_id, tweet)
-    addr = "linux-party@im.partych.at"
-    status_code = xmpp.send_message(addr, msg)
+    status_code = xmpp.send_message(group_addr, tweet)
     
 
 #@post("/_ah/xmpp/message/chat/")
