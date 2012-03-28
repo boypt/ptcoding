@@ -166,7 +166,8 @@ def add_twitter():
 @route('/tasks/newretweeted')
 @config_check
 def newretweeted():
-    usr_res = db.GqlQuery("SELECT * FROM TwitterUser")
+
+    usr_res = TwitterUser.all()
 
     for usr in usr_res:
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
