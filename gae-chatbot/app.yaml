@@ -1,0 +1,18 @@
+application: ptchatbot
+version: 3
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /tasks/.*
+  script: bot.app
+  login: admin
+
+- url: /.*
+  script: bot.app
+
+inbound_services:
+- xmpp_subscribe
+- xmpp_error
+#- xmpp_message

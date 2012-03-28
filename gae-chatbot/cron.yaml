@@ -1,0 +1,6 @@
+cron:
+- description: check new retweeted
+  url: /tasks/newretweeted
+  schedule: every 5 minutes from 9:00 to 2:00
+  timezone: Asia/Shanghai
+
