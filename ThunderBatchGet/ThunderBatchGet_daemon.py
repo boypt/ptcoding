@@ -19,7 +19,7 @@ import cStringIO
 
 logging.basicConfig(filename = "/tmp/thunderbatch.log",
         format = "%(asctime)s %(threadName)s(%(thread)s):%(name)s:%(message)s",
-                            level = logging.DEBUG)
+                            level = logging.INFO)
 
 DEFAULT_DOWN_DIR = os.path.expanduser("~/Downloads")
 
@@ -38,7 +38,7 @@ def LogException(func):
         try:
             return func(*args, **kwargs)
         except:
-            logger.debug("Exception", exc_info = True)
+            logger.info("Exception", exc_info = True)
             raise
     return __check
 
@@ -59,7 +59,7 @@ class DownloadThread(Thread):
 
     def run(self):
         logger = self.logger
-        logger.debug("init")
+        logger.info("init")
         self.subprocess = proc = Popen(self.cmd_args, bufsize = 4096, cwd = self.cwd, stdout=PIPE, stderr=PIPE, close_fds=True)
         out, err= proc.stdout, proc.stderr
         fn_dict = {out.fileno():self.std_deque, err.fileno():self.err_deque}
@@ -73,7 +73,7 @@ class DownloadThread(Thread):
         fcntl.fcntl(err, fcntl.F_SETFL, os.O_NONBLOCK)
 
         try:
-            logger.debug("run cmd: '%s'" % "' '".join(self.cmd_args))
+            logger.info("run cmd: '%s'" % "' '".join(self.cmd_args))
             exit_flag = False
 
             while True:
@@ -89,11 +89,11 @@ class DownloadThread(Thread):
 
                 if exit_flag:
                     ret = self.retcode = proc.returncode
-                    logger.debug("wget ended. exit code: '%d'" % ret)
+                    logger.info("wget ended. exit code: '%d'" % ret)
                     break
 
         except Exception, e:
-            logger.debug(str(e), exc_info = True)
+            logger.info(str(e), exc_info = True)
             raise
 
         finally:
@@ -116,13 +116,13 @@ class DownloadThread(Thread):
 
     def suicide(self):
         log = self.logger
-        log.debug("thread suicide")
+        log.info("thread suicide")
         if self.is_alive():
             if self.subprocess.poll() is None:
-                log.debug("subprocess living.. terminate it")
+                log.info("subprocess living.. terminate it")
                 self.subprocess.terminate()
                 while self.subprocess.poll() is None:
-                    log.debug("wait for subprocess end.")
+                    log.info("wait for subprocess end.")
                     time.sleep(0.5)
 
 class DownloadTask(object):
@@ -157,19 +157,19 @@ class DownloadTask(object):
         self.dl_thread.start()
 
     def force_restart(self, reset_cnt = False):
-        self.logger.debug("call force_restart, ")
+        self.logger.info("call force_restart, ")
         log = self.logger
 
         if self.dl_thread is not None and self.dl_thread.is_alive():
             self.dl_thread.suicide()
-            log.debug("thread is alive, join")
+            log.info("thread is alive, join")
             self.dl_thread.join()
 
         self.dl_thread = None
         if reset_cnt:
             self.retry_time = 0
         self.start_thread()
-        log.debug("thread restarted, id :%s" % str(self.dl_thread.ident))
+        log.info("thread restarted, id :%s" % str(self.dl_thread.ident))
 
     @property
     def need_retry(self):
