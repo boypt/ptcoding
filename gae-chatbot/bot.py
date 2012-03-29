@@ -21,23 +21,17 @@ session_opts = {
 
 consumer_key=None
 consumer_secret=None
-group_addr=None
 app_url = None
 
 def config_check(func):
     def __check(*args, **kwargs):
-        global consumer_key, consumer_secret, group_addr, app_url
-        if all(map(lambda x:x is None, (consumer_key, consumer_secret, group_addr, app_url))):
-            conf_res = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "consumer_token")
-            if conf_res.count() > 0:
-                conf = conf_res[0]
-                consumer_key, consumer_secret = eval(conf.config_value)
-                conf_addr = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "group_addr")
-                addr = conf_addr[0]
-                group_addr = addr.config_value
-                conf_url = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "app_url")
-                url = conf_url[0]
-                app_url = url.config_value
+        global consumer_key, consumer_secret, app_url
+        if all(map(lambda x:x is None, (consumer_key, consumer_secret, app_url))):
+            app_conf = AppConfig.get_by_key_name("consumer_token")
+            app_addr = AppConfig.get_by_key_name("app_url")
+            if app_conf is not None and app_addr is not None:
+                consumer_key, consumer_secret = eval(app_conf.config_value)
+                app_url = app_addr.config_value
                 return func(*args, **kwargs)
             else:
                 redirect("/tasks/config")
@@ -59,41 +53,49 @@ class AppConfig(db.Model):
     config_key = db.StringProperty()
     config_value = db.StringProperty()
 
-
+class SubscribeContacts(db.Model):
+    addr = db.StringProperty()
+    stanza = db.StringProperty()
+    add_time = db.DateTimeProperty(auto_now_add=True)
 
 @route('/tasks/config')
 def config():
-    conf_res = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "consumer_token")
-    if conf_res.count() > 1:
-        redirect("/login")
-    else:
-        html = """<form name="input" action="/tasks/config" method="post">
-        key: <input type="text" name="key" /> 
-        secret: <input type="text" name="secret" /> 
-        group_addr: <input type="text" name="group_addr" /> 
-        app_url: <input type="text" name="app_url" /> 
-        <input type="submit" value="Submit" /> </form>"""
-        return html
+    html = """<form name="input" action="/tasks/config" method="post">
+    key: <input type="text" name="key" /> 
+    secret: <input type="text" name="secret" /> 
+    app_url: <input type="text" name="app_url" /> 
+    <input type="submit" value="Submit" /> </form>"""
+    return html
 
 @post("/tasks/config")
 def config_post():
     config_key = request.POST["key"]
     config_sec = request.POST["secret"]
-    config_addr = request.POST["group_addr"]
     config_url = request.POST["app_url"]
 
-    conf_res = db.GqlQuery("SELECT * FROM AppConfig WHERE config_key = :1 ", "consumer_token")
-    if conf_res.count() < 1:
-        cosm_tkn = AppConfig(config_key = "consumer_token", config_value = repr((config_key, config_sec)))
-        cosm_tkn.put()
-        group_addr = AppConfig(config_key = "group_addr", config_value = config_addr)
-        group_addr.put()
+    AppConfig.get_or_insert("consumer_token", 
+            config_key = "consumer_token", 
+            config_value = repr((config_key, config_sec)))
+    AppConfig.get_or_insert("app_url", config_key = "app_url", config_value = config_url)
 
-        app_url = AppConfig(config_key = "app_url", config_value = config_url)
-        app_url.put()
+    yield "set"
 
-        yield "set"
 
+@route("/tasks/subscribe")
+def man_subscribe():
+    html = """<form name="input" action="/tasks/subscribe" method="post">
+    addr: <input type="text" name="addr" /> 
+    <input type="submit" value="Submit" /> </form>"""
+    return html
+
+@post("/tasks/subscribe")
+def man_subscribe_post():
+    sender_addr = request.POST["addr"]
+    ct = SubscribeContacts.get_or_insert(sender_addr)
+    ct.addr = sender_addr
+    ct.stanza = ''
+    ct.put()
+    yield "added " + sender_addr
 
 @route('/testsend')
 @config_check
@@ -129,46 +131,61 @@ def add_twitter():
         redirect("/login")
     else:
         session = request.environ.get('beaker.session')
-        usr_res = db.GqlQuery("SELECT * FROM TwitterUser WHERE user = :1 ", user)
-        request_token = session.get("request_token") 
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret, app_url + "/add_twitter")
+        auth = session.get("twitter_auth") 
         verifier = request.GET.get('oauth_verifier')
+        
+        if auth is not None and auth.request_token is None:
+            auth = None
 
          #first
-        if request_token is None or verifier is None:
-            uri = auth.get_authorization_url()
-            session["request_token"] = (auth.request_token.key, auth.request_token.secret)
-            session.save()
-            yield '<a href="{0}">Add your twitter</a>'.format(uri)
+        if auth is None or verifier is None:
+            twi = TwitterUser.get_by_key_name(user.email())
+            if twi is None:
+                auth = tweepy.OAuthHandler(consumer_key, consumer_secret, app_url + "/add_twitter")
+                uri = auth.get_authorization_url()
+                session["twitter_auth"] = auth
+                session.save()
+                yield '<a href="{0}">Add your twitter</a>'.format(uri)
+            else:
+                yield "You authed with id: " + twi.twitter_id
+                yield '<a href="/remove_twitter">Remove your twitter</a>'
+
         else:
-            session["request_token"] = None
-            session.save()
-
-            auth.set_request_token(*request_token)
-
             try:
                 auth.get_access_token(verifier)
             except tweepy.TweepError:
                 error('Error! Failed to get access token.')
 
-            if usr_res.count() > 0:
-                usr = usr_res[0]
-            else:
-                usr = TwitterUser(user = user, last_retweeted_id = 0)
+            usr = TwitterUser.get_or_insert(user.email(), 
+                    user = user,
+                    last_retweeted_id = 0,
+                    twitter_access_token = auth.access_token.key,
+                    twitter_access_token_secret = auth.access_token.secret,
+                    twitter_id = auth.get_username())
 
-            usr.twitter_access_token = auth.access_token.key
-            usr.twitter_access_token_secret = auth.access_token.secret
-            usr.twitter_id = auth.get_username()
-            usr.put()
-
+            session = request.environ.get('beaker.session')
+            session["twitter_auth"] = None
+            session.save()
             yield "Auth Succ." + usr.twitter_id
+
+@route("/remove_twitter")
+def remove_twitter():
+    user = users.get_current_user()
+    if user is None:
+        redirect("/login")
+    else:
+        twi = TwitterUser.get_by_key_name(user.email())
+        if twi is not None:
+            twi.delete()
+            yield "deleted."
+        else:
+            yield "not auth."
 
 @route('/tasks/newretweeted')
 @config_check
 def newretweeted():
-
     usr_res = TwitterUser.all()
-
+    queue_cnt = 0
     for usr in usr_res:
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(usr.twitter_access_token, usr.twitter_access_token_secret)
@@ -180,32 +197,25 @@ def newretweeted():
         if len(rts) > 0:
             usr.last_retweeted_id = rts[0].id
             usr.put()
-            for i, t in enumerate(reversed(rts)):
-                tweet = u"@{0}: {1}".format(t.retweeted_status.user.screen_name, t.text).encode("utf-8")
-                taskqueue.add(url='/send_retweeted_msg', countdown = i * 120,
+            for t in reversed(rts):
+                tweet = u"via {0} RT @{1}: {2}".format(t.user.screen_name, 
+                        t.retweeted_status.user.screen_name,
+                        t.retweeted_status.text).encode("utf-8")
+                taskqueue.add(url='/tasks/send_retweeted_msg', countdown = queue_cnt * 120,
                         params=dict(tweet = tweet))
+                queue_cnt += 1
 
             yield "retweeted {0}".format(len(rts))
         else:
             yield "no new retweet "
 
 
-@route("/test_put")
-@config_check
-def test_put():
-
-    twitter_id = "PT"
-    tweet = u"@{0} :{1}".format("name", u"tweet中文").encode("utf-8")
-    taskqueue.add(url='/send_retweeted_msg', countdown = 10,
-            params=dict(twid = twitter_id, tweet = tweet))
-
-
-@post("/send_retweeted_msg")
+@post("/tasks/send_retweeted_msg")
 @config_check
 def send_retweeted_msg():
     tweet = request.POST["tweet"]
-    status_code = xmpp.send_message(group_addr, tweet)
-    
+    for ct in SubscribeContacts.all():
+        xmpp.send_message(ct.addr, tweet)
 
 #@post("/_ah/xmpp/message/chat/")
 #def chat():
@@ -214,9 +224,12 @@ def send_retweeted_msg():
 
 @post("/_ah/xmpp/subscription/subscribe/")
 def subscribe():
-    from_addr = request.POST["from"]
-    xmpp.send_invite(from_addr)
-    logging.info(request.POST["stanza"])
+    sender_addr = request.POST["from"].split('/')[0]
+    stanza = request.POST["stanza"]
+    ct = SubscribeContacts.get_or_insert(sender_addr)
+    ct.addr = sender_addr
+    ct.stanza = stanza
+    ct.put()
 
 @post("/_ah/xmpp/subscription/subscribed/")
 def subscribed():
@@ -224,6 +237,9 @@ def subscribed():
 
 @post("/_ah/xmpp/subscription/unsubscribe/")
 def unsubscribe():
+    sender_addr = request.POST["from"].split('/')[0]
+    ct = SubscribeContacts.get_by_key_name(sender_addr)
+    ct.delete()
     logging.info(request.POST["stanza"])
 
 @post("/_ah/xmpp/subscription/unsubscribed/")
