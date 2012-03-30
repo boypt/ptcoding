@@ -1,0 +1,12 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+
+    {% if is_login %}
+        <a href="{{ login_url }}">Login</a>
+    {% else %}
+        hello,  {{ nickname }} <a href="{{ logout_url }}">Logout</a>
+    {% endif %}
+
+{% endblock %}
+

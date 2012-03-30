@@ -1,0 +1,13 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+<form name="input" action="/tasks/subscribe" method="post">
+    addr: <input type="text" name="addr" /> <input type="submit" value="Submit" /> 
+</form>
+<ul>
+    {% for ct in users %}
+        <li> {{ ct.addr }} </li>
+    {% endfor %}
+</ul>
+{% endblock %}
+

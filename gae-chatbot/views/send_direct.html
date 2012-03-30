@@ -1,0 +1,10 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+    <form name="input" action="/send_direct" method="post">
+    Text: <input type="text" name="msg" /> <input type="submit" value="Submit" />
+    </form>
+
+    {{ msg|default('') }}
+{% endblock %}
+
