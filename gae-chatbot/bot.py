@@ -224,10 +224,7 @@ def send_retweeted_msg():
 def subscribe():
     sender_addr = request.POST["from"].split('/')[0]
     stanza = request.POST["stanza"]
-    ct = SubscribeContacts.get_or_insert(sender_addr)
-    ct.addr = sender_addr
-    ct.stanza = stanza
-    ct.put()
+    SubscribeContacts.get_or_insert(sender_addr, addr = sender_addr, stanza = stanza)
 
 @post("/_ah/xmpp/subscription/subscribed/")
 def subscribed():
