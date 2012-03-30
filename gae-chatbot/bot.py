@@ -1,6 +1,7 @@
 #coding:utf8
 import bottle
-from bottle import route, request, post, redirect, error
+from bottle import request, post, redirect, error, get
+from bottle import jinja2_view as view
 
 from google.appengine.api import xmpp
 
@@ -58,16 +59,13 @@ class SubscribeContacts(db.Model):
     stanza = db.StringProperty()
     add_time = db.DateTimeProperty(auto_now_add=True)
 
-@route('/tasks/config')
+@get('/tasks/config')
+@view("config")
 def config():
-    html = """<form name="input" action="/tasks/config" method="post">
-    key: <input type="text" name="key" /> 
-    secret: <input type="text" name="secret" /> 
-    app_url: <input type="text" name="app_url" /> 
-    <input type="submit" value="Submit" /> </form>"""
-    return html
+    return {}
 
 @post("/tasks/config")
+@view("config")
 def config_post():
     config_key = request.POST["key"]
     config_sec = request.POST["secret"]
@@ -78,52 +76,49 @@ def config_post():
             config_value = repr((config_key, config_sec)))
     AppConfig.get_or_insert("app_url", config_key = "app_url", config_value = config_url)
 
-    yield "set"
+    return {}
 
 
-@route("/tasks/subscribe")
+@get("/tasks/subscribe")
+@view("subscribe")
 def man_subscribe():
-    html = """<form name="input" action="/tasks/subscribe" method="post">
-    addr: <input type="text" name="addr" /> 
-    <input type="submit" value="Submit" /> </form>"""
-    return html
+    return dict(users = list(SubscribeContacts.all()))
 
 @post("/tasks/subscribe")
+@view("subscribe")
 def man_subscribe_post():
     sender_addr = request.POST["addr"]
-    ct = SubscribeContacts.get_or_insert(sender_addr)
-    ct.addr = sender_addr
-    ct.stanza = ''
-    ct.put()
-    yield "added " + sender_addr
+    SubscribeContacts.get_or_insert(sender_addr, addr = sender_addr, stanza = '')
+    return dict(users = list(SubscribeContacts.all()))
 
-@route('/testsend')
+@get("/send_direct")
+@view("send_direct")
 @config_check
-def testsend_get():
-    html = """<form name="input" action="/testsend" method="post">
-Text: <input type="text" name="msg" /> <input type="submit" value="Submit" />
-</form>"""
-    return html
+def send_direct():
+    return {}
 
-@post("/testsend")
+@post("/send_direct")
+@view("send_direct")
 @config_check
-def testsend_post():
+def send_direct_post():
     msg = request.POST["msg"]
-    addr = "linux-party@im.partych.at"
-    status_code = xmpp.send_message(addr, msg)
-    return testsend_get()
+    for ct in SubscribeContacts.all():
+        xmpp.send_message(ct.addr, msg)
+    return dict(msg = msg.decode('utf-8'))
 
-@route('/login')
+@get('/login')
+@view("login")
 def test_login():
     user = users.get_current_user()
+    return dict(
+            is_login = (user is None),
+            login_url = users.create_login_url("/login"),
+            logout_url = users.create_logout_url("/login"),
+            nickname = '' if user is None else user.nickname()
+            )
 
-    if user is None:
-        yield '<a href="{0}">Login</a>'.format(users.create_login_url("/login"))
-    else:
-        yield 'hello, ' + user.nickname() 
-        yield '<a href="{0}">Logout</a>'.format(users.create_logout_url("/login"))
-
-@route('/add_twitter')
+@get('/add_twitter')
+@view("add_twitter")
 @config_check
 def add_twitter():
     user = users.get_current_user()
@@ -133,42 +128,44 @@ def add_twitter():
         session = request.environ.get('beaker.session')
         auth = session.get("twitter_auth") 
         verifier = request.GET.get('oauth_verifier')
-        
+
         if auth is not None and auth.request_token is None:
             auth = None
 
-         #first
-        if auth is None or verifier is None:
-            twi = TwitterUser.get_by_key_name(user.email())
-            if twi is None:
+        twi = TwitterUser.get_by_key_name(user.email())
+
+        auth_url = ''
+        if twi is None:
+
+             #first
+            if auth is None or verifier is None:
                 auth = tweepy.OAuthHandler(consumer_key, consumer_secret, app_url + "/add_twitter")
-                uri = auth.get_authorization_url()
+                auth_url = auth.get_authorization_url()
                 session["twitter_auth"] = auth
                 session.save()
-                yield '<a href="{0}">Add your twitter</a>'.format(uri)
             else:
-                yield "You authed with id: " + twi.twitter_id
-                yield '<a href="/remove_twitter">Remove your twitter</a>'
+                try:
+                    auth.get_access_token(verifier)
+                except tweepy.TweepError:
+                    error('Error! Failed to get access token.')
 
-        else:
-            try:
-                auth.get_access_token(verifier)
-            except tweepy.TweepError:
-                error('Error! Failed to get access token.')
+                twi = TwitterUser.get_or_insert(user.email(), 
+                        user = user,
+                        last_retweeted_id = 0,
+                        twitter_access_token = auth.access_token.key,
+                        twitter_access_token_secret = auth.access_token.secret,
+                        twitter_id = auth.get_username())
 
-            usr = TwitterUser.get_or_insert(user.email(), 
-                    user = user,
-                    last_retweeted_id = 0,
-                    twitter_access_token = auth.access_token.key,
-                    twitter_access_token_secret = auth.access_token.secret,
-                    twitter_id = auth.get_username())
+                session["twitter_auth"] = None
+                session.save()
 
-            session = request.environ.get('beaker.session')
-            session["twitter_auth"] = None
-            session.save()
-            yield "Auth Succ." + usr.twitter_id
+        return dict(is_twitter_added = twi is not None, 
+                    auth_url = auth_url,
+                    twitter_id = '' if twi is None else twi.twitter_id,
+                    remove_url = "/remove_twitter")
 
-@route("/remove_twitter")
+@get("/remove_twitter")
+@view("message")
 def remove_twitter():
     user = users.get_current_user()
     if user is None:
@@ -177,11 +174,13 @@ def remove_twitter():
         twi = TwitterUser.get_by_key_name(user.email())
         if twi is not None:
             twi.delete()
-            yield "deleted."
+            msg = "deleted."
         else:
-            yield "not auth."
+            msg = "not auth."
 
-@route('/tasks/newretweeted')
+        return dict(message = msg)
+
+@get('/tasks/newretweeted')
 @config_check
 def newretweeted():
     usr_res = TwitterUser.all()
@@ -200,7 +199,7 @@ def newretweeted():
             for t in reversed(rts):
                 tweet = u"via {0} RT @{1}: {2}".format(t.user.screen_name, 
                         t.retweeted_status.user.screen_name,
-                        t.retweeted_status.text).encode("utf-8")
+                        t.retweeted_status.text)
                 taskqueue.add(url='/tasks/send_retweeted_msg', countdown = queue_cnt * 120,
                         params=dict(tweet = tweet))
                 queue_cnt += 1
@@ -208,7 +207,6 @@ def newretweeted():
             yield "retweeted {0}".format(len(rts))
         else:
             yield "no new retweet "
-
 
 @post("/tasks/send_retweeted_msg")
 @config_check
