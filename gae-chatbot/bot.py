@@ -2,6 +2,7 @@
 import bottle
 from bottle import request, post, redirect, error, get
 from bottle import jinja2_view as view
+import urllib
 
 from google.appengine.api import xmpp
 
@@ -11,8 +12,9 @@ import tweepy
 bottle.debug(True)
 
 from beaker.middleware import SessionMiddleware
-from google.appengine.ext import db
 from google.appengine.api import users, taskqueue 
+
+from DbModule import TwitterUser, AppConfig, SubscribeContacts
 
 session_opts = {
     'session.cookie_expires': True,
@@ -23,6 +25,32 @@ session_opts = {
 consumer_key=None
 consumer_secret=None
 app_url = None
+
+
+def get_tweet_urls_text(tweet):
+
+    entities = tweet.entities
+    text = tweet.text
+
+    print entities
+
+    logging.info(str(entities))
+
+    if len(entities["urls"]) > 0:
+        for url in entities["urls"]:
+            expanded_url = url["expanded_url"]
+            beg, end = url["indices"]
+            text = text[:beg] + expanded_url + text[end:]
+
+    if entities.has_key("media"):
+        for media in entities["media"]:
+            expanded_url = media["expanded_url"]
+            beg, end = media["indices"]
+            media_url = media["media_url"]
+            text = text[:beg] + expanded_url + text[end:] + " PIC:" + media_url
+
+    return text
+
 
 def config_check(func):
     def __check(*args, **kwargs):
@@ -42,22 +70,6 @@ def config_check(func):
     return __check
 
 
-class TwitterUser(db.Model):
-    user = db.UserProperty()
-    twitter_id = db.StringProperty()
-    twitter_access_token = db.StringProperty()
-    twitter_access_token_secret = db.StringProperty()
-    last_retweeted_id = db.IntegerProperty()
-    last_updated = db.DateTimeProperty(auto_now_add=True)
-
-class AppConfig(db.Model):
-    config_key = db.StringProperty()
-    config_value = db.StringProperty()
-
-class SubscribeContacts(db.Model):
-    addr = db.StringProperty()
-    stanza = db.StringProperty()
-    add_time = db.DateTimeProperty(auto_now_add=True)
 
 @get('/tasks/config')
 @view("config")
@@ -109,11 +121,12 @@ def send_direct_post():
 @get('/login')
 @view("login")
 def test_login():
+    continue_url = request.GET.get('continue_url')
     user = users.get_current_user()
     return dict(
             is_login = (user is None),
-            login_url = users.create_login_url("/login"),
-            logout_url = users.create_logout_url("/login"),
+            login_url = users.create_login_url("/login" if continue_url is None else continue_url),
+            logout_url = users.create_logout_url("/login"), 
             nickname = '' if user is None else user.nickname()
             )
 
@@ -123,7 +136,7 @@ def test_login():
 def add_twitter():
     user = users.get_current_user()
     if user is None:
-        redirect("/login")
+        redirect("/login?{0}".format(urllib.urlencode(dict(continue_url=request.url))))
     else:
         session = request.environ.get('beaker.session')
         auth = session.get("twitter_auth") 
@@ -191,15 +204,15 @@ def newretweeted():
 
         api = tweepy.API(auth)
         #my_screen_name = api.me().screen_name
-        rts = api.retweeted_by_me(since_id = usr.last_retweeted_id, count = 5)
+        rts = api.retweeted_by_me(since_id = usr.last_retweeted_id, include_entities = True, count = 5)
 
         if len(rts) > 0:
             usr.last_retweeted_id = rts[0].id
             usr.put()
             for t in reversed(rts):
                 tweet = u"via {0} RT @{1}: {2}".format(t.user.screen_name, 
-                        t.retweeted_status.user.screen_name,
-                        t.retweeted_status.text)
+                        t.retweeted_status.user.screen_name, 
+                        get_tweet_urls_text(t.retweeted_status))
                 taskqueue.add(url='/tasks/send_retweeted_msg', countdown = queue_cnt * 120,
                         params=dict(tweet = tweet))
                 queue_cnt += 1
@@ -212,6 +225,7 @@ def newretweeted():
 @config_check
 def send_retweeted_msg():
     tweet = request.POST["tweet"]
+    print tweet
     for ct in SubscribeContacts.all():
         xmpp.send_message(ct.addr, tweet)
 

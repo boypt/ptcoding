@@ -3,9 +3,9 @@
 {% block content %}
 
     {% if is_login %}
-        <a href="{{ login_url }}">Login</a>
+        <a href="{{ login_url }}">Login with Google account</a>
     {% else %}
-        hello,  {{ nickname }} <a href="{{ logout_url }}">Logout</a>
+        hello,  {{ nickname }} . <a href="{{ logout_url }}">Logout</a>
     {% endif %}
 
 {% endblock %}
