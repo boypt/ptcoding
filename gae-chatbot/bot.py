@@ -3,7 +3,7 @@ import bottle
 from bottle import request, post, redirect, error, get
 from bottle import jinja2_view as view
 import urllib
-from datetime import date, timedelta, tzinfo
+from datetime import date, timedelta 
 
 from google.appengine.api import xmpp
 
@@ -31,23 +31,30 @@ app_url = None
 
 def get_tweet_urls_text(tweet):
     entities = tweet.entities
-    text = tweet.text
+    tweet_text = tweet.text
+    url_replaces = []
 
-    if len(entities["urls"]) > 0:
-        for url in entities["urls"]:
-            expanded_url = url["expanded_url"]
-            beg, end = url["indices"]
-            text = text[:beg] + expanded_url + text[end:]
+    for url in entities["urls"]:
+        url_replaces.append((url["expanded_url"], url["indices"]))
 
     if entities.has_key("media"):
         for media in entities["media"]:
-            expanded_url = media["expanded_url"]
-            beg, end = media["indices"]
-            media_url = media["media_url"]
-            text = text[:beg] + expanded_url + text[end:] + " PIC:" + media_url
+            url_replaces.append((media["expanded_url"], media["indices"]))
+            #media_url = media["media_url"]
+
+    if len(url_replaces) > 0:
+        url_replaces.sort(key = lambda r:r[1][0])
+        text = ''
+        cur = 0
+        for expanded_url, indices in url_replaces:
+            beg, end = indices
+            text += tweet_text[cur:beg]
+            text += expanded_url
+            cur = end
+    else:
+        text = tweet_text
 
     return text
-
 
 def config_check(func):
     def __check(*args, **kwargs):
@@ -255,12 +262,13 @@ def review_tweets():
     today = date.today()
     last_sunday = today - timedelta(days = (today.weekday() - 6) % 7)
 
-    week_tweets_query = query.filter("user =", user).filter("retweet_time >", last_sunday).order("-retweet_time")
+    week_tweets_query = query.filter("user =", user).\
+                            filter("retweet_time >", last_sunday).\
+                            order("-retweet_time")
     tweets_count = week_tweets_query.count()
     tweets  = week_tweets_query.fetch(limit = per_page, offset = offset)
-    pages = (tweets_count / per_page) + 1
+    pages = (tweets_count // per_page) + (1 if tweets_count % per_page > 0 else 0)
     pages_links = [("/review_tweets?page={0}".format(p), str(p)) for p in range(1, pages + 1)]
-
 
     return dict(since_time = last_sunday,
                 twitter_id = twi.twitter_id,
