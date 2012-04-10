@@ -35,8 +35,6 @@ def get_tweet_urls_text(tweet):
         for url in entities["urls"]:
             expanded_url = url["expanded_url"]
             beg, end = url["indices"]
-            if beg > 0:
-                beg -= 1
             text = text[:beg] + expanded_url + text[end:]
 
     if entities.has_key("media"):
@@ -44,8 +42,6 @@ def get_tweet_urls_text(tweet):
             expanded_url = media["expanded_url"]
             beg, end = media["indices"]
             media_url = media["media_url"]
-            if beg > 0:
-                beg -= 1
             text = text[:beg] + expanded_url + text[end:] + " PIC:" + media_url
 
     return text
