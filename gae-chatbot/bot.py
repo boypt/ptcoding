@@ -3,6 +3,7 @@ import bottle
 from bottle import request, post, redirect, error, get
 from bottle import jinja2_view as view
 import urllib
+from datetime import date, timedelta, tzinfo
 
 from google.appengine.api import xmpp
 
@@ -14,18 +15,19 @@ bottle.debug(True)
 from beaker.middleware import SessionMiddleware
 from google.appengine.api import users, taskqueue 
 
-from DbModule import TwitterUser, AppConfig, SubscribeContacts
+from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
+
 
 session_opts = {
     'session.cookie_expires': True,
     'session.type': 'ext:google',
 }
 
+tzdelta = timedelta(hours=8)
 
 consumer_key=None
 consumer_secret=None
 app_url = None
-
 
 def get_tweet_urls_text(tweet):
     entities = tweet.entities
@@ -191,38 +193,81 @@ def remove_twitter():
 @get('/tasks/newretweeted')
 @config_check
 def newretweeted():
-    usr_res = TwitterUser.all()
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    twitter_user = TwitterUser.all()
     queue_cnt = 0
-    for usr in usr_res:
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    for usr in twitter_user:
         auth.set_access_token(usr.twitter_access_token, usr.twitter_access_token_secret)
-
         api = tweepy.API(auth)
-        #my_screen_name = api.me().screen_name
         rts = api.retweeted_by_me(since_id = usr.last_retweeted_id, include_entities = True, count = 5)
 
         if len(rts) > 0:
             usr.last_retweeted_id = rts[0].id
             usr.put()
             for t in reversed(rts):
-                tweet = u"via {0} RT @{1}: {2}".format(t.user.screen_name, 
-                        t.retweeted_status.user.screen_name, 
-                        get_tweet_urls_text(t.retweeted_status))
+                tweet_text = u"RT @{0}: {1}".format(t.retweeted_status.user.screen_name, 
+                                                get_tweet_urls_text(t.retweeted_status))
+                msg_text = u"via {0} ".format(t.user.screen_name) + tweet_text
+
                 taskqueue.add(url='/tasks/send_retweeted_msg', countdown = queue_cnt * 120,
-                        params=dict(tweet = tweet))
+                        params=dict(tweet = msg_text))
+
                 queue_cnt += 1
 
-            yield "retweeted {0}".format(len(rts))
+                t = SavedTweets(user = usr.user, 
+                        retweet_time = t.created_at,
+                        tweet_text = tweet_text.replace('\n', ''))
+                t.put()
+
+            info = "schedualed {0} tweet(s).".format(len(rts))
         else:
-            yield "no new retweet "
+            info = "no new retweet "
+
+        logging.info(info)
 
 @post("/tasks/send_retweeted_msg")
 @config_check
 def send_retweeted_msg():
     tweet = request.POST["tweet"]
-    print tweet
     for ct in SubscribeContacts.all():
         xmpp.send_message(ct.addr, tweet)
+
+@get('/review_tweets')
+@view('review_tweets')
+@config_check
+def review_tweets():
+    page = request.GET.get('page')
+    user = users.get_current_user()
+    if user is None:
+        redirect("/login?{0}".format(urllib.urlencode(dict(continue_url=request.url))))
+    twi = TwitterUser.get_by_key_name(user.email())
+    query = SavedTweets.all()
+    per_page = 20
+
+    if page is None:
+        page = 0
+    else:
+        page = int(page) - 1
+
+    offset = page * per_page
+
+    # last sunday
+    today = date.today()
+    last_sunday = today - timedelta(days = (today.weekday() - 6) % 7)
+
+    week_tweets_query = query.filter("user =", user).filter("retweet_time >", last_sunday).order("-retweet_time")
+    tweets_count = week_tweets_query.count()
+    tweets  = week_tweets_query.fetch(limit = per_page, offset = offset)
+    pages = (tweets_count / per_page) + 1
+    pages_links = [("/review_tweets?page={0}".format(p), str(p)) for p in range(1, pages + 1)]
+
+
+    return dict(since_time = last_sunday,
+                twitter_id = twi.twitter_id,
+                tweets = tweets,
+                tzdelta = tzdelta,
+                pages_links = pages_links)
+
 
 #@post("/_ah/xmpp/message/chat/")
 #def chat():
@@ -234,6 +279,7 @@ def subscribe():
     sender_addr = request.POST["from"].split('/')[0]
     stanza = request.POST["stanza"]
     SubscribeContacts.get_or_insert(sender_addr, addr = sender_addr, stanza = stanza)
+    logging.info(stanza)
 
 @post("/_ah/xmpp/subscription/subscribed/")
 def subscribed():

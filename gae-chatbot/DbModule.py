@@ -17,3 +17,8 @@ class SubscribeContacts(db.Model):
     stanza = db.StringProperty()
     add_time = db.DateTimeProperty(auto_now_add=True)
 
+class SavedTweets(db.Model):
+    user = db.UserProperty()
+    retweet_time = db.DateTimeProperty(auto_now_add=True)
+    tweet_text = db.StringProperty()
+

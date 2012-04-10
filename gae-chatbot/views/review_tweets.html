@@ -1,0 +1,19 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+<h2>Retweets since {{ since_time|default('nodef') }} via {{ twitter_id|default('nodef') }}</h2>
+<div>
+    <ul>
+        {% for t in tweets %}
+        <li><span>{{ (t.retweet_time + tzdelta).strftime("%d/%m %I:%M %p") }}</span><p>{{ t.tweet_text|safe }}</p></li>
+        {% endfor %}
+    </ul>
+</div>
+
+Pages: 
+{% for link, num in pages_links %}
+<a href="{{ link }}">{{ num }}</a>
+{% endfor %}
+
+{% endblock %}
+
