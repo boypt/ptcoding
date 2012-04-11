@@ -1,22 +1,24 @@
 #coding:utf8
-import bottle
-from bottle import request, post, redirect, error, get
-from bottle import jinja2_view as view
+
+#stdlib
 import urllib
-from datetime import date, timedelta, tzinfo
-
-from google.appengine.api import xmpp
-
 import logging
-import tweepy
+from datetime import date, timedelta
 
-bottle.debug(True)
-
-from beaker.middleware import SessionMiddleware
+#gae api
+from google.appengine.api import xmpp
 from google.appengine.api import users, taskqueue 
 
-from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
+#Third party
+import tweepy
+import bottle
+bottle.debug(True)
+from bottle import request, post, redirect, error, get
+from bottle import jinja2_view as view
+from beaker.middleware import SessionMiddleware
 
+#custom module
+from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
 
 session_opts = {
     'session.cookie_expires': True,
