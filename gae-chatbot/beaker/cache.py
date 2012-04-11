@@ -18,6 +18,7 @@ import beaker.ext.memcached as memcached
 import beaker.ext.database as database
 import beaker.ext.sqla as sqla
 import beaker.ext.google as google
+import beaker.ext.googlememcache as googlememcache
 
 # Initialize the cache region dict
 cache_regions = {}
@@ -115,6 +116,7 @@ clsmap = _backends({
           'ext:database':database.DatabaseNamespaceManager,
           'ext:sqla': sqla.SqlaNamespaceManager,
           'ext:google': google.GoogleNamespaceManager,
+          'ext:googlememcache': googlememcache.GoogleMemcacheNamespaceManager,
           })
 
 
