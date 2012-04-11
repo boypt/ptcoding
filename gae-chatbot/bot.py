@@ -3,6 +3,7 @@
 #stdlib
 import urllib
 import logging
+import random
 from datetime import date, timedelta
 
 #gae api
@@ -100,14 +101,14 @@ def config_post():
 @get("/tasks/subscribe")
 @view("subscribe")
 def man_subscribe():
-    return dict(users = list(SubscribeContacts.all()))
+    return dict(users = SubscribeContacts.all().fetch(limit = 100))
 
 @post("/tasks/subscribe")
 @view("subscribe")
 def man_subscribe_post():
     sender_addr = request.POST["addr"]
     SubscribeContacts.get_or_insert(sender_addr, addr = sender_addr, stanza = '')
-    return dict(users = list(SubscribeContacts.all()))
+    return dict(users = SubscribeContacts.all().fetch(limit = 100))
 
 @get("/send_direct")
 @view("send_direct")
@@ -120,7 +121,7 @@ def send_direct():
 @config_check
 def send_direct_post():
     msg = request.POST["msg"]
-    for ct in SubscribeContacts.all():
+    for ct in SubscribeContacts.all().fetch(limit = 10):
         xmpp.send_message(ct.addr, msg)
     return dict(msg = msg.decode('utf-8'))
 
@@ -203,12 +204,14 @@ def remove_twitter():
 @config_check
 def newretweeted():
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-    twitter_user = TwitterUser.all()
+    twitter_user = TwitterUser.all().fetch(limit = 100)
+    random.shuffle(twitter_user)
     queue_cnt = 0
     for usr in twitter_user:
         auth.set_access_token(usr.twitter_access_token, usr.twitter_access_token_secret)
         api = tweepy.API(auth)
-        rts = api.retweeted_by_me(since_id = usr.last_retweeted_id, include_entities = True, count = 5)
+        rts = api.retweeted_by_me(since_id = usr.last_retweeted_id,
+                                    include_entities = True, count = 5)
 
         if len(rts) > 0:
             usr.last_retweeted_id = rts[0].id
@@ -238,7 +241,7 @@ def newretweeted():
 @config_check
 def send_retweeted_msg():
     tweet = request.POST["tweet"]
-    for ct in SubscribeContacts.all():
+    for ct in SubscribeContacts.all().fetch(limit = 100):
         xmpp.send_message(ct.addr, tweet)
 
 @get('/review_tweets')
@@ -250,7 +253,6 @@ def review_tweets():
     if user is None:
         redirect("/login?{0}".format(urllib.urlencode(dict(continue_url=request.url))))
     twi = TwitterUser.get_by_key_name(user.email())
-    query = SavedTweets.all()
     per_page = 20
 
     if page is None:
@@ -264,9 +266,9 @@ def review_tweets():
     today = date.today()
     last_sunday = today - timedelta(days = (today.weekday() - 6) % 7)
 
-    week_tweets_query = query.filter("user =", user).\
-                            filter("retweet_time >", last_sunday).\
-                            order("-retweet_time")
+    week_tweets_query = SavedTweets.all().filter("user =", user).\
+                                        filter("retweet_time >", last_sunday).\
+                                        order("-retweet_time")
     tweets_count = week_tweets_query.count()
     tweets  = week_tweets_query.fetch(limit = per_page, offset = offset)
     pages = (tweets_count // per_page) + (1 if tweets_count % per_page > 0 else 0)
