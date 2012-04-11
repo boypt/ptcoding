@@ -4,7 +4,7 @@
 import urllib
 import logging
 import random
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
 
 #gae api
 from google.appengine.api import xmpp
@@ -21,13 +21,7 @@ from beaker.middleware import SessionMiddleware
 #custom module
 from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
 
-session_opts = {
-    'session.cookie_expires': True,
-    'session.type': 'ext:google',
-}
-
 tzdelta = timedelta(hours=8)
-
 consumer_key=None
 consumer_secret=None
 app_url = None
@@ -280,7 +274,6 @@ def review_tweets():
                 tzdelta = tzdelta,
                 pages_links = pages_links)
 
-
 #@post("/_ah/xmpp/message/chat/")
 #def chat():
 #    message = xmpp.Message(request.POST)
@@ -314,6 +307,10 @@ def xmpp_error():
     error_stanza = request.POST['stanza']
     logging.error('XMPP error received from %s (%s)', error_sender, error_stanza)
 
+session_opts = {
+    'session.cookie_expires': True,
+    'session.type': 'ext:googlememcache',
+}
 
 app = SessionMiddleware(bottle.app(), session_opts)
 
