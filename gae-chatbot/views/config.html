@@ -3,9 +3,9 @@
 {% block content %}
 <form name="input" action="/tasks/config" method="post">
     <ul>
-        <li>key: <input type="text" name="key" /> </li>
-        <li>secret: <input type="text" name="secret" /> </li>
-        <li>app_url: <input type="text" name="app_url" /> </li>
+        <li>key: <input type="text" name="key" value="{{ key|default('', true) }}" /> </li>
+        <li>secret: <input type="text" name="secret" value="{{ secret|default('', true) }}" /> </li>
+        <li>app_url: <input type="text" name="app_url" value="{{ app_url|default('', true)}}" /> </li>
         <li><input type="submit" value="Submit" /></li>
     </ul>
 </form>

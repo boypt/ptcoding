@@ -1,11 +1,49 @@
+{% set navigation = [
+('/login', 'Login'),
+('/twitter', 'Twitter'), 
+('/review_tweets', 'Review Tweets'),
+("/send_direct", 'Send'),
+('/tasks/config', 'ADM:Config'),
+('/tasks/subscribe', 'ADM:Subscribe'),
+] %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>GAE Retweet Bot</title>
+<title>GAE Retweet Bot</title>
+<style>
+
+ul#navigation {
+    list-style: none outside;
+}
+
+ul#navigation li {
+    margin: 0 8px;
+    float: left;
+    display: list-item;
+}
+
+div.clear {
+    clear: both;
+}
+
+div.content {
+    margin: 20px 0 0 48px;
+}
+
+</style>
 </head>
 
 <body>
+
+    <div class="navbar">
+        <ul id="navigation">
+            {% for href, text in navigation %}
+            <li><a href="{{ href }}">{{ text }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="clear"></div>
 
     <div class="content">
       {% block content %}

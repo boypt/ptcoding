@@ -75,11 +75,12 @@ def config_check(func):
 @get('/tasks/config')
 @view("config")
 def config():
-    return {}
+    return dict(key = consumer_key, secret = consumer_secret, app_url = app_url)
 
 @post("/tasks/config")
 @view("config")
 def config_post():
+    global consumer_key, consumer_secret, app_url
     config_key = request.POST["key"]
     config_sec = request.POST["secret"]
     config_url = request.POST["app_url"]
@@ -89,7 +90,9 @@ def config_post():
             config_value = repr((config_key, config_sec)))
     AppConfig.get_or_insert("app_url", config_key = "app_url", config_value = config_url)
 
-    return {}
+    consumer_key, consumer_secret, app_url = config_key, config_sec, config_url
+
+    return dict(key = consumer_key, secret = consumer_secret, app_url = app_url)
 
 
 @get("/tasks/subscribe")
@@ -131,8 +134,20 @@ def test_login():
             nickname = '' if user is None else user.nickname()
             )
 
+@get('/twitter')
+@view('twitter')
+def twitter():
+    user = users.get_current_user()
+    if user is None:
+        redirect("/login?{0}".format(urllib.urlencode(dict(continue_url=request.url))))
+
+    twi = TwitterUser.get_by_key_name(user.email())
+
+    return dict(is_twitter_added = twi is not None, 
+            twitter_id = '' if twi is None else twi.twitter_id)
+
+
 @get('/add_twitter')
-@view("add_twitter")
 @config_check
 def add_twitter():
     user = users.get_current_user()
@@ -153,10 +168,11 @@ def add_twitter():
 
              #first
             if auth is None or verifier is None:
-                auth = tweepy.OAuthHandler(consumer_key, consumer_secret, app_url + "/add_twitter")
+                auth = tweepy.OAuthHandler(consumer_key, consumer_secret, request.url)
                 auth_url = auth.get_authorization_url()
                 session["twitter_auth"] = auth
                 session.save()
+                redirect(auth_url)
             else:
                 try:
                     auth.get_access_token(verifier)
@@ -173,10 +189,7 @@ def add_twitter():
                 session["twitter_auth"] = None
                 session.save()
 
-        return dict(is_twitter_added = twi is not None, 
-                    auth_url = auth_url,
-                    twitter_id = '' if twi is None else twi.twitter_id,
-                    remove_url = "/remove_twitter")
+        redirect("/twitter")
 
 @get("/remove_twitter")
 @view("message")
@@ -247,6 +260,8 @@ def review_tweets():
     if user is None:
         redirect("/login?{0}".format(urllib.urlencode(dict(continue_url=request.url))))
     twi = TwitterUser.get_by_key_name(user.email())
+    if twi is None:
+        return dict(is_twitter_missing = True, message = "You haven't link your twitter account.")
     per_page = 20
 
     if page is None:
