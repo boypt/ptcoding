@@ -27,8 +27,8 @@ consumer_secret=None
 app_url = None
 
 def get_tweet_urls_text(tweet):
-    entities = tweet["entities"]
-    tweet_text = tweet["text"]
+    entities = tweet.entities
+    tweet_text = tweet.text
     url_replaces = []
     pic_urls = []
 
@@ -244,9 +244,9 @@ def newretweeted():
                         tweet_text = tweet_text.replace('\n', ''))
                 t.put()
 
-            info = "schedualed {0} tweet(s).".format(len(rts))
+            info = "schedualed {0} tweet(s) from {1}".format(len(rts), usr.twitter_id)
         else:
-            info = "no new retweet "
+            info = "no new retweet from {0}".format(usr.twitter_id)
 
         logging.info(info)
 
