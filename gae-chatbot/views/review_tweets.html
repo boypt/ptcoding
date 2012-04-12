@@ -1,12 +1,24 @@
 {% extends "base_layout.html" %}
 
 {% block content %}
+
+<script type="text/javascript" src="http://benalman.com/code/javascript/ba-linkify.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript">
+$(function(){
+  $('ul#twitter_list li').each(function(){
+    var that = $(this);
+    that.html(linkify(that.html()));
+  });
+});
+</script>
+
     {% if is_twitter_missing is undefined %}
         <h2>Retweets since {{ since_time|default('nodef') }} via {{ twitter_id|default('nodef') }}</h2>
-        <div>
-            <ul>
+        <div id="tweet_list_container">
+            <ul id="twitter_list">
                 {% for t in tweets %}
-                <li><span>{{ (t.retweet_time + tzdelta).strftime("%d/%m %I:%M %p") }}</span><p>{{ t.tweet_text|safe }}</p></li>
+                <li class="{{ loop.cycle('odd', 'even') }}"><span class="time">{{ (t.retweet_time + tzdelta).strftime("%d/%m %I:%M %p") }}</span><p>{{ t.tweet_text|safe }}</p></li>
                 {% endfor %}
             </ul>
         </div>
