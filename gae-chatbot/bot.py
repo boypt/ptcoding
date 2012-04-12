@@ -27,8 +27,8 @@ consumer_secret=None
 app_url = None
 
 def get_tweet_urls_text(tweet):
-    entities = tweet.entities
-    tweet_text = tweet.text
+    entities = tweet["entities"]
+    tweet_text = tweet["text"]
     url_replaces = []
     pic_urls = []
 
@@ -42,15 +42,17 @@ def get_tweet_urls_text(tweet):
 
     if len(url_replaces) > 0:
         url_replaces.sort(key = lambda r:r[1][0])
-        text = ''
+        text = unicode()
         cur = 0
         for expanded_url, indices in url_replaces:
             beg, end = indices
             text += tweet_text[cur:beg]
             text += expanded_url
             cur = end
+        if cur != len(tweet_text) - 1:
+            text += tweet_text[cur:]
         if len(pic_urls) > 0:
-            text += " PIC: " + " ".join(pic_urls)
+            text += " //PIC: " + " ".join(pic_urls)
     else:
         text = tweet_text
 
