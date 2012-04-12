@@ -30,6 +30,7 @@ def get_tweet_urls_text(tweet):
     entities = tweet.entities
     tweet_text = tweet.text
     url_replaces = []
+    pic_urls = []
 
     for url in entities["urls"]:
         url_replaces.append((url["expanded_url"], url["indices"]))
@@ -37,7 +38,7 @@ def get_tweet_urls_text(tweet):
     if entities.has_key("media"):
         for media in entities["media"]:
             url_replaces.append((media["expanded_url"], media["indices"]))
-            #media_url = media["media_url"]
+            pic_urls.append(media["media_url"])
 
     if len(url_replaces) > 0:
         url_replaces.sort(key = lambda r:r[1][0])
@@ -48,6 +49,8 @@ def get_tweet_urls_text(tweet):
             text += tweet_text[cur:beg]
             text += expanded_url
             cur = end
+        if len(pic_urls) > 0:
+            text += " PIC: " + " ".join(pic_urls)
     else:
         text = tweet_text
 
