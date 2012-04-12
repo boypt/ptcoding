@@ -1,0 +1,39 @@
+ul#navigation {
+    list-style: none outside;
+}
+
+ul#navigation li {
+    margin: 0 8px;
+    float: left;
+    display: list-item;
+}
+
+div.clear {
+    clear: both;
+}
+
+div.content {
+    margin: 20px 0 0 48px;
+}
+
+div#tweet_list_container {
+    padding: 20px 20px 20px 0;
+    background-color: #ccc;
+}
+
+ul#twitter_list {
+    list-style: none outside;
+}
+
+ul#twitter_list li {
+    padding: 5px;
+}
+
+ul#twitter_list li.odd {
+    background-color: #ddd;
+}
+
+span.time {
+    font-size: 0.5em;
+}
+
