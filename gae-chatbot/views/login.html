@@ -1,12 +1,11 @@
 {% extends "base_layout.html" %}
 
 {% block content %}
-
-    {% if is_login %}
-        <a href="{{ login_url }}">Login with Google account</a>
+    {% if not is_logedin %}
+    <h2>PT's RT Bot Web Console</h2>
+    <a href="{{ login_url }}">Login with Google account</a>
     {% else %}
-        hello,  {{ nickname }} . <a href="{{ logout_url }}">Logout</a>
+    Welcome, <span>{{ nickname }}</span>. <a href="{{ logout_url }}">Logout</a>
     {% endif %}
-
 {% endblock %}
 

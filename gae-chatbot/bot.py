@@ -122,13 +122,14 @@ def send_direct_post():
         xmpp.send_message(ct.addr, msg)
     return dict(msg = msg.decode('utf-8'))
 
+@get('/')
 @get('/login')
 @view("login")
 def test_login():
     continue_url = request.GET.get('continue_url')
     user = users.get_current_user()
     return dict(
-            is_login = (user is None),
+            is_logedin = (user is not None),
             login_url = users.create_login_url("/login" if continue_url is None else continue_url),
             logout_url = users.create_logout_url("/login"), 
             nickname = '' if user is None else user.nickname()
