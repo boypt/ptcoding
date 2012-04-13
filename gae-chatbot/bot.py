@@ -42,6 +42,13 @@ DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 DATETIME_FORMAT_SHORT = "%d/%m %I:%M %p"
 CSTTZ = timedelta(hours=8)
 
+def default_range():
+    today = date.today()
+    to_time = today + timedelta(days = 1)
+    since_time = today - timedelta(days =  7)
+    return since_time, to_time
+
+
 @cache_region("short_term")
 def retrive_tweet_data(user, since_time, to_time):
     items_limit = 20
@@ -270,6 +277,8 @@ def newretweeted():
                         tweet_text = tweet_text.replace('\n', ''))
                 t.put()
 
+            region_invalidate(retrive_tweet_data, "short_term", usr.user, *default_range())
+
             info = "schedualed {0} tweet(s) from {1}".format(len(rts), usr.twitter_id)
         else:
             info = "no new retweet from {0}".format(usr.twitter_id)
@@ -296,24 +305,20 @@ def review_tweets():
         return dict(is_twitter_missing = True, message = "You haven't link your twitter account.")
 
     to_time = request.GET.get('to_time')
+    since_time = request.GET.get('since_time')
 
-    # last sunday
-    today = date.today()
-    last_sunday = today - timedelta(days = (today.weekday() - 6) % 7)
+    def_since, def_to = default_range()
+    to_time = def_to if to_time is None else datetime.strptime(to_time, DATETIME_FORMAT)
+    since_time = def_since if since_time is None else datetime.strptime(since_time, DATETIME_FORMAT)
 
-    if to_time is None:
-        to_time = today + timedelta(days = 1)
-    else:
-        to_time = datetime.strptime(to_time, DATETIME_FORMAT)
-
-    tweets = retrive_tweet_data(user, last_sunday, to_time)
+    tweets = retrive_tweet_data(user, since_time, to_time)
 
     if request.is_ajax:
         return json.dumps([dict(retweet_time = t.retweet_time.strftime(DATETIME_FORMAT),
                                     local_time = (t.retweet_time + CSTTZ).strftime(DATETIME_FORMAT_SHORT),
                                     tweet_text = t.tweet_text) for t in tweets])
 
-    return dict(since_time = last_sunday,
+    return dict(since_time = since_time,
                 twitter_id = twi.twitter_id,
                 tweets = tweets,
                 datefmt = DATETIME_FORMAT,
