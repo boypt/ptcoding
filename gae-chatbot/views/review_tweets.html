@@ -12,11 +12,18 @@ $(function(){
     });
     $("#more a").click(function () {
         var t = $("ul#twitter_list li span.time:last").attr("utc");
-        $.get('/review_tweets', {to_time: t}, function(data) {
-            var list = $("ul#twitter_list");
-            $.each(data, function(tweet) {
-                list.append('<li class=""><span class="time" utc=""></span><p>' + tweet.tweet_text + '</p></li>');
-            });
+        $.getJSON('/review_tweets', {to_time: t}, function(data) {
+            if (data.length > 0) {
+                var list = $("ul#twitter_list");
+                $.each(data, function(i, t) {
+                    var li = $('<li class=""><span class="time" utc="' + t.retweet_time + '">' + t.local_time + '</span><p>' + linkify(t.tweet_text) + '</p></li>');
+                    if ( i % 2 == 0 ) $(li).addClass("odd");
+                    list.append(li);
+                });
+            }
+            else {
+                $("#more").text("No More");
+            }
         });
         return false;
     });
@@ -29,7 +36,7 @@ $(function(){
         <div id="tweet_list_container">
             <ul id="twitter_list">
                 {% for t in tweets %}
-                <li class="{{ loop.cycle('odd', 'even') }}"><span class="time" utc="{{ t.retweet_time }}">{{ (t.retweet_time + tzdelta).strftime("%d/%m %I:%M %p") }}</span><p>{{ t.tweet_text|safe }}</p></li>
+                <li class="{{ loop.cycle('odd', 'even') }}"><span class="time" utc="{{ t.retweet_time.strftime(datefmt) }}">{{ (t.retweet_time + tzdelta).strftime(datefmt_short) }}</span><p>{{ t.tweet_text|safe }}</p></li>
                 {% endfor %}
             </ul>
         </div>

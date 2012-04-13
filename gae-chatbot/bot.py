@@ -5,7 +5,7 @@ import urllib
 import logging
 import random
 from datetime import datetime, date, timedelta
-import json
+import simplejson
 
 #gae api
 from google.appengine.api import xmpp
@@ -32,14 +32,15 @@ cache_opts = {
     'cache.long_term.type': 'ext:googlememcache',
     'cache.long_term.expire': 86400,
     }
-
-
 cache_regions.update(**parse_cache_config_options(cache_opts)['cache_regions'])
 
-tzdelta = timedelta(hours=8)
 consumer_key=None
 consumer_secret=None
 app_url = None
+
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATETIME_FORMAT_SHORT = "%d/%m %I:%M %p"
+CSTTZ = timedelta(hours=8)
 
 @cache_region("short_term")
 def retrive_tweet_data(user, since_time, to_time):
@@ -300,16 +301,22 @@ def review_tweets():
 
     if to_time is None:
         to_time = today + timedelta(days = 1)
+    else:
+        to_time = datetime.strptime(to_time, DATETIME_FORMAT)
 
     tweets = retrive_tweet_data(user, last_sunday, to_time)
 
     if request.is_ajax:
-        return json.dumps() ##!!
+        return simplejson.dumps([dict(retweet_time = t.retweet_time.strftime(DATETIME_FORMAT),
+                                    local_time = (t.retweet_time + CSTTZ).strftime(DATETIME_FORMAT_SHORT),
+                                    tweet_text = t.tweet_text) for t in tweets])
 
     return dict(since_time = last_sunday,
                 twitter_id = twi.twitter_id,
                 tweets = tweets,
-                tzdelta = tzdelta)
+                datefmt = DATETIME_FORMAT,
+                datefmt_short = DATETIME_FORMAT_SHORT,
+                tzdelta = CSTTZ)
 
 #@post("/_ah/xmpp/message/chat/")
 #def chat():
