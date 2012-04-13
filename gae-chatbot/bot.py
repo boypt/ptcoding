@@ -5,7 +5,7 @@ import urllib
 import logging
 import random
 from datetime import datetime, date, timedelta
-import simplejson
+import json
 
 #gae api
 from google.appengine.api import xmpp
@@ -309,7 +309,7 @@ def review_tweets():
     tweets = retrive_tweet_data(user, last_sunday, to_time)
 
     if request.is_ajax:
-        return simplejson.dumps([dict(retweet_time = t.retweet_time.strftime(DATETIME_FORMAT),
+        return json.dumps([dict(retweet_time = t.retweet_time.strftime(DATETIME_FORMAT),
                                     local_time = (t.retweet_time + CSTTZ).strftime(DATETIME_FORMAT_SHORT),
                                     tweet_text = t.tweet_text) for t in tweets])
 
