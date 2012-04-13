@@ -68,15 +68,17 @@ def get_tweet_urls_text(tweet):
 
     if len(url_replaces) > 0:
         url_replaces.sort(key = lambda r:r[1][0])
-        text = ''
+        text = unicode()
         cur = 0
         for expanded_url, indices in url_replaces:
             beg, end = indices
             text += tweet_text[cur:beg]
             text += expanded_url
             cur = end
+        if cur != len(tweet_text) - 1:
+            text += tweet_text[cur:]
         if len(pic_urls) > 0:
-            text += " PIC: " + " ".join(pic_urls)
+            text += " //PIC: " + " ".join(pic_urls)
     else:
         text = tweet_text
 
@@ -268,9 +270,9 @@ def newretweeted():
                         tweet_text = tweet_text.replace('\n', ''))
                 t.put()
 
-            info = "schedualed {0} tweet(s).".format(len(rts))
+            info = "schedualed {0} tweet(s) from {1}".format(len(rts), usr.twitter_id)
         else:
-            info = "no new retweet "
+            info = "no new retweet from {0}".format(usr.twitter_id)
 
         logging.info(info)
 
