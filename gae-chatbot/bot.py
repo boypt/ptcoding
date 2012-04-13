@@ -5,6 +5,7 @@ import urllib
 import logging
 import random
 from datetime import datetime, date, timedelta
+import json
 
 #gae api
 from google.appengine.api import xmpp
@@ -17,14 +18,38 @@ bottle.debug(True)
 from bottle import request, post, redirect, error, get
 from bottle import jinja2_view as view
 from beaker.middleware import SessionMiddleware
+from beaker.cache import cache_regions, cache_region, region_invalidate
+from beaker.util import parse_cache_config_options
 
 #custom module
 from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
+
+
+cache_opts = {
+    'cache.regions': 'short_term, long_term',
+    'cache.short_term.type': 'ext:googlememcache',
+    'cache.short_term.expire': 3600,
+    'cache.long_term.type': 'ext:googlememcache',
+    'cache.long_term.expire': 86400,
+    }
+
+
+cache_regions.update(**parse_cache_config_options(cache_opts)['cache_regions'])
 
 tzdelta = timedelta(hours=8)
 consumer_key=None
 consumer_secret=None
 app_url = None
+
+@cache_region("short_term")
+def retrive_tweet_data(user, since_time, to_time):
+    items_limit = 20
+    week_tweets_query = SavedTweets.all().filter("user =", user).\
+                                        filter("retweet_time >=", since_time).\
+                                        filter("retweet_time <", to_time).\
+                                        order("-retweet_time")
+    tweets = week_tweets_query.fetch(limit = items_limit)
+    return tweets
 
 def get_tweet_urls_text(tweet):
     entities = tweet.entities
@@ -222,7 +247,7 @@ def newretweeted():
         auth.set_access_token(usr.twitter_access_token, usr.twitter_access_token_secret)
         api = tweepy.API(auth)
         rts = api.retweeted_by_me(since_id = usr.last_retweeted_id,
-                                    include_entities = True, count = 5)
+                                    include_entities = True, count = 30)
 
         if len(rts) > 0:
             usr.last_retweeted_id = rts[0].id
@@ -259,39 +284,32 @@ def send_retweeted_msg():
 @view('review_tweets')
 @config_check
 def review_tweets():
-    page = request.GET.get('page')
     user = users.get_current_user()
     if user is None:
         redirect("/login?{0}".format(urllib.urlencode(dict(continue_url=request.url))))
+
     twi = TwitterUser.get_by_key_name(user.email())
     if twi is None:
         return dict(is_twitter_missing = True, message = "You haven't link your twitter account.")
-    per_page = 20
 
-    if page is None:
-        page = 0
-    else:
-        page = int(page) - 1
-
-    offset = page * per_page
+    to_time = request.GET.get('to_time')
 
     # last sunday
     today = date.today()
     last_sunday = today - timedelta(days = (today.weekday() - 6) % 7)
 
-    week_tweets_query = SavedTweets.all().filter("user =", user).\
-                                        filter("retweet_time >", last_sunday).\
-                                        order("-retweet_time")
-    tweets_count = week_tweets_query.count()
-    tweets  = week_tweets_query.fetch(limit = per_page, offset = offset)
-    pages = (tweets_count // per_page) + (1 if tweets_count % per_page > 0 else 0)
-    pages_links = [("/review_tweets?page={0}".format(p), str(p)) for p in range(1, pages + 1)]
+    if to_time is None:
+        to_time = today + timedelta(days = 1)
+
+    tweets = retrive_tweet_data(user, last_sunday, to_time)
+
+    if request.is_ajax:
+        return json.dumps() ##!!
 
     return dict(since_time = last_sunday,
                 twitter_id = twi.twitter_id,
                 tweets = tweets,
-                tzdelta = tzdelta,
-                pages_links = pages_links)
+                tzdelta = tzdelta)
 
 #@post("/_ah/xmpp/message/chat/")
 #def chat():

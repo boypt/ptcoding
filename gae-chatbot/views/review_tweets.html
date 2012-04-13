@@ -2,14 +2,25 @@
 
 {% block content %}
 
-<script type="text/javascript" src="http://benalman.com/code/javascript/ba-linkify.min.js"></script>
+<script type="text/javascript" src="/static/ba-linkify.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script type="text/javascript">
 $(function(){
-  $('ul#twitter_list li').each(function(){
-    var that = $(this);
-    that.html(linkify(that.html()));
-  });
+    $('ul#twitter_list li').each(function(){
+        var that = $(this);
+        that.html(linkify(that.html()));
+    });
+    $("#more a").click(function () {
+        var t = $("ul#twitter_list li span.time:last").attr("utc");
+        $.get('/review_tweets', {to_time: t}, function(data) {
+            var list = $("ul#twitter_list");
+            $.each(data, function(tweet) {
+                list.append('<li class=""><span class="time" utc=""></span><p>' + tweet.tweet_text + '</p></li>');
+            });
+        });
+        return false;
+    });
+
 });
 </script>
 
@@ -18,14 +29,11 @@ $(function(){
         <div id="tweet_list_container">
             <ul id="twitter_list">
                 {% for t in tweets %}
-                <li class="{{ loop.cycle('odd', 'even') }}"><span class="time">{{ (t.retweet_time + tzdelta).strftime("%d/%m %I:%M %p") }}</span><p>{{ t.tweet_text|safe }}</p></li>
+                <li class="{{ loop.cycle('odd', 'even') }}"><span class="time" utc="{{ t.retweet_time }}">{{ (t.retweet_time + tzdelta).strftime("%d/%m %I:%M %p") }}</span><p>{{ t.tweet_text|safe }}</p></li>
                 {% endfor %}
             </ul>
         </div>
-        Pages: 
-        {% for link, num in pages_links %}
-        <a href="{{ link }}">{{ num }}</a>
-        {% endfor %}
+        <div id="more"><a href="#">More</a></div>
     {% else %}
         <h2>{{ message }}</h2>
     {% endif %}

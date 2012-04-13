@@ -6,6 +6,8 @@ from beaker.synchronization import file_synchronizer
 from beaker.util import verify_directory, SyncDict
 import warnings
 
+import logging
+
 MAX_KEY_LENGTH = 250
 
 _client_libs = {}
@@ -105,9 +107,11 @@ class MemcachedNamespaceManager(NamespaceManager):
         return formated_key
 
     def __getitem__(self, key):
+        logging.info("getitem: '{0}'".format(self._format_key(key)))
         return self.mc.get(self._format_key(key))
 
     def __contains__(self, key):
+        logging.info("contains: '{0}'".format(self._format_key(key)))
         value = self.mc.get(self._format_key(key))
         return value is not None
 
@@ -115,18 +119,22 @@ class MemcachedNamespaceManager(NamespaceManager):
         return key in self
 
     def set_value(self, key, value, expiretime=None):
+        logging.info("set_value: '{0}' {1}".format(self._format_key(key), str(expiretime)))
         if expiretime:
             self.mc.set(self._format_key(key), value, time=expiretime)
         else:
             self.mc.set(self._format_key(key), value)
 
     def __setitem__(self, key, value):
+        logging.info("setitem: '{0}'".format(self._format_key(key)))
         self.set_value(key, value)
 
     def __delitem__(self, key):
+        logging.info("delitem: '{0}'".format(self._format_key(key)))
         self.mc.delete(self._format_key(key))
 
     def do_remove(self):
+        logging.info("flush all")
         self.mc.flush_all()
 
     def keys(self):

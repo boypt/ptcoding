@@ -1,4 +1,5 @@
 from google.appengine.ext import db
+from beaker.cache import cache_region
 
 class TwitterUser(db.Model):
     user = db.UserProperty()
@@ -8,9 +9,19 @@ class TwitterUser(db.Model):
     last_retweeted_id = db.IntegerProperty()
     last_updated = db.DateTimeProperty(auto_now_add=True)
 
+    #@cache_region("", "twitteruser")
+#    @classmethod
+#    def get_by_key_name(cls, *args, **kwargs):
+#        super(TwitterUser, cls).get_by_key_name(*args, **kwargs)
+
 class AppConfig(db.Model):
     config_key = db.StringProperty()
     config_value = db.StringProperty()
+
+    #@cache_region("long_term", "app_config")
+#    @classmethod
+#    def get_by_key_name(cls, *args, **kwargs):
+#        super(AppConfig, cls).get_by_key_name(*args, **kwargs)
 
 class SubscribeContacts(db.Model):
     addr = db.StringProperty()
