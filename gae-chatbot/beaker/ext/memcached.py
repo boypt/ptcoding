@@ -6,8 +6,6 @@ from beaker.synchronization import file_synchronizer
 from beaker.util import verify_directory, SyncDict
 import warnings
 
-import logging
-
 MAX_KEY_LENGTH = 250
 
 _client_libs = {}
@@ -107,11 +105,9 @@ class MemcachedNamespaceManager(NamespaceManager):
         return formated_key
 
     def __getitem__(self, key):
-        logging.info("getitem: '{0}'".format(self._format_key(key)))
         return self.mc.get(self._format_key(key))
 
     def __contains__(self, key):
-        logging.info("contains: '{0}'".format(self._format_key(key)))
         value = self.mc.get(self._format_key(key))
         return value is not None
 
@@ -119,22 +115,24 @@ class MemcachedNamespaceManager(NamespaceManager):
         return key in self
 
     def set_value(self, key, value, expiretime=None):
-        logging.info("set_value: '{0}' {1}".format(self._format_key(key), str(expiretime)))
+        if expiretime is None and type(value) is tuple:
+            try:
+                expiretime = int(value[1])
+            except KeyError:
+                pass
+
         if expiretime:
             self.mc.set(self._format_key(key), value, time=expiretime)
         else:
             self.mc.set(self._format_key(key), value)
 
     def __setitem__(self, key, value):
-        logging.info("setitem: '{0}'".format(self._format_key(key)))
         self.set_value(key, value)
 
     def __delitem__(self, key):
-        logging.info("delitem: '{0}'".format(self._format_key(key)))
         self.mc.delete(self._format_key(key))
 
     def do_remove(self):
-        logging.info("flush all")
         self.mc.flush_all()
 
     def keys(self):
@@ -142,44 +140,18 @@ class MemcachedNamespaceManager(NamespaceManager):
                 "Memcache caching does not "
                 "support iteration of all cache keys")
 
-
 class PyLibMCNamespaceManager(MemcachedNamespaceManager):
     """Provide thread-local support for pylibmc."""
 
     def __init__(self, *arg, **kw):
         super(PyLibMCNamespaceManager, self).__init__(*arg, **kw)
         self.pool = pylibmc.ThreadMappedPool(self.mc)
+        self.mc = self._pool_mc
 
-    def __getitem__(self, key):
+    @property
+    def _pool_mc(self):
         with self.pool.reserve() as mc:
-            return mc.get(self._format_key(key))
-
-    def __contains__(self, key):
-        with self.pool.reserve() as mc:
-            value = mc.get(self._format_key(key))
-            return value is not None
-
-    def has_key(self, key):
-        return key in self
-
-    def set_value(self, key, value, expiretime=None):
-        with self.pool.reserve() as mc:
-            if expiretime:
-                mc.set(self._format_key(key), value, time=expiretime)
-            else:
-                mc.set(self._format_key(key), value)
-
-    def __setitem__(self, key, value):
-        self.set_value(key, value)
-
-    def __delitem__(self, key):
-        with self.pool.reserve() as mc:
-            mc.delete(self._format_key(key))
-
-    def do_remove(self):
-        with self.pool.reserve() as mc:
-            mc.flush_all()
-
+            return mc
 
 class MemcachedContainer(Container):
     """Container class which invokes :class:`.MemcacheNamespaceManager`."""

@@ -35,7 +35,7 @@ class GoogleMemcacheNamespaceManager(MemcachedNamespaceManager):
         return null_synchronizer()
 
     def get_creation_lock(self, key):
-        # this is weird, should probably be present
+        # no need in google environment
         return null_synchronizer()
 
 class GoogleMemcacheContainer(Container):
