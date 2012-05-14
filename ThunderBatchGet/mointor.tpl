@@ -4,7 +4,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Control Panel</title>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.0/jquery.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="http://jquery.offput.ca/js/jquery.timers.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://raw.github.com/patryk/jquery.timers/master/jquery.timers.min.js" type="text/javascript" charset="utf-8"></script>
+
 <style type="text/css">
 
 
