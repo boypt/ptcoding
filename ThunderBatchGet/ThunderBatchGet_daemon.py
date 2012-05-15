@@ -284,6 +284,7 @@ class ThunderTaskManager(object):
         name_set = frozenset([t.filename for t in self.thread_pool.values()])
 
         if filename in name_set:
+            self.logger.info("Entry {0} already existed.".format(filename))
             return -1
 
         task = DownloadTask(tasktype = tasktype,
