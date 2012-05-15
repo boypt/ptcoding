@@ -209,6 +209,13 @@ $(function () {
         $("a[uid=" + uid + "]").click();
         return false;
     });
+    $("#forcestop").click(function (){
+        var uid = $("div[id^=task_control_]:visible").attr('taskuid');
+        $.get(API_BASE + "/force_stop/" + uid).success(function (data) { });
+        update_tasks();
+        $("a[uid=" + uid + "]").click();
+        return false;
+    });
     $("#tasks").everyTime(5000, "timer_tasks", update_tasks);
     update_tasks();
     
@@ -240,6 +247,7 @@ $(function () {
         <li><a id="pauselog" href="#">PauseLog</a></li>
         <li><a id="clearlog" href="#">ClearLog</a></li>
         <li><a id="forcerestart" href="#">ForceRestart</a></li>
+        <li><a id="forcestop" href="#">ForceStop</a></li>
     </ul>
 </div>
 <!-- -->

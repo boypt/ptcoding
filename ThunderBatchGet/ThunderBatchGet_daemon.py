@@ -301,6 +301,9 @@ class ThunderTaskManager(object):
     def force_restart(self, uid):
         self.thread_pool[uid].force_restart(reset_cnt = True)
 
+    def force_stop(self, uid):
+        self.thread_pool[uid].force_stop()
+
     def list_all_tasks(self):
         p = self.thread_pool
         self.logger.debug("list all keys: " + str(self.thread_pool.keys()))
@@ -359,6 +362,12 @@ def force_restart(tid = None):
     task_mgr.force_restart(tid)
     return ""
 
+@route("/force_stop/:tid")
+@LogException
+def force_stop(tid = None):
+    assert tid is not None, "need tid"
+    task_mgr.force_stop(tid)
+    return ""
 
 
 @route("/")
