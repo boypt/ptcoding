@@ -160,16 +160,24 @@ class DownloadTask(object):
         self.logger.info("call force_restart, ")
         log = self.logger
 
+        self.force_stop()
+
+        if reset_cnt:
+            self.retry_time = 0
+        self.start_thread()
+        log.info("thread restarted, id :%s" % str(self.dl_thread.ident))
+
+    def force_stop(self):
+        self.logger.info("call force_restart, ")
+        log = self.logger
+
         if self.dl_thread is not None and self.dl_thread.is_alive():
             self.dl_thread.suicide()
             log.info("thread is alive, join")
             self.dl_thread.join()
 
         self.dl_thread = None
-        if reset_cnt:
-            self.retry_time = 0
-        self.start_thread()
-        log.info("thread restarted, id :%s" % str(self.dl_thread.ident))
+        log.info("thread stopped")
 
     @property
     def need_retry(self):
@@ -273,6 +281,11 @@ class ThunderTaskManager(object):
         self.thread_pool = {}
 
     def new_wget_task(self, tasktype, filename, dl_url, cookies_values):
+        name_set = frozenset([t.filename for t in self.thread_pool.values()])
+
+        if filename in name_set:
+            return -1
+
         task = DownloadTask(tasktype = tasktype,
                         filename = filename,
                         dl_dir = DEFAULT_DOWN_DIR,
