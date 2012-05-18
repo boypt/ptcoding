@@ -112,7 +112,7 @@ class DownloadThread(Thread):
         return (not self.is_alive()) and (retcode is not None) and (retcode != 0) and (retcode != 3)
 
     is_subprocess_exit_0 = property(lambda s:s.retcode == 0)
-    is_subprocess_finished = property(lambda s:s.subprocess.poll() is not None)
+    is_subprocess_finished = property(lambda s: True if s.subprocess is None else (s.subprocess.poll() is not None))
 
     def suicide(self):
         log = self.logger
