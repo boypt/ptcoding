@@ -1,16 +1,11 @@
 #!/bin/bash
 
 OPENVPNEXAMPLE="/usr/share/openvpn/examples/"
+EASYRSA="/usr/share/openvpn/easy-rsa/"
 PORT="9812"
 SERVERIP="4.3.2.1"
 VPNSUBNET="10.$((RANDOM%=255)).$((RANDOM%=255)).0"
 VPNMASK="255.255.255.192"
-
-ALLTAREDCONF=$1
-
-TEMPDIR=`mktemp -d`
-cd $TEMPDIR
-
 
 msg_red() {
     echo -e "\033[31;1m $1\033[0m";
@@ -19,6 +14,26 @@ msg_red() {
 msg_yellow () {
     echo -e "\033[33;1m $1\033[0m";
 }
+
+#ovpn path test
+
+if [[ ! -d $OPENVPNEXAMPLE ]] || [[ ! -d $EASYRSA ]]; then
+
+    #ubuntu
+    OPENVPNEXAMPLE="/usr/share/doc/openvpn/examples/sample-config-files/"
+    EASYRSA="/usr/share/doc/openvpn/examples/easy-rsa/2.0/"
+    if [[ ! -d $OPENVPNEXAMPLE ]] || [[ ! -d $EASYRSA ]]; then
+        msg_red "OpenVPN Example/Easy-rsa not found, edit script for a correnct path."
+    fi
+fi
+
+
+ALLTAREDCONF=$1
+
+TEMPDIR=`mktemp -d`
+cd $TEMPDIR
+
+
 
 msg_usefule () {
     msg_red "iptables commands below may be useful:"
@@ -71,7 +86,7 @@ else
     msg_red "Enter your VPN name:"
     read VPN_NAME
 
-    cp -r /usr/share/openvpn/easy-rsa/ $TEMPDIR
+    cp -r $EASYRSA $TEMPDIR/easy-rsa
     cd easy-rsa
     sed "s/--interact //" -i build-ca build-key build-key-server
 
