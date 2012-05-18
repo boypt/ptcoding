@@ -117,6 +117,7 @@ build_server () {
     cd $TEMPDIR/easy-rsa
 
     export KEY_NAME=$SVRNAME-$RANDOM
+    export KEY_CN=$KEY_NAME
     ./build-key-server $SVRNAME
     cd ..
 
@@ -153,6 +154,7 @@ build_client () {
     echo -e "\033[33;1m" 
     CLINAMEIDNY="$CLINAME-$NAME"
     export KEY_NAME=$CLINAMEIDNY
+    export KEY_CN=$KEY_NAME
     ./build-key $CLINAME
 
     cd ..
