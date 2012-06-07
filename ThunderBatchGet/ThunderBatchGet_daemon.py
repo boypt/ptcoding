@@ -2,12 +2,12 @@ import os
 import sys
 import fcntl
 import time
+import datetime
 import logging
-from collections import deque 
+from collections import deque, Counter
 import threading
 from threading import Thread
 from subprocess import Popen, PIPE
-from select import select
 import select
 
 import bottle
@@ -19,9 +19,10 @@ import cStringIO
 
 logging.basicConfig(filename = "/tmp/thunderbatch.log",
         format = "%(asctime)s %(threadName)s(%(thread)s):%(name)s:%(message)s",
-                            level = logging.INFO)
+                            level = logging.DEBUG)
 
 DEFAULT_DOWN_DIR = os.path.expanduser("~/Downloads")
+MAX_CONCURRENT_TASK = 1
 
 if not os.path.isdir(DEFAULT_DOWN_DIR):
     DEFAULT_DOWN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Downloads")
@@ -137,6 +138,11 @@ class DownloadTask(object):
     retry_time = 0
     dl_thread = None
 
+    create_time = None
+    start_time = None
+    stop_time = None
+    manual_stop_flag = False
+
     __str__ = lambda s : "[uid='%s',tasktype='%s',filename='%s',retry_time='%s',dl_thread='%s',,,finished='%s',need_retry='%s']" % (s.uid, s.tasktype, s.filename, s.retry_time, s.dl_thread, s.is_task_finished, s.need_retry)
 
     def __init__(self, *args, **kw):
@@ -147,8 +153,11 @@ class DownloadTask(object):
         self.dl_headers = "Cookie: " + "".join(map(lambda s:"%s=%s; " % s, self.cookies_values))
         self.std_deque = deque(maxlen = 8 * 1024)
         self.err_deque = deque(maxlen = 8 * 1024)
+        self.create_time = datetime.datetime.now()
 
     def start_thread(self):
+        self.start_time = datetime.datetime.now()
+        self.manual_stop_flag = False
         self.retry_time += 1
         self.logger.info("thread start")
         wget_cmd = ['/usr/bin/wget', '--continue', '--header', self.dl_headers, '-O', self.filename, 
@@ -177,6 +186,7 @@ class DownloadTask(object):
             self.dl_thread.join()
 
         self.dl_thread = None
+        self.manual_stop_flag = True
         log.info("thread stopped")
 
     @property
@@ -211,7 +221,12 @@ class DownloadTask(object):
     def status(self):
         thread = self.dl_thread
         if thread is None:
-            return "Done"
+            if self.start_time is None:
+                return "Queue"
+            elif self.manual_stop_flag is True:
+                return "Stop"
+            else:
+                return "Done"
 
         retcode = self.dl_thread.retcode
         status = ''
@@ -232,22 +247,21 @@ class DownloadTask(object):
                                         is_task_finished = s.is_task_finished))
 
     def log_output(self):
-        log = ''
+        output = cStringIO.StringIO()
         self.logger.debug("len %d,%d" % (len(self.std_deque), len(self.err_deque)))
         for queue in (self.std_deque, self.err_deque):
             if len(queue) > 0:
-                output = cStringIO.StringIO()
                 while True:
                     try:
                         line = queue.popleft()
                         output.write(line)
                     except IndexError:
                         break
-                log += output.getvalue()
-                output.close()
+
+        log = output.getvalue()
+        output.close()
 
         return log
-
 
 class TaskMointorThread(Thread):
 
@@ -264,13 +278,29 @@ class TaskMointorThread(Thread):
         logger.info("init")
 
         while True:
-            keys = tuple(task_pool.keys())
+            self.task_mgr.process_task_queue()
+            keys = task_pool.keys()
             for k in keys:
                 t = task_pool[k]
-                logger.debug(str(t))
+                #logger.debug(str(t))
                 if t.is_task_finished and t.need_retry:
                     logger.info("retry task " + str(t.uid))
                     t.force_restart(reset_cnt = False)
+                    continue
+
+                if t.is_task_finished and \
+                        t.manual_stop_flag is False and \
+                        t.start_time is not None and \
+                        t.stop_time is None:
+                    t.stop_time = datetime.datetime.now()
+                    continue
+
+                if t.stop_time is not None and (datetime.datetime.now() - t.stop_time > datetime.datedelta(hours = 1)):
+
+                    logger.info("remove old task: " + str(t))
+                    task_pool.pop(t.uid)
+                    continue
+
             time.sleep(3)
 
 
@@ -279,6 +309,7 @@ class ThunderTaskManager(object):
     def __init__(self):
         self.logger = logging.getLogger(type(self).__name__)
         self.thread_pool = {}
+        self.task_queue = deque(maxlen = 256)
 
     def new_wget_task(self, tasktype, filename, dl_url, cookies_values):
         name_set = frozenset([t.filename for t in self.thread_pool.values()])
@@ -295,13 +326,18 @@ class ThunderTaskManager(object):
                         )
         uid = task.uid
         self.thread_pool[uid] = task
-        task.start_thread()
+        self.task_queue.append(uid)
+        self.process_task_queue()
         return uid
 
     def force_restart(self, uid):
+        if uid in self.task_queue:
+            return
         self.thread_pool[uid].force_restart(reset_cnt = True)
 
     def force_stop(self, uid):
+        if uid in self.task_queue:
+            return
         self.thread_pool[uid].force_stop()
 
     def list_all_tasks(self):
@@ -312,6 +348,18 @@ class ThunderTaskManager(object):
                                 filename = p[k].filename, 
                                 status = p[k].status), 
                    sorted(self.thread_pool.keys()))
+
+    def process_task_queue(self):
+        tc = Counter([t.status for t in self.thread_pool.values()])
+        self.logger.debug("process_task_queue: " + str(tc))
+        if tc["Running"] < MAX_CONCURRENT_TASK:
+            try:
+                uid = self.task_queue.popleft()
+            except IndexError:
+                return
+            else:
+                t = self.thread_pool[uid]
+                t.start_thread()
 
 
 @route("/thunder_single_task")
