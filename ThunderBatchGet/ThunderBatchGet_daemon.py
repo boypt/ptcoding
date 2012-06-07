@@ -314,6 +314,8 @@ class ThunderTaskManager(object):
     def new_wget_task(self, tasktype, filename, dl_url, cookies_values):
         name_set = frozenset([t.filename for t in self.thread_pool.values()])
 
+        filename = filename.replace("/", "_")
+
         if filename in name_set:
             self.logger.info("Entry {0} already existed.".format(filename))
             return -1
