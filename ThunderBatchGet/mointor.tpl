@@ -144,7 +144,7 @@ function update_tasks() {
                                         $(logwindow).append(data.line.replace(/\n/g, '<br /> \n'));
                                     }
                                     if (data.status != "Running") {
-                                        if (data.status == "Done")
+                                        if (data.status == "Done" || data.status === "Stop" || data.status === "Queue")
                                             $(tc).stopTime("timer"+uid);
                                         update_tasks();
                                         $(tc).children("h2").children("em").text(data.status);

@@ -103,6 +103,8 @@ $(function () {
         }).appendTo("div.side_nav");
         $('<h2 class="saveside"><a href="#"><em class="ic_sf"></em>ChangeServer</a></h2>').click(function (){
             API_BASE = prompt("BatchWget Server", "http://127.0.0.1:8080");
+            if ( API_BASE.substr(-1) === "/") API_BASE = API_BASE.substring(0, API_BASE.lastIndexOf('/'))
+
         }).appendTo("div.side_nav");
 
     }
