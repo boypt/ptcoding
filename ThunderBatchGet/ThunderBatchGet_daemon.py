@@ -248,7 +248,7 @@ class DownloadTask(object):
 
     def log_output(self):
         output = cStringIO.StringIO()
-        self.logger.debug("len %d,%d" % (len(self.std_deque), len(self.err_deque)))
+        #self.logger.debug("len %d,%d" % (len(self.std_deque), len(self.err_deque)))
         for queue in (self.std_deque, self.err_deque):
             if len(queue) > 0:
                 while True:
@@ -278,30 +278,35 @@ class TaskMointorThread(Thread):
         logger.info("init")
 
         while True:
-            self.task_mgr.process_task_queue()
-            keys = task_pool.keys()
-            for k in keys:
-                t = task_pool[k]
-                #logger.debug(str(t))
-                if t.is_task_finished and t.need_retry:
-                    logger.info("retry task " + str(t.uid))
-                    t.force_restart(reset_cnt = False)
-                    continue
+            try:
+                time.sleep(3)
+                self.task_mgr.process_task_queue()
+                keys = task_pool.keys()
+                for k in keys:
+                    t = task_pool[k]
+                    #logger.debug(str(t))
+                    if t.is_task_finished and t.need_retry:
+                        logger.info("retry task " + str(t.uid))
+                        t.force_restart(reset_cnt = False)
+                        logger.debug("retryed: " + str(t))
+                        continue
 
-                if t.is_task_finished and \
-                        t.manual_stop_flag is False and \
-                        t.start_time is not None and \
-                        t.stop_time is None:
-                    t.stop_time = datetime.datetime.now()
-                    continue
+                    if t.is_task_finished and \
+                            t.manual_stop_flag is False and \
+                            t.start_time is not None and \
+                            t.stop_time is None:
+                        t.stop_time = datetime.datetime.now()
+                        logger.debug("mark finish: " + str(t))
+                        continue
 
-                if t.stop_time is not None and (datetime.datetime.now() - t.stop_time > datetime.datedelta(hours = 1)):
+                    if t.stop_time is not None and \
+                            (datetime.datetime.now() - t.stop_time > datetime.timedelta(hours = 1)):
+                        logger.info("remove old task: " + str(t))
+                        task_pool.pop(t.uid)
+                        continue
 
-                    logger.info("remove old task: " + str(t))
-                    task_pool.pop(t.uid)
-                    continue
-
-            time.sleep(3)
+            except Exception, e:
+                logger.info("monitor thread error",exc_info = True)
 
 
 class ThunderTaskManager(object):
