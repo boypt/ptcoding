@@ -263,10 +263,10 @@ class DownloadTask(object):
 
         return log
 
-class TaskMointorThread(Thread):
+class TaskMonitorThread(Thread):
 
     def __init__(self, task_mgr):
-        super(TaskMointorThread, self).__init__(name = type(self).__name__)
+        super(TaskMonitorThread, self).__init__(name = type(self).__name__)
         self.logger = logging.getLogger(type(self).__name__)
         self.daemon = True
         self.task_mgr = task_mgr
@@ -426,7 +426,7 @@ def force_stop(tid = None):
 
 
 @route("/")
-@view('mointor')
+@view('monitor')
 def root():
     return {}
 
@@ -435,8 +435,8 @@ if __name__ == "__main__":
 
 
     task_mgr = ThunderTaskManager()
-    mointor = TaskMointorThread(task_mgr)
-    mointor.start()
+    monitor = TaskMonitorThread(task_mgr)
+    monitor.start()
 
     import webbrowser
     webbrowser.open_new_tab("http://127.0.0.1:8080")
