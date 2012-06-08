@@ -143,7 +143,8 @@ class DownloadTask(object):
     stop_time = None
     manual_stop_flag = False
 
-    __str__ = lambda s : "[uid='%s',tasktype='%s',filename='%s',retry_time='%s',dl_thread='%s',,,finished='%s',need_retry='%s']" % (s.uid, s.tasktype, s.filename, s.retry_time, s.dl_thread, s.is_task_finished, s.need_retry)
+    __str__ = lambda s : "[uid='%s',tasktype='%s',filename='%s',retry_time='%s',dl_thread='%s',,,is_subp_running='%s',need_retry='%s']" % \
+                                (s.uid, s.tasktype, s.filename, s.retry_time, s.dl_thread, s.is_subprocess_running, s.need_retry)
 
     def __init__(self, *args, **kw):
         self.__dict__.update(**kw)
@@ -207,15 +208,15 @@ class DownloadTask(object):
         return wget_err
 
     @property
-    def is_task_finished(self):
-        if (self.dl_thread is None):
-            return True
+    def is_subprocess_running(self):
+        if self.dl_thread is None:
+            return False
         elif self.dl_thread.is_subprocess_exit_0 and not self.dl_thread.is_alive():
             self.dl_thread = None
             self.logger.info("task %s finished, remove thread obj" % self.uid)
-            return True
+            return False
         else:
-            return self.dl_thread.is_subprocess_finished
+            return not self.dl_thread.is_subprocess_finished
 
     @property
     def status(self):
@@ -244,7 +245,7 @@ class DownloadTask(object):
 
     report_dict = property(lambda s:dict(status = s.status, 
                                         retry_time = s.retry_time, 
-                                        is_task_finished = s.is_task_finished))
+                                        is_subprocess_running = s.is_subprocess_running))
 
     def log_output(self):
         output = cStringIO.StringIO()
@@ -285,25 +286,21 @@ class TaskMonitorThread(Thread):
                 for k in keys:
                     t = task_pool[k]
                     #logger.debug(str(t))
-                    if t.is_task_finished and t.need_retry:
+                    if not t.is_subprocess_running and t.need_retry:
                         logger.info("retry task " + str(t.uid))
                         t.force_restart(reset_cnt = False)
-                        logger.debug("retryed: " + str(t))
                         continue
 
-                    if t.is_task_finished and \
-                            t.manual_stop_flag is False and \
+                    if t.status == "Done" and \
                             t.start_time is not None and \
                             t.stop_time is None:
                         t.stop_time = datetime.datetime.now()
                         logger.debug("mark finish: " + str(t))
-                        continue
 
-                    if t.stop_time is not None and \
+                    elif t.status == "Done" and t.stop_time is not None and \
                             (datetime.datetime.now() - t.stop_time > datetime.timedelta(hours = 1)):
                         logger.info("remove old task: " + str(t))
                         task_pool.pop(t.uid)
-                        continue
 
             except Exception, e:
                 logger.info("monitor thread error",exc_info = True)
@@ -358,15 +355,14 @@ class ThunderTaskManager(object):
 
     def process_task_queue(self):
         tc = Counter([t.status for t in self.thread_pool.values()])
-        self.logger.debug("process_task_queue: " + str(tc))
+        #self.logger.debug("process_task_queue: " + str(tc))
         if tc["Running"] < MAX_CONCURRENT_TASK:
             try:
                 uid = self.task_queue.popleft()
             except IndexError:
                 return
             else:
-                t = self.thread_pool[uid]
-                t.start_thread()
+                self.thread_pool[uid].start_thread()
 
 
 @route("/thunder_single_task")
