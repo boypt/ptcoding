@@ -82,8 +82,11 @@ def proxy():
 
     try:
         headtuple, content = curl_http(url, headers)
-#        import ipdb;ipdb.set_trace()    
+        import ipdb;ipdb.set_trace()    
+
         headret = [(k,v) for k,v in headtuple if not is_hop_by_hop(k)]
+        html = content.replace("<body>", "<body><!-- test -->")
+        log.debug(html)
         raise HTTPResponse(output = content, header = headret)
     except pycurl.error, e:
         log.debug("curl error: " + str(e))
