@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#
+# This script sets up route tables for each different interface
+#   properly descriped in /etc/network/interfaces.
+# Useful when the server has more than one IP in different subnets with 
+#    different gateways
+#
+# Usage:
+#   1. put this script under /etc/network/if-up.d , make sure excuatable
+#   2. describe interfaces in /etc/network/interfaces, it's better 
+#        static, dhcp mode not tested. 
+#       
+#   The script will not work if any of this OPTIONS missing:
+#        address
+#        gateway
+#        network
+#
+
+if [[ "$MODE" != start || "$IFACE" == lo || "$ADDRFAM" != inet ]]; then
+    exit 0
+fi
+
+export `ifquery $IFACE|sed 's/: /=/;s/-//'`
+
+if [[ -z $address || -z $gateway || -z $network ]]; then
+    logger 'RouteTable' "Network for dev $IFACE incomplete."
+    echo "Network for dev $IFACE incomplete."
+    exit 0;
+fi
+
+TABLENAME="table`echo $address|sed 's/\.//g'`"
+
+isIDInRtTables () {
+    for NUM in `sed -n 's/^\([0-9]\+\).\+/\1/p' /etc/iproute2/rt_tables`; do
+        if [[ $1 -eq $NUM ]]; then
+            return 0
+        fi
+    done
+
+    return 1;
+}
+
+if ! grep -q $TABLENAME /etc/iproute2/rt_tables; then
+    while true; do
+        let ID=$RANDOM%250
+        if ! isIDInRtTables $ID; then
+            echo $ID $TABLENAME >> /etc/iproute2/rt_tables
+            break
+        fi
+    done
+fi
+
+
+/sbin/ip route add $network dev $IFACE src $address table $TABLENAME || true
+/sbin/ip route add default via $gateway table $TABLENAME || true
+/sbin/ip rule add from $address table $TABLENAME || true
+
