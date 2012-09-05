@@ -1,5 +1,6 @@
 #!/bin/bash
-
+#
+# Author: Preston M. <pentie [at] gmail.com> 2012.09.01
 #
 # This script sets up route tables for each different interface
 #   properly descriped in /etc/network/interfaces.
@@ -24,7 +25,7 @@ fi
 export `ifquery $IFACE|sed 's/: /=/;s/-//'`
 
 if [[ -z $address || -z $gateway || -z $network ]]; then
-    logger 'RouteTable' "Network for dev $IFACE incomplete."
+    logger "$0: RouteTable Network for dev $IFACE incomplete. Ignored."
     echo "Network for dev $IFACE incomplete."
     exit 0;
 fi
@@ -55,4 +56,6 @@ fi
 /sbin/ip route add $network dev $IFACE src $address table $TABLENAME || true
 /sbin/ip route add default via $gateway table $TABLENAME || true
 /sbin/ip rule add from $address table $TABLENAME || true
+
+logger "$0: Setup Route table $TABLENAME for $IFACE with gateway $gateway ."
 
