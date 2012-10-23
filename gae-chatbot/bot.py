@@ -24,6 +24,11 @@ from beaker.util import parse_cache_config_options
 #custom module
 from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
 
+import re
+from htmlentitydefs import name2codepoint
+def htmlentitydecode(s):
+    return re.sub('&(%s);' % '|'.join(name2codepoint),
+            lambda m: unichr(name2codepoint[m.group(1)]), s)
 
 cache_opts = {
     'cache.regions': 'short_term, long_term',
@@ -265,7 +270,7 @@ def newretweeted():
             for t in reversed(rts):
                 tweet_text = u"RT @{0}: {1}".format(t.retweeted_status.user.screen_name, 
                                                 get_tweet_urls_text(t.retweeted_status))
-                msg_text = u"via {0} ".format(t.user.screen_name) + tweet_text
+                msg_text = htmlentitydecode(u"via {0} ".format(t.user.screen_name) + tweet_text)
 
                 taskqueue.add(url='/tasks/send_retweeted_msg', countdown = queue_cnt * 120,
                         params=dict(tweet = msg_text))
