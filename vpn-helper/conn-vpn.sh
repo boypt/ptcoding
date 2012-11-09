@@ -3,13 +3,18 @@
 VPNNAME=$1
 NOTAG=$2
 
-OLDVPNPID=$(pgrep openvpn)
-if [[ ! -z $OLDVPNPID  && ${NOTAG,,} == "notail" ]]; then
-    echo "Kill Old VPN Process ... "
-    sudo kill -SIGTERM $OLDVPNPID
+
+if [[ -z $VPNNAME ]]; then
+    echo "$0 VPNNAME"
+    exit 1
 fi
-echo "Wait for their exit ..."
-sleep 2
+
+if [[ ${NOTAG,,} != "notail" ]] && pgrep "openvpn" > /dev/null ; then
+    echo "Kill Old VPN Process ... "
+    sudo killall openvpn
+    echo "Wait for their exit ..."
+    sleep 2
+fi
 
 cd /etc/openvpn/$VPNNAME
 CONF=$(ls *.conf)
