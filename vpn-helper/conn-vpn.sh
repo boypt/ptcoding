@@ -9,7 +9,7 @@ if [[ -z $VPNNAME ]]; then
     exit 1
 fi
 
-if [[ ${NOTAG,,} != "notail" ]] && pgrep "openvpn" > /dev/null ; then
+if [[ ${NOTAG,,} != "nokill" ]] && pgrep "openvpn" > /dev/null ; then
     echo "Kill Old VPN Process ... "
     sudo killall openvpn
     echo "Wait for their exit ..."
