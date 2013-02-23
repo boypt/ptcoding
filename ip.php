@@ -34,7 +34,8 @@ th,td {padding:5px 10px;border: 1px solid #aaa;}
         }
 
         foreach($_SERVER as $k => $v) {
-            if(substr($k, 0, 4) === "HTTP") {
+            $pre_key = substr($k, 0, 4);
+            if($pre_key === "HTTP" || $pre_key === "GEOI") {
             ?><tr><td><?=$k?></td><td><?=$v?></td></tr>
         <?php }
         }?></tbody>
