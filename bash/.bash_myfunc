@@ -1,0 +1,29 @@
+# delete "hosts finger print not match" warnings
+seddelhost () {
+        sed -i $1d ~/.ssh/known_hosts
+}
+
+
+screenshoot () {
+    #sleep .5;
+    SCREEN=/tmp/`date '+%Y-%m-%d_%H-%M-%S'`.png
+    scrot -bs "$SCREEN"
+
+    if [[ ! -e "$SCREEN" ]]; then
+        zenity --info --text="No image grabbed."
+        return 0
+    fi
+    ACTION=$(zenity --list  --height=250 --title="What to do with the image" --column="How" "Save" "Temp" "Upload")
+
+    if [[ $ACTION == "Save" ]]; then
+        TO_PATH=$(zenity --file-selection --save --confirm-overwrite --filename "$SCREEN")
+        mv "$SCREEN" "$TO_PATH"
+        zenity --info --text="$TO_PATH"
+    elif [[ $ACTION == "Upload" ]]; then
+        URL=$(curl -F "name=@$SCREEN" http://img.vim-cn.com/)
+        zenity --info --text="$URL"
+    else
+        zenity --info --text="$SCREEN"
+    fi
+}
+
