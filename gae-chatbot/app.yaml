@@ -23,8 +23,7 @@ handlers:
 inbound_services:
 - xmpp_subscribe
 - xmpp_error
-#- xmpp_message
-#
+- xmpp_message
 
 libraries:
 - name: jinja2

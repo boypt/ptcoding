@@ -338,32 +338,47 @@ def review_tweets():
                 datefmt_short = DATETIME_FORMAT_SHORT,
                 tzdelta = CSTTZ)
 
-#@post("/_ah/xmpp/message/chat/")
-#def chat():
-#    message = xmpp.Message(request.POST)
-#    #message.reply("hi")
+@post("/_ah/xmpp/message/chat/")
+def xmpp_chat():
+    message = xmpp.Message(request.POST)
+
+    msg_text = message.body.decode('utf-8')
+    logging.debug(msg_text)
+
+    reply = ''
+    if "bot" in msg_text.lower():
+        reply = u"我在！"
+    elif "233" in msg_text:
+        reply = u"233 ..."
+    elif u"噗" in msg_text:
+        reply = u"噗 ..."
+    elif u"喵" in msg_text:
+        reply = u"喵 nyan ..."
+
+    if len(reply) > 0:
+        message.reply(reply)
 
 @post("/_ah/xmpp/subscription/subscribe/")
 def subscribe():
     sender_addr = request.POST["from"].split('/')[0]
     stanza = request.POST["stanza"]
     SubscribeContacts.get_or_insert(sender_addr, addr = sender_addr, stanza = stanza)
-    logging.info(stanza)
+    logging.debug(stanza)
 
 @post("/_ah/xmpp/subscription/subscribed/")
 def subscribed():
-    logging.info(request.POST["stanza"])
+    logging.debug(request.POST["stanza"])
 
 @post("/_ah/xmpp/subscription/unsubscribe/")
 def unsubscribe():
     sender_addr = request.POST["from"].split('/')[0]
     ct = SubscribeContacts.get_by_key_name(sender_addr)
     ct.delete()
-    logging.info(request.POST["stanza"])
+    logging.debug(request.POST["stanza"])
 
 @post("/_ah/xmpp/subscription/unsubscribed/")
-def unsubscribed():
-    logging.info(request.POST["stanza"])
+def xmpp_unsubscribed():
+    logging.debug(request.POST["stanza"])
 
 @post("/_ah/xmpp/error/")
 def xmpp_error():
