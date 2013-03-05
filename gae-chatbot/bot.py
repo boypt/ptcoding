@@ -346,9 +346,12 @@ def xmpp_chat():
     msg_text = message.body.decode('utf-8')
 
     resps = {"bot": u"我在！",
-            "233": u"233 ...",
-            u"噗": u"噗",
-            u"喵": u"喵~"
+            "233": u"23333~",
+            "pia": u"Pia!<(=ｏ ‵-′)ノ☆",
+            u"噗": u"噗！",
+            u"喵": u"喵~",
+            u"你猜": u"你猜~",
+            u"自己写个": u"自己写个",
             }
 
     for k in resps.keys():
