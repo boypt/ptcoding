@@ -261,12 +261,20 @@ def newretweeted():
     for usr in twitter_user:
         auth.set_access_token(usr.twitter_access_token, usr.twitter_access_token_secret)
         api = tweepy.API(auth)
-        rts = api.retweeted_by_me(since_id = usr.last_retweeted_id,
-                                    include_entities = True, count = 30)
+
+        rts = api.user_timeline(
+                user_id=usr.twitter_id,
+                since_id=usr.last_retweeted_id if usr.last_retweeted_id != 0 else None,
+                include_rts=1,
+                exclude_replies=1,
+                count=100)
+
+        rts = [t for t in rts if hasattr(t, "retweeted_status")]
 
         if len(rts) > 0:
             usr.last_retweeted_id = rts[0].id
             usr.put()
+
             for t in reversed(rts):
                 tweet_text = u"RT @{0}: {1}".format(t.retweeted_status.user.screen_name, 
                                                 get_tweet_urls_text(t.retweeted_status))
@@ -284,7 +292,7 @@ def newretweeted():
 
             region_invalidate(retrive_tweet_data, "short_term", usr.user, *default_range())
 
-            info = "schedualed {0} tweet(s) from {1}".format(len(rts), usr.twitter_id)
+            info = "schedualed {0} tweet(s) from {1}".format(queue_cnt, usr.twitter_id)
         else:
             info = "no new retweet from {0}".format(usr.twitter_id)
 

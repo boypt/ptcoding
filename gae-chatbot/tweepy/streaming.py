@@ -6,16 +6,15 @@ import httplib
 from socket import timeout
 from threading import Thread
 from time import sleep
-import urllib
 
 from tweepy.models import Status
 from tweepy.api import API
 from tweepy.error import TweepError
 
-from tweepy.utils import import_simplejson
+from tweepy.utils import import_simplejson, urlencode_noplus
 json = import_simplejson()
 
-STREAM_VERSION = 1
+STREAM_VERSION = '1.1'
 
 
 class StreamListener(object):
@@ -136,26 +135,30 @@ class Stream(object):
             raise
 
     def _data(self, data):
-        for d in [dt for dt in data.split('\n') if dt]:
-            if self.listener.on_data(d) is False:
-                self.running = False
+        if self.listener.on_data(data) is False:
+            self.running = False
 
     def _read_loop(self, resp):
-        buf = ''
+
         while self.running and not resp.isclosed():
-            c = resp.read(self.buffer_size)
-            idx = c.rfind('\n')
-            if idx > -1:
-                # There is an index. Store the tail part for later,
-                # and process the head part as messages. We use idx + 1
-                # as we dont' actually want to store the newline.
-                data = buf + c[:idx]
-                buf = c[idx + 1:]
-                self._data(data)
-            else:
-                # No newline found, so we add this to our accumulated
-                # buffer
-                buf += c
+
+            # Note: keep-alive newlines might be inserted before each length value.
+            # read until we get a digit...
+            c = '\n'
+            while c == '\n' and self.running and not resp.isclosed():
+                c = resp.read(1)
+            delimited_string = c
+
+            # read rest of delimiter length..
+            d = ''
+            while d != '\n' and self.running and not resp.isclosed():
+                d = resp.read(1)
+                delimited_string += d
+
+            # read the next twitter status object
+            if delimited_string.strip().isdigit():
+                next_status_obj = resp.read( int(delimited_string) )
+                self._data(next_status_obj)
 
         if resp.isclosed():
             self.on_closed(resp)
@@ -172,19 +175,18 @@ class Stream(object):
         pass
 
     def userstream(self, count=None, async=False, secure=True):
+        self.parameters = {'delimited': 'length'}
         if self.running:
             raise TweepError('Stream object already connected!')
-        self.url = '/2/user.json'
+        self.url = '/2/user.json?delimited=length'
         self.host='userstream.twitter.com'
-        if count:
-            self.url += '&count=%s' % count
         self._start(async)
 
     def firehose(self, count=None, async=False):
         self.parameters = {'delimited': 'length'}
         if self.running:
             raise TweepError('Stream object already connected!')
-        self.url = '/%i/statuses/firehose.json?delimited=length' % STREAM_VERSION
+        self.url = '/%s/statuses/firehose.json?delimited=length' % STREAM_VERSION
         if count:
             self.url += '&count=%s' % count
         self._start(async)
@@ -193,24 +195,25 @@ class Stream(object):
         self.parameters = {'delimited': 'length'}
         if self.running:
             raise TweepError('Stream object already connected!')
-        self.url = '/%i/statuses/retweet.json?delimited=length' % STREAM_VERSION
+        self.url = '/%s/statuses/retweet.json?delimited=length' % STREAM_VERSION
         self._start(async)
 
     def sample(self, count=None, async=False):
         self.parameters = {'delimited': 'length'}
         if self.running:
             raise TweepError('Stream object already connected!')
-        self.url = '/%i/statuses/sample.json?delimited=length' % STREAM_VERSION
+        self.url = '/%s/statuses/sample.json?delimited=length' % STREAM_VERSION
         if count:
             self.url += '&count=%s' % count
         self._start(async)
 
-    def filter(self, follow=None, track=None, async=False, locations=None, count = None):
+    def filter(self, follow=None, track=None, async=False, locations=None, 
+        count = None, stall_warnings=False):
         self.parameters = {}
         self.headers['Content-type'] = "application/x-www-form-urlencoded"
         if self.running:
             raise TweepError('Stream object already connected!')
-        self.url = '/%i/statuses/filter.json?delimited=length' % STREAM_VERSION
+        self.url = '/%s/statuses/filter.json?delimited=length' % STREAM_VERSION
         if follow:
             self.parameters['follow'] = ','.join(map(str, follow))
         if track:
@@ -220,7 +223,9 @@ class Stream(object):
             self.parameters['locations'] = ','.join(['%.2f' % l for l in locations])
         if count:
             self.parameters['count'] = count
-        self.body = urllib.urlencode(self.parameters)
+        if stall_warnings:
+            self.parameters['stall_warnings'] = stall_warnings
+        self.body = urlencode_noplus(self.parameters)
         self.parameters['delimited'] = 'length'
         self._start(async)
 
