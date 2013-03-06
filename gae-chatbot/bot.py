@@ -26,6 +26,8 @@ from beaker.util import parse_cache_config_options
 #custom module
 from DbModule import TwitterUser, AppConfig, SubscribeContacts, SavedTweets
 
+from botreply import botreply
+
 import re
 from htmlentitydefs import name2codepoint
 def htmlentitydecode(s):
@@ -343,30 +345,17 @@ def review_tweets():
 @post("/_ah/xmpp/message/chat/")
 def xmpp_chat():
     message = xmpp.Message(request.POST)
-    msg_text = message.body.decode('utf-8')
 
-    resps = {"bot": u"我在！",
-            "233": u"23333~",
-            "pia": u"Pia!<(=ｏ ‵-′)ノ☆",
-            u"噗": u"噗！",
-            u"喵": u"喵~",
-            u"你猜": u"你猜~",
-            u"自己写个": u"自己写个",
-            }
+    key,reply = botreply(message.body)
 
-    for k in resps.keys():
-        if k in msg_text:
-            break
-    else:
-        return
+    if key is not None:
+        MEM_KEY = 'resp_time_' + key
+        resp_time = memcache.get(MEM_KEY)
+        now = time.time()
 
-    MEM_KEY = 'resp_time_' + k
-    resp_time = memcache.get(MEM_KEY)
-    now = time.time()
-
-    if resp_time is None or now - resp_time > 60:
-        memcache.set(MEM_KEY, now)
-        message.reply(resps[k])
+        if resp_time is None or now - resp_time > 60:
+            memcache.set(MEM_KEY, now)
+            message.reply(reply)
 
 @post("/_ah/xmpp/subscription/subscribe/")
 def subscribe():
