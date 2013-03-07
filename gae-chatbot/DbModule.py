@@ -1,5 +1,5 @@
 from google.appengine.ext import db
-from beaker.cache import cache_region
+#from beaker.cache import cache_region
 
 class TwitterUser(db.Model):
     user = db.UserProperty()
@@ -29,7 +29,9 @@ class SubscribeContacts(db.Model):
     add_time = db.DateTimeProperty(auto_now_add=True)
 
 class SavedTweets(db.Model):
+    tweet_id = db.IntegerProperty()
+    pushed_flag = db.BooleanProperty()
     user = db.UserProperty()
     retweet_time = db.DateTimeProperty(auto_now_add=True)
-    tweet_text = db.StringProperty()
+    tweet_text = db.TextProperty()
 

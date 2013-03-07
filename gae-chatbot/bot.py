@@ -257,7 +257,7 @@ def remove_twitter():
 @config_check
 def newretweeted():
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-    twitter_user = TwitterUser.all().fetch(limit = 100)
+    twitter_user = TwitterUser.all().fetch(limit = 10)
     random.shuffle(twitter_user)
     queue_cnt = 0
     for usr in twitter_user:
@@ -269,7 +269,7 @@ def newretweeted():
                 since_id=usr.last_retweeted_id if usr.last_retweeted_id != 0 else None,
                 include_rts=1,
                 exclude_replies=1,
-                count=100)
+                count=30)
 
         rts = [t for t in rts if hasattr(t, "retweeted_status")]
 
@@ -280,17 +280,23 @@ def newretweeted():
             for t in reversed(rts):
                 tweet_text = u"RT @{0}: {1}".format(t.retweeted_status.user.screen_name, 
                                                 get_tweet_urls_text(t.retweeted_status))
-                msg_text = htmlentitydecode(u"via {0} ".format(t.user.screen_name) + tweet_text)
 
-                taskqueue.add(url='/tasks/send_retweeted_msg', countdown = queue_cnt * 120,
-                        params=dict(tweet = msg_text))
+                msg_text = htmlentitydecode(u"via {0}: {1}".format(t.user.screen_name, tweet_text))
+
+                dt = SavedTweets(
+                        tweet_id = t.id,
+                        user = usr.user,
+                        pushed_flag = False,
+                        tweet_text = msg_text)
+
+                dt.put()
+
+                taskqueue.add(url='/tasks/push_retweet', 
+                        name = 'push_{0}'.format(t.id),
+                        countdown = queue_cnt * 120,
+                        params=dict(dbkey=dt.key()))
 
                 queue_cnt += 1
-
-                t = SavedTweets(user = usr.user, 
-                        retweet_time = t.created_at,
-                        tweet_text = tweet_text.replace('\n', ''))
-                t.put()
 
             region_invalidate(retrive_tweet_data, "short_term", usr.user, *default_range())
 
@@ -300,12 +306,19 @@ def newretweeted():
 
         logging.info(info)
 
-@post("/tasks/send_retweeted_msg")
+@post("/tasks/push_retweet")
 @config_check
-def send_retweeted_msg():
-    tweet = request.POST["tweet"]
-    for ct in SubscribeContacts.all().fetch(limit = 100):
-        xmpp.send_message(ct.addr, tweet)
+def push_retweet():
+    dbkey = request.POST["dbkey"]
+    t = SavedTweets.get(keys=dbkey)
+    if t is not None:
+        t.tweet_text
+
+        map(lambda ct:xmpp.send_message(ct.addr, t.tweet_text), 
+            SubscribeContacts.all().fetch(limit = 10))
+
+        t.pushed_flag = True
+        t.put()
 
 @get('/review_tweets')
 @view('review_tweets')
