@@ -6,12 +6,10 @@ import logging
 import random
 from datetime import datetime, date, timedelta
 import json
-import time
 
 #gae api
 from google.appengine.api import xmpp
 from google.appengine.api import users, taskqueue 
-from google.appengine.api import memcache
 
 #Third party
 import tweepy
@@ -345,17 +343,9 @@ def review_tweets():
 @post("/_ah/xmpp/message/chat/")
 def xmpp_chat():
     message = xmpp.Message(request.POST)
-
     reply = botreply(message.body)
-
     if reply is not None:
-        MEM_KEY = 'resp_time_%d' % hash(reply)
-        resp_time = memcache.get(MEM_KEY)
-        now = time.time()
-
-        if resp_time is None or now - resp_time > 60:
-            memcache.set(MEM_KEY, now)
-            message.reply(reply)
+        message.reply(reply)
 
 @post("/_ah/xmpp/subscription/subscribe/")
 def subscribe():
