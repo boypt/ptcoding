@@ -346,10 +346,10 @@ def review_tweets():
 def xmpp_chat():
     message = xmpp.Message(request.POST)
 
-    key,reply = botreply(message.body)
+    reply = botreply(message.body)
 
-    if key is not None:
-        MEM_KEY = 'resp_time_' + key
+    if reply is not None:
+        MEM_KEY = 'resp_time_%d' % hash(reply)
         resp_time = memcache.get(MEM_KEY)
         now = time.time()
 

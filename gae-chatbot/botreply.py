@@ -1,17 +1,20 @@
 #coding:utf8
 
+import random
+
 
 resps_ascii = {
-        "bot": u"我在！",
-        "233": u"23333~",
+        "bot": lambda : random.choice((u"我在！", u"干嘛？", u"别叫我。")),
+        "233": lambda : "2{0} ~".format('3' * random.randint(2, 6)),
         "pia": u"Pia!<(=ｏ ‵-′)ノ☆",
         }
 
 resps_unicode = {
         u"噗": u"噗！",
-        u"喵": u"喵~",
+        u"喵": lambda : random.choice((u"喵～", u"nyan ~", u"meow ~")),
         u"你猜": u"你猜~",
-        u"自己写个": u"自己写个",
+        u"膜拜": lambda :u"膜拜 +{0}".format(random.choice((233,10086,1024,1069))),
+        u"自己写": u"自己写个",
         }
 
 def botreply(raw_msg):
@@ -19,12 +22,14 @@ def botreply(raw_msg):
     msglow = raw_msg.lower()
     for k in resps_ascii.keys():
         if k in msglow:
-            return k, resps_ascii[k]
+            v = resps_ascii[k]
+            return v() if callable(v) else v
     else:
         msguni = raw_msg.decode('utf-8')
         for k in resps_unicode.keys():
             if k in msguni:
-                return k, resps_unicode[k]
+                v = resps_unicode[k]
+                return v() if callable(v) else v
 
-    return None,None
+    return None
 
