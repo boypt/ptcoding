@@ -22,11 +22,11 @@ if [[ "$MODE" != start || "$IFACE" == lo || "$ADDRFAM" != inet ]]; then
     exit 0
 fi
 
-export `ifquery $IFACE|sed 's/: /=/;s/-//'`
+export `ifquery $IFACE|sed 's/: /=/;s/[- ]/_/g'`
 
 if [[ -z $address || -z $gateway || -z $network ]]; then
-    logger "$0: RouteTable Network for dev $IFACE incomplete. Ignored."
-    echo "Network for dev $IFACE incomplete."
+    logger "$0: RouteTable Network for dev $IFACE incomplete. add=$address gw=$gateway nw=$network"
+    echo "$0: RouteTable Network for dev $IFACE incomplete. add=$address gw=$gateway nw=$network"
     exit 0;
 fi
 
