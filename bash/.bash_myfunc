@@ -15,11 +15,11 @@ screenshoot () {
     fi
     ACTION=$(zenity --list  --height=250 --title="What to do with the image" --column="How" "Save" "Temp" "Upload")
 
-    if [[ $ACTION == "Save" ]]; then
+    if [[ $ACTION == "Save"* ]]; then
         TO_PATH=$(zenity --file-selection --save --confirm-overwrite --filename "$SCREEN")
         mv "$SCREEN" "$TO_PATH"
         zenity --info --text="$TO_PATH"
-    elif [[ $ACTION == "Upload" ]]; then
+    elif [[ $ACTION == "Upload"* ]]; then
         URL=$(curl -F "name=@$SCREEN" http://img.vim-cn.com/)
         zenity --info --text="$URL"
     else
