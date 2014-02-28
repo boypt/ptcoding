@@ -10,9 +10,7 @@ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     echo json_encode($_SERVER, JSON_PRETTY_PRINT);
 } elseif (!empty($_SERVER['HTTP_USER_AGENT']) && strpos(strtolower($_SERVER['HTTP_USER_AGENT']), 'curl') !== FALSE) {
     header("Content-type: text/plain");
-    foreach($_SERVER as $k => $v) {
-        echo "$k => $v\n";
-    }
+    echo "{$_SERVER["REMOTE_ADDR"]}\n";
 } else { ?>
 <!DOCTYPE html>
 <html>
