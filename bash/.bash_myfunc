@@ -1,12 +1,18 @@
+#
+#
+
 # delete "hosts finger print not match" warnings
 seddelhost () {
-        sed -i $1d ~/.ssh/known_hosts
+    local LINE=$1
+    [[ $LINE -gt 0 ]] || { echo "Line num" && return 1; }
+    echo "Delete line $LINE"
+    sed -i "$LINE"d ~/.ssh/known_hosts
 }
 
 
 screenshoot () {
     #sleep .5;
-    SCREEN=/tmp/`date '+%Y-%m-%d_%H-%M-%S'`.png
+    local SCREEN=/tmp/`date '+%Y-%m-%d_%H-%M-%S'`.png
     scrot -bs "$SCREEN"
 
     if [[ ! -e "$SCREEN" ]]; then
@@ -25,5 +31,20 @@ screenshoot () {
     else
         zenity --info --text="$SCREEN"
     fi
+}
+
+stshadowsocks () {
+    local PF=$1
+    [[ ! -z $PF ]] || { echo "Profile name." && return 1; }
+    local SERVICE=$(systemctl list-units | awk '/^shadowsocks-libev/{print $1; exit 0}')
+    sudo systemctl stop $SERVICE
+    sudo systemctl start "shadowsocks-libev@$PF"
+    systemctl status "shadowsocks-libev@$PF"
+}
+
+reshadowsocks () {
+    local SERVICE=$(systemctl list-units | awk '/^shadowsocks-libev/{print $1; exit 0}')
+    sudo systemctl restart $SERVICE
+    systemctl status $SERVICE
 }
 
