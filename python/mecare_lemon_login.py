@@ -4,13 +4,12 @@
 #   Black box analysed from captured stream from their android client.
 #
 
-import os
 import json
 import urllib
 import urllib2
 import hashlib
 from pprint import pprint,pformat
-from time import gmtime, strftime
+from time import localtime, strftime
 
 DEVNAME="test-name" #random name
 TOKEN=hashlib.md5(DEVNAME).hexdigest()
@@ -50,10 +49,10 @@ def print_wdata(wdata):
 def write_wdata(wdata):
 
     print "-" * 65
-    fn = 'wdata_{0}.csv'.format(strftime("%Y-%m-%d_%H%M%S", gmtime()))
-    wdt =  [ "{0}\t{1:.1f}".format(wd["wdate"], sum( [ w['value'] for w in wd["wdata"] ] ) / len(wd["wdata"])) for wd in wdata ]
+    fn = 'wdata_{0}.csv'.format(strftime("%Y-%m-%d_%H%M%S", localtime()))
+    wdt =  [ "{0},{1:.1f}".format(wd["wdate"], sum( [ w['value'] for w in wd["wdata"] ] ) / len(wd["wdata"])) for wd in wdata ]
     with open(fn, 'w') as f:
-        f.write(os.linesep.join(wdt))
+        f.write("\n".join(wdt))
 
     print "Done. See '{0}'".format(fn)
 
