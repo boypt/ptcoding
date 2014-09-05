@@ -4,14 +4,15 @@
 #   Black box analysed from captured stream from their android client.
 #
 
+import os
 import json
 import urllib
 import urllib2
 import hashlib
 from pprint import pprint,pformat
+from time import gmtime, strftime
 
 DEVNAME="test-name" #random name
-
 TOKEN=hashlib.md5(DEVNAME).hexdigest()
 ACCOUNT=raw_input("Email:")
 PASSWD=hashlib.md5(raw_input('Password:')).hexdigest()
@@ -46,6 +47,16 @@ def print_wdata(wdata):
         #print "%s,%s" % (date,weigh)
         print "{0},{1:.1f}".format(date,weigh)
 
+def write_wdata(wdata):
+
+    print "-" * 65
+    fn = 'wdata_{0}.csv'.format(strftime("%Y-%m-%d_%H%M%S", gmtime()))
+    wdt =  [ "{0}\t{1:.1f}".format(wd["wdate"], sum( [ w['value'] for w in wd["wdata"] ] ) / len(wd["wdata"])) for wd in wdata ]
+    with open(fn, 'w') as f:
+        f.write(os.linesep.join(wdt))
+
+    print "Done. See '{0}'".format(fn)
+
 def main():
 
     print TOKEN
@@ -62,7 +73,8 @@ def main():
     if "uid" in u:
         w = get_wdata(u["uid"])
         #pprint(w)
-        print_wdata(w)
+        #print_wdata(w)
+        write_wdata(w)
 
 if __name__ == "__main__":
     main()
