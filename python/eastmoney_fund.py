@@ -42,17 +42,19 @@ if __name__ == '__main__':
     num_fn = sys.argv[1]
 
     with open("eastmoney.cookies") as f: cookies = f.read()
-    dtstr = eastmoney_get(cookies)
 
-    #with open("example.txt") as f: dtstr = f.read()
+    #dtstr = eastmoney_get(cookies)
+    with open("example.txt") as f: dtstr = f.read()
     dtdb = parse_js_obj(dtstr)
 
     #pprint(dtdb)
-    with open(num_fn) as f:
-        nums = f.readlines()
+    with open(num_fn, 'rb') as f:
+        nums = f.read()
         vals = []
-        for ln in nums:
-            key = re.match(r"\d+", ln).group()
+        num_re = re.compile(b"\d+")
+
+        for ln in num_re.findall(nums):
+            key = ln.decode('ascii')
             if key in dtdb:
                 print("{num: <10}\t{name: <20}\t{val}\t{valdate}".format(**dtdb[key]))
                 vals.append(dtdb[key]['val'])
