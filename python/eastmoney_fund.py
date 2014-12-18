@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import re
+import os
 import sys
 import urllib.request
 from pprint import pprint
@@ -40,25 +41,23 @@ def parse_js_obj(est_js):
 if __name__ == '__main__':
 
     num_fn = sys.argv[1]
-
     with open("eastmoney.cookies") as f: cookies = f.read()
 
-    #dtstr = eastmoney_get(cookies)
-    with open("example.txt") as f: dtstr = f.read()
+    dtstr = eastmoney_get(cookies)
+    #with open("example.txt") as f: dtstr = f.read()
     dtdb = parse_js_obj(dtstr)
 
-    #pprint(dtdb)
     with open(num_fn, 'rb') as f:
         nums = f.read()
-        vals = []
+        #vals = []
         num_re = re.compile(b"\d+")
 
         for ln in num_re.findall(nums):
             key = ln.decode('ascii')
             if key in dtdb:
                 print("{num: <10}\t{name: <20}\t{val}\t{valdate}".format(**dtdb[key]))
-                vals.append(dtdb[key]['val'])
-
+                #vals.append(dtdb[key]['val'])
         print("---------")
-        print("\n".join(vals))
 
+        
+    val = input('Press to exit')
