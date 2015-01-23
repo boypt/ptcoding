@@ -57,7 +57,8 @@ if __name__ == '__main__':
             if key in dtdb:
                 print("{num: <10}\t{name: <20}\t{val}\t{valdate}".format(**dtdb[key]))
                 #vals.append(dtdb[key]['val'])
-        print("---------")
+            else:
+                print("****** {0} Not Selected ******".format(key))
 
+        print("---------")
         
-    val = input('Press to exit')
