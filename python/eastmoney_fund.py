@@ -29,7 +29,7 @@ def parse_js_obj(est_js):
         cols = ln.split(',')
         key=cols[0]
         try:
-            fund_db[key] = dict(num=cols[0], name=cols[1], valdate=cols[17], val=cols[18])
+            fund_db[key] = dict(num=cols[0], name=cols[1], valdate=cols[17], val=cols[18], incr=cols[23])
         except IndexError:
             print('---------')
             pprint(cols)
@@ -50,12 +50,12 @@ if __name__ == '__main__':
     with open(num_fn, 'rb') as f:
         nums = f.read()
         #vals = []
-        num_re = re.compile(b"\d+")
+        num_re = re.compile(b"\d{6}")
 
         for ln in num_re.findall(nums):
             key = ln.decode('ascii')
             if key in dtdb:
-                print("{num: <10}\t{name: <20}\t{val}\t{valdate}".format(**dtdb[key]))
+                print("{num:<6}\t{val:6}\t{incr:6}%\t{valdate}\t{name:<20}".format(**dtdb[key]))
                 #vals.append(dtdb[key]['val'])
             else:
                 print("****** {0} Not Selected ******".format(key))
