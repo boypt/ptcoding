@@ -1,0 +1,2 @@
+sinastock.py %*
+pause

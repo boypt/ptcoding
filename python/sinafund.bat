@@ -1,0 +1,2 @@
+sinafund.py %*
+pause
