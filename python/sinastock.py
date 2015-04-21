@@ -2,6 +2,7 @@
 
 import re
 import sys
+import os
 import urllib.request, urllib.error, urllib.parse
 
 reg = re.compile(r'var hq_str_[szh]{2}\d{6}="(.+?)";\n')
@@ -46,5 +47,7 @@ if __name__ == '__main__':
 
             print("{0:.4f}\t{1:.2%}\t{2:.2f}\t -- {3} {4}".format(curval,incr,lastval, name, time))
 
-        print("---------")
-        
+        print("---------")     
+        if os.name == 'nt':
+            os.system("pause")
+
