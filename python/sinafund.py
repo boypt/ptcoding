@@ -1,8 +1,8 @@
-
 #!/usr/bin/python3
 
 import re
 import sys
+import os
 import urllib.request, urllib.error, urllib.parse
 
 
@@ -41,6 +41,8 @@ if __name__ == '__main__':
             incr = (curval-lastval)/lastval
 
             print("{0:.4f}\t{1:.2%}\t{2:.4f}\t -- {3} {4}".format(curval,incr,lastval,name,date))
-
-        print("---------")
+            
+        print("---------")        
+        if os.name == 'nt':
+            os.system("pause")
         
