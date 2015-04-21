@@ -5,7 +5,7 @@ import sys
 import os
 import urllib.request, urllib.error, urllib.parse
 
-reg = re.compile(r'var hq_str_[szh]{2}\d{6}="(.+?)";\n')
+reg = re.compile(r'var hq_str_s_[szh]{2}\d{6}="(.+?)";\n')
 
 def a_stock(num):
     req = urllib.request.Request("http://hq.sinajs.cn/list=%s" % num)
@@ -16,9 +16,19 @@ def a_stock(num):
     stall = tuple(map(lambda q:tuple(q.split(',')), stval))
 
     return stall
+    
+def market(num):
+    markets = {
+        "6":"sh",
+        "9":"sh",
+        "5":"sh",
+        "0":"sz",
+        "2":"sz",
+        "3":"sz",
+        "1":"sz",
+    }
 
-
-
+    return "s_{0}{1}".format(markets[num[0]], num)
 
 if __name__ == '__main__':
 
@@ -26,28 +36,28 @@ if __name__ == '__main__':
 
     with open(num_fn, 'rb') as f:
         nums = f.read()
-        num_re = re.compile(b"[szh]{2}\d{6}")
+        num_re = re.compile(b"\d{6}")
 
         file_num = num_re.findall(nums)
-        stock_num = ",".join(map(lambda z:z.decode('ascii'), file_num))
+        all_num = map(lambda z:z.decode('ascii'), file_num)
+        market_num = map(market, all_num)
+        stock_num = ",".join(market_num)
+        # print(stock_num)
         stall = a_stock(stock_num)
 
         print("-Cur----Incr----Last-----Name-----Date/Time--")
         for q in stall:
-            #for n,v in enumerate(q): print (n,v)
+            # for n,v in enumerate(q): print (n,v)
             name = q[0]
-            curval = float(q[3])
-            lastval = float(q[2])
-            incr = (curval-lastval)/lastval
-            time = q[31]
-            if curval == 0:
-                curval = float(q[2])
-                lastval = float(q[2])
-                incr = float(0)
+            curval = float(q[1])
+            incr = float(q[2])
+            incr_pct = float(q[3])
 
-            print("{0:.4f}\t{1:.2%}\t{2:.2f}\t -- {3} {4}".format(curval,incr,lastval, name, time))
+            if curval == 0:
+                curval=1
+
+            print("{0:.4f}\t{1:.4f}\t{2:.2f}%\t -- {3}".format(curval,incr,incr_pct,name))
 
         print("---------")     
         if os.name == 'nt':
             os.system("pause")
-
