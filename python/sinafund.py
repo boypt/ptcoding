@@ -30,13 +30,17 @@ if __name__ == '__main__':
         item_num = ",".join(map(lambda z:'f_'+z.decode('ascii'), file_num))
         stall = sina_fund(item_num)
 
+        print("-Cur----Incr----Last--------Name--       ---Date--")
+
         for q in stall:
             #for n,v in enumerate(q): print (n,v)
             name = q[0]
-            curval = q[1]
+            curval = float(q[1])
+            lastval = float(q[3])
             date = q[4]
+            incr = (curval-lastval)/lastval
 
-            print("{0} \t {1} {2}".format(curval, name, date))
+            print("{0:.4f}\t{1:.2%}\t{2:.4f}\t -- {3} {4}".format(curval,incr,lastval,name,date))
 
         print("---------")
         

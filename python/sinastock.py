@@ -31,15 +31,18 @@ if __name__ == '__main__':
         stock_num = ",".join(map(lambda z:z.decode('ascii'), file_num))
         stall = a_stock(stock_num)
 
+        print("-Cur----Incr----Last-----Name-----Date/Time--")
         for q in stall:
             #for n,v in enumerate(q): print (n,v)
             name = q[0]
-            curval = q[3]
+            curval = float(q[3])
+            lastval = float(q[2])
+            incr = (curval-lastval)/lastval
             time = q[31]
             if float(curval) == 0:
                 curval = q[2]
 
-            print("{0}\t {1} {2}".format(curval, name, time))
+            print("{0:.2f}\t{1:.2%}\t{2:.2f} -- {3} {4}".format(curval,incr,lastval, name, time))
 
         print("---------")
         
