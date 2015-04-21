@@ -39,10 +39,12 @@ if __name__ == '__main__':
             lastval = float(q[2])
             incr = (curval-lastval)/lastval
             time = q[31]
-            if float(curval) == 0:
-                curval = q[2]
+            if curval == 0:
+                curval = float(q[2])
+                lastval = float(q[2])
+                incr = float(0)
 
-            print("{0:.2f}\t{1:.2%}\t{2:.2f} -- {3} {4}".format(curval,incr,lastval, name, time))
+            print("{0:.2f}\t{1:.2%}\t{2:.2f}\t -- {3} {4}".format(curval,incr,lastval, name, time))
 
         print("---------")
         
