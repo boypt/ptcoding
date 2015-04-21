@@ -44,7 +44,7 @@ if __name__ == '__main__':
                 lastval = float(q[2])
                 incr = float(0)
 
-            print("{0:.2f}\t{1:.2%}\t{2:.2f}\t -- {3} {4}".format(curval,incr,lastval, name, time))
+            print("{0:.4f}\t{1:.2%}\t{2:.2f}\t -- {3} {4}".format(curval,incr,lastval, name, time))
 
         print("---------")
         
