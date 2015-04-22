@@ -8,8 +8,8 @@ import urllib.request, urllib.error, urllib.parse
 
 def sina_fund(num):
 
-    if num[0:2] != '15':
-        raise TypeError('Number must be 15xxxx')
+    if num[0:2] not in ('15', '16'):
+        raise TypeError('Number must be 15xxxx 16xxxx')
 
     query_str="s_sz{0},f_{0}".format(num)
     req = urllib.request.Request("http://hq.sinajs.cn/list="+query_str)
@@ -20,21 +20,45 @@ def sina_fund(num):
 
     return (fundval, marketval)
 
+def fund_premium_val(num):
+    fval,mval = sina_fund(num)
+    lastval = float(fval[1])
+    curval = float(mval[1])
+    rate = (curval-lastval)/lastval
+    return "{0:.2%}\t{1:.4f}\t{2:.4f}\t{3},{4}".format(rate,curval,lastval,fval[0],mval[0])
+
+def interactive_lookup():
+    try:
+        import readline
+    except ImportError:
+        pass
+    while True:
+        try:
+            if sys.version_info[0] == 3:
+                words = input('> ')
+            else:
+                words = raw_input('> ')
+            words = words.strip()
+            if len(words)==6 and re.match(r'\d{6}', words):
+                print(fund_premium_val(words))
+            else:
+                print("6 numbers only")
+                continue
+        except KeyboardInterrupt:
+            print()
+            continue
+        except EOFError:
+            break
+
 
 if __name__ == '__main__':
 
-    num = sys.argv[1]
-
-    fundval, marketval = sina_fund(num)
-    #print(fundval)
-    #print(marketval)
-
-    lastval = float(fundval[1])
-    curval = float(marketval[1])
-    rate = (curval-lastval)/lastval
+    if len(sys.argv) == 2:
+        num = sys.argv[1]
+        print(fund_premium_val(num))
+    else:
+        interactive_lookup()
     
-    print("{0:.2%}\t{1:.4f}\t{2:.4f}\t{3},{4}".format(rate,curval,lastval,fundval[0],marketval[0]))
-    print("---------")        
     if os.name == 'nt':
         os.system("pause")
-    
+
