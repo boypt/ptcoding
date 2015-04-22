@@ -15,8 +15,14 @@ def sina_fund(num):
     req = urllib.request.Request("http://hq.sinajs.cn/list="+query_str)
     data = urllib.request.urlopen(req).read().decode('gbk')
 
-    fundval = re.search(r'var hq_str_f_\d{6}="(.+?)";\n', data).groups()[0].split(',');
-    marketval = re.search(r'var hq_str_s_sz\d{6}="(.+?)";\n', data).groups()[0].split(',');
+    fcnt = re.search(r'var hq_str_f_\d{6}="(.+?)";\n', data)
+    mcnt = re.search(r'var hq_str_s_sz\d{6}="(.+?)";\n', data)
+
+    if fcnt is None or mcnt is None:
+        raise TypeError("Number '{0}' invalid.".format(num))
+
+    fundval = fcnt.groups()[0].split(',');
+    marketval = mcnt.groups()[0].split(',');
 
     return (fundval, marketval)
 
@@ -40,7 +46,11 @@ def interactive_lookup():
                 words = raw_input('> ')
             words = words.strip()
             if len(words)==6 and re.match(r'\d{6}', words):
-                print(fund_premium_val(words))
+                try:
+                    print(fund_premium_val(words))
+                except TypeError as e:
+                    print(e)
+                    continue
             else:
                 print("6 numbers only")
                 continue
