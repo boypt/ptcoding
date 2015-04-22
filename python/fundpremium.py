@@ -33,7 +33,7 @@ if __name__ == '__main__':
     curval = float(marketval[1])
     rate = (curval-lastval)/lastval
     
-    print("{0:.2%}\t{1:.4f}\t{2:.4f}".format(rate,curval,lastval))
+    print("{0:.2%}\t{1:.4f}\t{2:.4f}\t{3},{4}".format(rate,curval,lastval,fundval[0],marketval[0]))
     print("---------")        
     if os.name == 'nt':
         os.system("pause")
