@@ -31,7 +31,7 @@ def fund_premium_val(num):
     lastval = float(fval[1])
     curval = float(mval[1])
     rate = (curval-lastval)/lastval
-    return "{0:.2%}\t{1:.4f}\t{2:.4f}\t{3},{4} [{5}]".format(rate,curval,lastval,fval[0],mval[0],fval[4])
+    return "{0:+.2%}\t{1:.4f}\t{2:.4f}\t{3},{4} [{5}]".format(rate,curval,lastval,fval[0],mval[0],fval[4])
 
 def interactive_lookup():
     try:

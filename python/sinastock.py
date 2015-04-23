@@ -45,7 +45,7 @@ if __name__ == '__main__':
         # print(stock_num)
         stall = a_stock(stock_num)
 
-        print("-Cur----Incr----Last-----Name-----Date/Time--")
+        print("-Cur-------Incr------Rate------Name------")
         for q in stall:
             # for n,v in enumerate(q): print (n,v)
             name = q[0]
@@ -56,8 +56,11 @@ if __name__ == '__main__':
             if curval == 0:
                 curval=1
 
-            print("{0:.4f}\t{1:.4f}\t{2:.2f}%\t -- {3}".format(curval,incr,incr_pct,name))
+            curval_str = "{:.4f}".format(curval).rjust(8)
+            incr_str = "{:+.4f}".format(incr).rjust(7)
+            incr_pct_str = "{:+.2f}%".format(incr_pct).rjust(7)
+            print("{0}  {1}  {2}     {3}".format(curval_str,incr_str,incr_pct_str,name))
 
-        print("---------")     
+        print("-"*70)
         if os.name == 'nt':
             os.system("pause")

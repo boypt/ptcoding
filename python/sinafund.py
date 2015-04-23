@@ -30,7 +30,7 @@ if __name__ == '__main__':
         item_num = ",".join(map(lambda z:'f_'+z.decode('ascii'), file_num))
         stall = sina_fund(item_num)
 
-        print("-Cur----Incr----Last--------Name--       ---Date--")
+        print("--净值-----涨幅-----昨净-----净值日期-----------基金全称-----------")
 
         for q in stall:
             #for n,v in enumerate(q): print (n,v)
@@ -40,9 +40,13 @@ if __name__ == '__main__':
             date = q[4]
             incr = (curval-lastval)/lastval
 
-            print("{0:.4f}\t{1:.2%}\t{2:.4f}\t -- {3} {4}".format(curval,incr,lastval,name,date))
+            s_curval = "{:.4f}".format(curval).rjust(7)
+            s_lastval = "{:.4f}".format(lastval).rjust(7)
+            s_incr = "{:+.2%}".format(incr).rjust(7)
+
+            print("{0}  {1}  {2}   {3} -- {4}".format(s_curval,s_incr,s_lastval,date,name))
             
-        print("---------")        
+        print("-"*70)
         if os.name == 'nt':
             os.system("pause")
         
