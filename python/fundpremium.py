@@ -31,7 +31,7 @@ def fund_premium_val(num):
     lastval = float(fval[1])
     curval = float(mval[1])
     rate = (curval-lastval)/lastval
-    return "{0:.2%}\t{1:.4f}\t{2:.4f}\t{3},{4}".format(rate,curval,lastval,fval[0],mval[0])
+    return "{0:.2%}\t{1:.4f}\t{2:.4f}\t{3},{4} [{5}]".format(rate,curval,lastval,fval[0],mval[0],fval[4])
 
 def interactive_lookup():
     try:
@@ -63,6 +63,7 @@ def interactive_lookup():
 
 if __name__ == '__main__':
 
+    print("溢折率--现价----净值----全称,简称--------------净值日期")
     if len(sys.argv) == 2:
         num = sys.argv[1]
         print(fund_premium_val(num))
