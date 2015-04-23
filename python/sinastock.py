@@ -45,7 +45,7 @@ if __name__ == '__main__':
         # print(stock_num)
         stall = a_stock(stock_num)
 
-        print("-Cur-------Incr------Rate------Name------")
+        print("---最新-----涨跌-----涨幅------名称-----------------------------------")
         for q in stall:
             # for n,v in enumerate(q): print (n,v)
             name = q[0]
