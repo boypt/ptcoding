@@ -30,6 +30,8 @@ def print_fund(fund_all):
         s_lastval = "{:.4f}".format(lastval).rjust(7)
         s_incr = "{:+.2%}".format(incr).rjust(7)
 
+        if len(name) > 12: name=name[:12]
+
         print("{}  {}  {}   {} -- {}{}".format(s_curval,s_incr,s_lastval,date,num,name))
 
 
