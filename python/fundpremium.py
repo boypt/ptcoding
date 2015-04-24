@@ -436,14 +436,28 @@ def sina_fund(num):
 
 def print_fund_val(fund_cnt):
 
+    print("----涨幅%----当前----溢折率%----净值---净值日期------------名称--")
+
     for key,vs in fund_cnt.items():
         fval,mval = vs
         fval=fval.split(',')
         mval=mval.split(',')
-        lastval = float(fval[1])
+        #import ipdb;ipdb.set_trace()
+
+        netval = float(fval[1])
         curval = float(mval[1])
-        rate = (curval-lastval)/lastval
-        print("{0:+.2%}\t{1:.4f}\t{2:.4f}[{3}]\t{4},{5} ".format(rate,curval,lastval,fval[4],fval[0],mval[0]))
+
+        netval_str = "{:.4f}".format(netval).rjust(7)
+        curval_str = "{:.4f}".format(curval).rjust(7)
+        rate = "{:+.2%}".format((curval-netval)/netval).rjust(7)
+
+        curval_chg = mval[2].rjust(8)
+        curval_ptg = mval[3].rjust(8)
+        date = fval[4]
+        name = "{} {}".format(mval[0],fval[0])
+    
+        #print("{0:+.2%}\t{1:.4f}\t{2:.4f}[{3}]\t{4},{5} ".format(rate,curval,lastval,fval[4],fval[0],mval[0]))
+        print("{}%  {}  {}  {} {} -- {}".format(curval_ptg, curval_str, rate, netval_str, date, name))
 
 
 def interactive_lookup():
@@ -474,7 +488,6 @@ def interactive_lookup():
 
 if __name__ == '__main__':
 
-    print("-溢折率--现价----净值--------------------------全称,简称--------------")
     if len(sys.argv) == 2:
         num = sys.argv[1]
         num = guess_num(num)
