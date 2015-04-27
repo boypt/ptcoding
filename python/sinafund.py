@@ -23,7 +23,7 @@ def print_fund(fund_all):
         name = q[0]
         curval = float(q[1])
         lastval = float(q[3])
-        date = q[4]
+        date = q[4][5:]
         incr = (curval-lastval)/lastval
 
         s_curval = "{:.4f}".format(curval).rjust(7)
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         file_num = num_re.findall(nums)
         stall = sina_fund(file_num)
 
-        print("--净值-----涨幅-----昨净-----净值日期-----------基金全称--------------")
+        print("--净值-----涨幅-----昨净---净值日期------基金全称--------------")
         print_fund(stall)
         print("-"*70)
         if os.name == 'nt':
