@@ -437,7 +437,7 @@ def sina_fund(num):
 
 def print_fund_val(fund_cnt):
 
-    print("----涨幅%----当前----溢折率%----净值---净值日期------------名称--")
+    print("----涨幅%----当前----溢折率%----净值-日期------------名称--------------")
 
     for key,vs in fund_cnt.items():
         fval,mval = vs
@@ -454,11 +454,11 @@ def print_fund_val(fund_cnt):
 
         curval_chg = mval[2].rjust(8)
         curval_ptg = mval[3].rjust(8)
-        date = fval[4]
-        name = "{} {}".format(mval[0],fval[0])
+        date = fval[4][5:]
+        name = "{}{},{}".format(key,mval[0],fval[0])
     
         #print("{0:+.2%}\t{1:.4f}\t{2:.4f}[{3}]\t{4},{5} ".format(rate,curval,lastval,fval[4],fval[0],mval[0]))
-        print("{}%  {}  {}  {} {} -- {}".format(curval_ptg, curval_str, rate, netval_str, date, name))
+        print("{}%  {}  {}  {} {} {}".format(curval_ptg, curval_str, rate, netval_str, date, name))
 
 
 def interactive_lookup():
