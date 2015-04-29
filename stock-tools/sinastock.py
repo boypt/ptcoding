@@ -42,7 +42,7 @@ def print_stock(stock_list):
         incr = float(q[2])
         incr_pct = float(q[3])
 
-        color = Fore.RED if incr >= 0 else Fore.GREEN
+        color = Style.BRIGHT + (Fore.RED if incr >= 0 else Fore.GREEN)
 
         if curval == 0:
             curval=1

@@ -36,7 +36,7 @@ def print_fund(fund_all):
 
         if len(name) > 30: name=name[:30]
 
-        color = Fore.RED if curval-lastval >= 0 else Fore.GREEN
+        color = Style.BRIGHT + (Fore.RED if curval-lastval >= 0 else Fore.GREEN)
 
         print("{}{}  {}  {}   {} -- {}{}{}".format(color,s_curval,s_incr,s_lastval,date,num,name,Style.RESET_ALL))
 
