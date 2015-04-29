@@ -4,6 +4,10 @@ import re
 import sys
 import os
 import urllib.request, urllib.error, urllib.parse
+import colorama
+colorama.init()
+
+from colorama import Fore, Back, Style
 
 MARKET_PREFIX = {
         "6":"sh",
@@ -38,13 +42,16 @@ def print_stock(stock_list):
         incr = float(q[2])
         incr_pct = float(q[3])
 
+        color = Fore.RED if incr >= 0 else Fore.GREEN
+
         if curval == 0:
             curval=1
 
         curval_str = "{:.4f}".format(curval).rjust(8)
         incr_str = "{:+.4f}".format(incr).rjust(7)
         incr_pct_str = "{:+.2f}%".format(incr_pct).rjust(7)
-        print("{}  {}  {}     {}{}".format(curval_str,incr_str,incr_pct_str,num,name))
+
+        print("{}{}  {}  {}     {}{}{}".format(color,curval_str,incr_str,incr_pct_str,num,name,Style.RESET_ALL))
 
 if __name__ == '__main__':
 

@@ -5,6 +5,10 @@ import sys
 import os
 import urllib.request, urllib.error, urllib.parse
 
+import colorama
+colorama.init()
+
+from colorama import Fore, Back, Style
 
 def sina_fund(num):
     query_str = ",".join(map(lambda z:'f_{}'.format(z), num))
@@ -30,9 +34,11 @@ def print_fund(fund_all):
         s_lastval = "{:.4f}".format(lastval).rjust(7)
         s_incr = "{:+.2%}".format(incr).rjust(7)
 
-        if len(name) > 12: name=name[:12]
+        if len(name) > 30: name=name[:30]
 
-        print("{}  {}  {}   {} -- {}{}".format(s_curval,s_incr,s_lastval,date,num,name))
+        color = Fore.RED if curval-lastval >= 0 else Fore.GREEN
+
+        print("{}{}  {}  {}   {} -- {}{}{}".format(color,s_curval,s_incr,s_lastval,date,num,name,Style.RESET_ALL))
 
 
 if __name__ == '__main__':
@@ -45,9 +51,9 @@ if __name__ == '__main__':
         file_num = num_re.findall(nums)
         stall = sina_fund(file_num)
 
-        print("--净值-----涨幅-----昨净---净值日期------基金全称--------------")
+        print("--净值-----涨幅-----昨净---净值日期------基金全称---------------------------")
         print_fund(stall)
-        print("-"*70)
+        print("-"*76)
         if os.name == 'nt':
             os.system("pause")
 
