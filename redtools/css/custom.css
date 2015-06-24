@@ -1,1 +1,15 @@
 #sharenums { margin:20px 0; width:100%; height: 100px; }
+#neat_val_window {background-color:#fff; display:none;}
+#neat_val_window > pre { padding: 50px;}
+#simplemodal-container a.modalCloseImg {
+	background:url(x.png) no-repeat; /* adjust url as required */
+	width:25px;
+	height:29px;
+	display:inline;
+	z-index:3200;
+	position:absolute;
+	top:-15px;
+	right:-18px;
+	cursor:pointer;
+}
+

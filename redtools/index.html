@@ -13,10 +13,6 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- FONT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="//fonts.useso.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="stylesheet" href="css/normalize.css">
@@ -30,6 +26,7 @@
 
   <script type='text/javascript' src='//libs.useso.com/js/jquery/1.11.1/jquery.min.js'></script>
   <script type='text/javascript' src='js/jquery.dataTables.min.js'></script>
+  <script type='text/javascript' src='js/jquery.simplemodal.1.4.4.min.js'></script>
 
 </head>
 <body>
@@ -38,12 +35,23 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <div class="container">
 
+      <div class="row">
+          <div class="three columns">
+            <div class="u-full-width">当前组：<span id='cur_pfid'></span></div>
+          </div>
+          <div class="three columns">
+            <button class="u-full-width button-primary" id="update_share">更新数据</button>
+          </div>
+          <div class="three columns">
+            <button class="u-full-width button-primary" id="neat_value">复制净值</button>
+          </div>
+          <div class="three columns">
+            <button class="u-full-width button-primary" id="dontknow">...</button>
+          </div>
+      </div>
       <!-- just use a number and class 'column' or 'columns' -->
       <div class="row">
         <div id="profile_nav" class="two columns">
-            <div class="u-full-width">当前数据组：<span id='cur_pfid'></span></div>
-            <button class="u-full-width button-primary" id="test_tbn">test</button>
-            <button class="u-full-width button-primary" id="update_share">更新数据</button>
             <button class="u-full-width profile_btn" data-pfid="1">1</button>
             <button class="u-full-width profile_btn" data-pfid="2">2</button>
             <button class="u-full-width profile_btn" data-pfid="3">3</button>
@@ -57,8 +65,8 @@
         <div class="">
             <form data-destroy="false" id="data_form" action="">
                 <div class="u-full-width">
-                    <input type="checkbox" id="is_fund" name="is_fund" checked="">基金
                     <textarea class="u-full-width" id="sharenums"></textarea>
+                    <input type="checkbox" id="is_fund" name="is_fund" checked="">基金
                 </div>
             </form>
         </div>
@@ -66,6 +74,7 @@
 
   </div>
 
+  <div id="neat_val_window"><pre> </pre></div>
 <script type='text/javascript' src='js/stock.js'></script>
 </body>
 </html>

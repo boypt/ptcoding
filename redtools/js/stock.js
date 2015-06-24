@@ -1,5 +1,6 @@
 $(function() {
     resumenums();
+    updatetable();
     $('#sharenums').blur(savenums);
     $('#is_fund').click(savenums);
 });
@@ -36,6 +37,10 @@ function parsenums () {
     var ids = $.trim($('#sharenums').val());
     var is_fund = $("#is_fund").prop('checked');
 
+    if(ids.length === 0) {
+        return [];
+    }
+
     if(is_fund) {
         var qs = $.map(ids.match(/[0-9]{6}/g), function(v) { return 'f_'+v; });
     }else{
@@ -61,13 +66,15 @@ function updatetable() {
         }
     });
 
-    $("#data_table").html( '<table cellpadding="0" cellspacing="0" border="0" class="display" id="data_table_tb"></table>' );
+    $("#data_table").html( '<table cellpadding="0" cellspacing="0" border="0" class="u-full-width" id="data_table_tb"></table>' );
 
     if(is_fund) {
 
         var colm_defs = [];
         var colms = [
-            { "title": "名称" },
+            { "title": "名称",
+                "className":"dt-nowrap",
+            },
             { "title": "净值" },
             { "title": "？？" },
             { "title": "昨净" },
@@ -79,13 +86,16 @@ function updatetable() {
 
         var colm_defs = [
             { "render": function ( data, type, row ) { return '￥'+data; }, "targets": [1,2] },
-            { "render": function ( data, type, row ) { return data+'%'; }, "targets": 3 }
         ];
         var colms = [
-            { "title": "名称" },
+            { "title": "名称",
+                "className":"dt-nowrap",
+            },
             { "title": "现价" },
             { "title": "涨跌" },
-            { "title": "涨跌幅%" },
+            { "title": "涨跌幅%",
+                "render": function ( data, type, row ) { return data+'%'; },
+            },
             { "title": "现量" },
             { "title": "现手" },
         ];
@@ -102,12 +112,6 @@ function updatetable() {
     });
 
 
-    $("#test_tbn").click(function(env) {
-
-        console.log(tb.column(3).data());
-
-
-    });
 
 }
 
@@ -116,14 +120,16 @@ $(function () {
     $('#update_share').click(function(evn) {
         evn.preventDefault();
         var qs = parsenums();
-        var qsstr = 'list='+qs.join(',');
-        $.getScript('api.php?'+qsstr, function () {
-            $.each(qs, function (i,v) {
-                localStorage.setItem(v, window['hq_str_'+v]);
-            });
-            updatetable();
-        });
 
+        if(qs.length > 0) {
+            var qsstr = 'list='+qs.join(',');
+            $.getScript('api.php?'+qsstr, function () {
+                $.each(qs, function (i,v) {
+                    localStorage.setItem(v, window['hq_str_'+v]);
+                });
+                updatetable();
+            });
+        }
 
         //console.log(qs);
     });
@@ -138,6 +144,19 @@ $(function () {
             resumenums();
             updatetable();
         }
+    });
+
+    $("#neat_value").click(function(env) {
+        var tb = $("#data_table_tb").DataTable();
+        var dt = tb.column(1).data();
+        var netv = $("#neat_val_window > pre").empty().text(dt.join('\n'));
+        $("#neat_val_window").modal({
+            opacity:80,
+            overlayCss: {backgroundColor:"#333"},
+            minHeight:400,
+            minWidth: 100,
+        });
+
     });
 
 });
