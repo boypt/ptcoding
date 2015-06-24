@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>RedData Tool</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.useso.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+  <script type='text/javascript' src='//libs.useso.com/js/jquery/1.11.1/jquery.min.js'></script>
+  <script type='text/javascript' src='js/jquery.dataTables.min.js'></script>
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+
+      <!-- just use a number and class 'column' or 'columns' -->
+      <div class="row">
+        <div id="profile_nav" class="two columns">
+            <div class="u-full-width">当前数据组：<span id='cur_pfid'></span></div>
+            <button class="u-full-width button-primary" id="test_tbn">test</button>
+            <button class="u-full-width button-primary" id="update_share">更新数据</button>
+            <button class="u-full-width profile_btn" data-pfid="1">1</button>
+            <button class="u-full-width profile_btn" data-pfid="2">2</button>
+            <button class="u-full-width profile_btn" data-pfid="3">3</button>
+        </div>
+        <div class="ten columns">
+            <div id="data_table"></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="">
+            <form data-destroy="false" id="data_form" action="">
+                <div class="u-full-width">
+                    <input type="checkbox" id="is_fund" name="is_fund" checked="">基金
+                    <textarea class="u-full-width" id="sharenums"></textarea>
+                </div>
+            </form>
+        </div>
+      </div>
+
+  </div>
+
+<script type='text/javascript' src='js/stock.js'></script>
+</body>
+</html>
