@@ -36,19 +36,19 @@ screenshoot () {
 stshadowsocks () {
     local PF=$1
     [[ ! -z $PF ]] || { echo "Profile name." && return 1; }
-    local SERVICE=$(systemctl list-units --type=service | awk '/shadowsocks-libev/{sub(/^[^s]/, "", $1); print $1;}')
+    local SERVICE=$(systemctl list-units --type=service | awk '/shadowsocks/{sub(/^[^s]/, "", $1); print $1;}')
 
     for UNIT in $SERVICE; do
         echo "Stoped: $UNIT";
         sudo systemctl stop $SERVICE
     done
 
-    sudo systemctl start "shadowsocks-libev@$PF"
-    systemctl status "shadowsocks-libev@$PF"
+    sudo systemctl start "shadowsocks@$PF"
+    systemctl status "shadowsocks@$PF"
 }
 
 reshadowsocks () {
-    local SERVICE=$(systemctl list-units --type=service | awk '/shadowsocks-libev/{sub(/^[^s]/, "", $1); print $1;}')
+    local SERVICE=$(systemctl list-units --type=service | awk '/shadowsocks/{sub(/^[^s]/, "", $1); print $1;}')
     sudo systemctl restart $SERVICE
     systemctl status $SERVICE
 }
