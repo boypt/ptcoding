@@ -35,7 +35,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <div class="container">
 
-      <div class="row">
+      <div class="row nav_row">
           <div class="three columns">
             <button class="u-full-width button-primary" id="dontknow">...</button>
           </div>
@@ -43,7 +43,7 @@
             <button class="u-full-width button-primary" id="update_share">更新数据</button>
           </div>
           <div class="three columns">
-            <button class="u-full-width button-primary" id="neat_value">复制净值</button>
+            <button class="u-full-width button-primary" id="neat_value">输出净值</button>
           </div>
           <div class="three columns">
             <button class="u-full-width button-primary" id="dontknow1">...</button>
@@ -54,32 +54,32 @@
 
       <div class="row">
         <div id="profile_nav" class="two columns">
-            <div class="u-full-width">当前组：<span id='cur_pfid'></span></div>
             <button class="u-full-width profile_btn" data-pfid="1">1</button>
             <button class="u-full-width profile_btn" data-pfid="2">2</button>
             <button class="u-full-width profile_btn" data-pfid="3">3</button>
         </div>
         <div id="data_table_div" class="ten columns">
-            <table cellpadding="0" cellspacing="0" border="0" class="compact" id="data_table_tb"></table>
+            <div id="msgbar" class="u-full-width"></div>
+            <table class="compact" id="data_table_tb"></table>
         </div>
       </div>
 
 
 
-      <div class="row">
-        <div class="">
-            <form data-destroy="false" id="data_form" action="">
-                <div class="u-full-width">
-                    <textarea class="u-full-width" id="sharenums"></textarea>
-                    <input type="checkbox" id="is_fund" name="is_fund" checked="">基金
-                </div>
-            </form>
+      <div class="row input_row">
+        <div class="two columns">
+            <div class="right">
+                <input type="checkbox" id="is_fund" name="is_fund" checked="">
+                <label class="right" for="is_fund">基金</label>
+            </div>
+        </div>
+        <div class="ten columns">
+            <textarea class="u-full-width" id="sharenums"></textarea>
         </div>
       </div>
-
   </div>
 
-  <div id="neat_val_window"><pre> </pre></div>
+  <div id="neat_val_window"><pre><code id="neat_val"> </code></pre></div>
   <script type='text/javascript' src='js/stock.js'></script>
 </body>
 </html>

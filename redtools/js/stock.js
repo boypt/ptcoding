@@ -12,7 +12,7 @@ function resumenums () {
         localStorage.setItem('cur_pfid',cur_pfid);
     }
 
-    $("#cur_pfid").text(cur_pfid);
+    $(".profile_btn[data-pfid="+cur_pfid+"]").addClass('button-primary')
 
     var ids = localStorage.getItem('sharenums_'+cur_pfid);
     var is_fund = localStorage.getItem('is_fund_'+cur_pfid);
@@ -66,6 +66,8 @@ function updatetable() {
         }
     });
 
+    $("#data_table_tb").slideUp();
+
     if($.fn.dataTable.isDataTable("#data_table_tb")) {
         $("#data_table_tb").DataTable().destroy();
         $("#data_table_tb").empty();
@@ -100,8 +102,8 @@ function updatetable() {
             { "title": "涨跌幅%",
                 "render": function ( data, type, row ) { return data+'%'; },
             },
-            { "title": "现量" },
-            { "title": "现手" },
+            { "title": "现量", "visible": false },
+            { "title": "现手", "visible": false }
         ];
     }
  
@@ -112,7 +114,7 @@ function updatetable() {
         "searching":false,
         "data": dataSet,
         "columns": colms
-    });
+    }).slideDown();
 
     $("#data_table_tb").DataTable().rows().every( function () {
         var row = this.data();
@@ -139,6 +141,7 @@ $(function () {
 
     $('#update_share').click(function(evn) {
         evn.preventDefault();
+        $("#msgbar").text('Loading ...').slideDown();
         var qs = parsenums();
 
         if(qs.length > 0) {
@@ -148,6 +151,7 @@ $(function () {
                     localStorage.setItem(v, window['hq_str_'+v]);
                 });
                 updatetable();
+                $("#msgbar").slideUp();
             });
         }
 
@@ -156,10 +160,15 @@ $(function () {
 
     $(".profile_btn").click(function(evn) {
         evn.preventDefault();
-        var cur_pfid = $(evn.target).data("pfid");
+        var btn = $(evn.target)
+        var cur_pfid = btn.data("pfid");
         var lo_cur_pfid = localStorage.getItem('cur_pfid');
 
         if (lo_cur_pfid !== cur_pfid) {
+
+            $(".profile_btn").removeClass('button-primary');
+            btn.addClass('button-primary');
+
             localStorage.setItem('cur_pfid', cur_pfid);
             resumenums();
             updatetable();
@@ -169,7 +178,7 @@ $(function () {
     $("#neat_value").click(function(env) {
         var tb = $("#data_table_tb").DataTable();
         var dt = tb.column(1).data();
-        var netv = $("#neat_val_window > pre").empty().text(dt.join('\n'));
+        var netv = $("#neat_val").empty().text(dt.join('\n'));
         $("#neat_val_window").modal({
             opacity:80,
             overlayCss: {backgroundColor:"#333"},
