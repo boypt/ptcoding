@@ -7,6 +7,8 @@
 #neat_val_window pre { padding: 10px 20px;}
 #data_table_div tr.reddata { background-color:#FFC7CB;}
 #data_table_div tr.greendata { background-color:#CBFFCB;}
+a:link.val_target, a:visited.val_target{color:#000; text-decoration: none;}
+a:hover.val_target, a:active.val_target{text-decoration:underline;}
 #msgbar {display:none;}
 
 #simplemodal-container a.modalCloseImg {

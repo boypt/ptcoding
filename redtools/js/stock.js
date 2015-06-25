@@ -62,7 +62,9 @@ function updatetable() {
     var dataSet = $.map(qs, function (v) {
         var val = localStorage.getItem(v);
         if(val !== null) {
-            return [val.split(',')];
+            var dt = val.split(',');
+            dt.push(v);
+            return [dt];
         }
     });
 
@@ -77,7 +79,8 @@ function updatetable() {
 
         var colm_defs = [ ];
         var colms = [
-            { "title": "名称", "className":"dt-nowrap" },
+            { "title": "名称", "className":"dt-nowrap",
+                "render": function ( data, type, row ) { return '<a data-code="'+row[6]+'" class="val_target" href="#">'+data+'</a>'; },},
             { "title": "净值" },
             { "title": "累计净值" },
             { "title": "昨净" },
@@ -96,7 +99,8 @@ function updatetable() {
 
         var colm_defs = [ ];
         var colms = [
-            { "title": "名称", "className":"dt-nowrap", },
+            { "title": "名称", "className":"dt-nowrap",
+                "render": function ( data, type, row ) { return '<a data-code="'+row[6]+'" class="val_target" href="#">'+data+'</a>'; },},
             { "title": "现价" },
             { "title": "涨跌" },
             { "title": "涨跌幅%",
@@ -175,7 +179,7 @@ $(function () {
         }
     });
 
-    $("#neat_value").click(function(env) {
+    $("#neat_value").click(function() {
         var tb = $("#data_table_tb").DataTable();
         var dt = tb.column(1).data();
         var netv = $("#neat_val").empty().text(dt.join('\n'));
@@ -188,4 +192,20 @@ $(function () {
 
     });
 
+    $("#data_table_div tbody").on('click', 'a.val_target', function(evn) {
+        evn.preventDefault();
+
+        var elm = $(evn.target);
+        var code = elm.data('code');
+
+        if(code.substr(0,2) == "f_") {
+            code = code.match(/[0-9]{6}$/)[0];
+            var url = 'http://fund.eastmoney.com/'+code+'.html';
+        }else if(code.substr(0,2) == "s_") {
+            code = code.substr(2);
+            var url = 'http://quote.eastmoney.com/'+code+'.html';
+        }
+
+        window.open(url, '_blank');
+    });
 });
