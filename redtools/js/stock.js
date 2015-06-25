@@ -66,31 +66,35 @@ function updatetable() {
         }
     });
 
-    $("#data_table").html( '<table cellpadding="0" cellspacing="0" border="0" class="u-full-width" id="data_table_tb"></table>' );
+    if($.fn.dataTable.isDataTable("#data_table_tb")) {
+        $("#data_table_tb").DataTable().destroy();
+        $("#data_table_tb").empty();
+    }
 
     if(is_fund) {
 
-        var colm_defs = [];
+        var colm_defs = [ ];
         var colms = [
-            { "title": "名称",
-                "className":"dt-nowrap",
-            },
+            { "title": "名称", "className":"dt-nowrap" },
             { "title": "净值" },
-            { "title": "？？" },
+            { "title": "累计净值" },
             { "title": "昨净" },
             { "title": "净值日期" },
-            { "title": "？？" },
+            { "title": "？？", "visible": false },
+            { "title": "涨跌幅", 
+                "data": function ( row, type, val, meta ) {
+                    var val = parseFloat(row[1]);
+                    var lastval = parseFloat(row[3]);
+                    return ((val-lastval)/lastval*100).toFixed(2)+'%';
+                } 
+            }
         ];
 
     } else {
 
-        var colm_defs = [
-            { "render": function ( data, type, row ) { return '￥'+data; }, "targets": [1,2] },
-        ];
+        var colm_defs = [ ];
         var colms = [
-            { "title": "名称",
-                "className":"dt-nowrap",
-            },
+            { "title": "名称", "className":"dt-nowrap", },
             { "title": "现价" },
             { "title": "涨跌" },
             { "title": "涨跌幅%",
@@ -101,17 +105,14 @@ function updatetable() {
         ];
     }
  
-    var tb = $("#data_table_tb").dataTable( {
-        "data": dataSet,
+    $("#data_table_tb").dataTable( {
         "paging":   false,
         "ordering": false,
         "info":     false,
         "searching":false,
-        "columnDefs": colm_defs,
+        "data": dataSet,
         "columns": colms
     });
-
-
 
 }
 
