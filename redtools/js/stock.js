@@ -139,6 +139,23 @@ function updatetable() {
 
     });
 
+
+    $("#data_table_tb tbody").on('click', 'a.val_target', function(evn) {
+        evn.preventDefault();
+
+        var elm = $(evn.target);
+        var code = elm.data('code');
+
+        if(code.substr(0,2) == "f_") {
+            code = code.match(/[0-9]{6}$/)[0];
+            var url = 'http://fund.eastmoney.com/'+code+'.html';
+        }else if(code.substr(0,2) == "s_") {
+            code = code.substr(2);
+            var url = 'http://quote.eastmoney.com/'+code+'.html';
+        }
+
+        window.open(url, '_blank');
+    });
 }
 
 $(function () {
@@ -192,20 +209,4 @@ $(function () {
 
     });
 
-    $("#data_table_div tbody").on('click', 'a.val_target', function(evn) {
-        evn.preventDefault();
-
-        var elm = $(evn.target);
-        var code = elm.data('code');
-
-        if(code.substr(0,2) == "f_") {
-            code = code.match(/[0-9]{6}$/)[0];
-            var url = 'http://fund.eastmoney.com/'+code+'.html';
-        }else if(code.substr(0,2) == "s_") {
-            code = code.substr(2);
-            var url = 'http://quote.eastmoney.com/'+code+'.html';
-        }
-
-        window.open(url, '_blank');
-    });
 });
