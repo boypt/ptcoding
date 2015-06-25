@@ -68,16 +68,13 @@ function updatetable() {
         }
     });
 
-    $("#data_table_tb").slideUp();
-
     if($.fn.dataTable.isDataTable("#data_table_tb")) {
-        $("#data_table_tb").DataTable().destroy();
+        $("#data_table_tb").slideUp().DataTable().destroy();
         $("#data_table_tb").empty();
     }
 
     if(is_fund) {
 
-        var colm_defs = [ ];
         var colms = [
             { "title": "名称", "className":"dt-nowrap",
                 "render": function ( data, type, row ) { return '<a data-code="'+row[6]+'" class="val_target" href="#">'+data+'</a>'; },},
@@ -97,7 +94,6 @@ function updatetable() {
 
     } else {
 
-        var colm_defs = [ ];
         var colms = [
             { "title": "名称", "className":"dt-nowrap",
                 "render": function ( data, type, row ) { return '<a data-code="'+row[6]+'" class="val_target" href="#">'+data+'</a>'; },},
@@ -120,16 +116,12 @@ function updatetable() {
         "columns": colms
     }).slideDown();
 
+    /* Decorate Red or Green */
     $("#data_table_tb").DataTable().rows().every( function () {
         var row = this.data();
-
         var incr = 0;
-        if(is_fund) {
-            incr = parseFloat(row[1]) - parseFloat(row[3]);;
-        } else {
-            incr = parseFloat(row[2]);
-        }
-
+        if(is_fund) { incr = parseFloat(row[1]) - parseFloat(row[3]);; }
+        else { incr = parseFloat(row[2]); }
 
         if(incr > 0) {
             $(this.node()).addClass('reddata');
@@ -142,10 +134,8 @@ function updatetable() {
 
     $("#data_table_tb tbody").on('click', 'a.val_target', function(evn) {
         evn.preventDefault();
-
         var elm = $(evn.target);
         var code = elm.data('code');
-
         if(code.substr(0,2) == "f_") {
             code = code.match(/[0-9]{6}$/)[0];
             var url = 'http://fund.eastmoney.com/'+code+'.html';
@@ -153,7 +143,6 @@ function updatetable() {
             code = code.substr(2);
             var url = 'http://quote.eastmoney.com/'+code+'.html';
         }
-
         window.open(url, '_blank');
     });
 }
@@ -175,8 +164,6 @@ $(function () {
                 $("#msgbar").slideUp();
             });
         }
-
-        //console.log(qs);
     });
 
     $(".profile_btn").click(function(evn) {
