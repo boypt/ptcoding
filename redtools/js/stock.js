@@ -183,7 +183,7 @@ $(function () {
         }
     });
 
-    $("#neat_value").click(function() {
+    $("#show_neat_value").click(function() {
         var tb = $("#data_table_tb").DataTable();
         var dt = tb.column(1).data();
         var netv = $("#neat_val").empty().text(dt.join('\n'));
