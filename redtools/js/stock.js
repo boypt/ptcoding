@@ -114,6 +114,25 @@ function updatetable() {
         "columns": colms
     });
 
+    $("#data_table_tb").DataTable().rows().every( function () {
+        var row = this.data();
+
+        var incr = 0;
+        if(is_fund) {
+            incr = parseFloat(row[1]) - parseFloat(row[3]);;
+        } else {
+            incr = parseFloat(row[2]);
+        }
+
+
+        if(incr > 0) {
+            $(this.node()).addClass('reddata');
+        } else if (incr < 0) {
+            $(this.node()).addClass('greendata');
+        }
+
+    });
+
 }
 
 $(function () {

@@ -1,6 +1,6 @@
 #sharenums { margin:20px 0; width:100%; height: 100px; }
 #neat_val_window {background-color:#fff; display:none;}
-#neat_val_window > pre { padding: 50px;}
+#neat_val_window > pre { padding: 20px 50px;}
 #simplemodal-container a.modalCloseImg {
 	background:url(x.png) no-repeat; /* adjust url as required */
 	width:25px;
@@ -12,4 +12,7 @@
 	right:-18px;
 	cursor:pointer;
 }
+
+#data_table_div tr.reddata { background-color:#FFC7CB;}
+#data_table_div tr.greendata { background-color:#CBFFCB;}
 
