@@ -88,7 +88,7 @@ function init_data_table(tbid, dt) {
             var colms = [
                 { "title": "名称", "className":"dt-nowrap",
                     "render": function ( data, type, row ) { 
-                        return '<a data-code="'+row[6]+'" class="val_target" href="#">'+data+'</a>'; },},
+                        return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
                 { "title": "净值" },
                 { "title": "累计净值" },
                 { "title": "昨净" },
@@ -107,10 +107,10 @@ function init_data_table(tbid, dt) {
             var colms = [
                 { "title": "名称", "className":"dt-nowrap",
                     "render": function ( data, type, row ) { 
-                        return '<a data-code="'+row[6]+'" class="val_target" href="#">'+data+'</a>'; },},
+                        return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
                 { "title": "现价" },
                 { "title": "涨跌" },
-                { "title": "涨跌幅%",
+                { "title": "涨跌幅",
                     "render": function ( data, type, row ) { return data+'%'; },
                 },
                 { "title": "现量", "visible": false },
