@@ -5,8 +5,8 @@
 
 #neat_val_window {background-color:#fff; padding: 5px 20px; border: 2px solid; border-radius: 5px; display:none;}
 #neat_value { background-color:#F1F1F1; padding: 0 20px;}
-tr.reddata { background-color:#FFA7A7;}
-tr.greendata { background-color:#A9FFC4;}
+#data_table_div tr.reddata { background-color:#FFA7A7;}
+#data_table_div tr.greendata { background-color:#A9FFC4;}
 a:link.val_target, a:visited.val_target{color:#000; text-decoration: none;}
 a:hover.val_target, a:active.val_target{text-decoration:underline;}
 #msgbar {display:none;}
