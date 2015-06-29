@@ -1,15 +1,4 @@
-$(function() {
-    var cur_pfid = localStorage.getItem('cur_pfid');
-    resumenums();
-    show_data_table(cur_pfid);
-
-    $('#sharenums').blur(function () {savenums();});
-    $('#is_fund').click(function () {
-        $("#data_table_tb"+CURPFID).DataTable().destroy(true);
-        savenums();
-    });
-
-});
+$script.ready('jquery_bundle', function() {
 
 function stoset(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
 function stoget(key) {
@@ -234,5 +223,19 @@ $(function () {
         window.open(url, '_blank');
         return false;
     });
+
+    $('#sharenums').blur(function () {savenums();});
+    $('#is_fund').click(function () {
+        $("#data_table_tb"+CURPFID).DataTable().destroy(true);
+        savenums();
+    });
 });
 
+
+$(function() {
+    var cur_pfid = localStorage.getItem('cur_pfid');
+    resumenums();
+    show_data_table(cur_pfid);
+});
+
+});

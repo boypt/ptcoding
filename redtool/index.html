@@ -23,13 +23,17 @@
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="icon" type="image/png" href="images/favicon.png">
-
-  <script type='text/javascript' src='//libs.useso.com/js/jquery/1.11.1/jquery.min.js'></script>
-  <script type='text/javascript' src='js/jquery.dataTables.min.js'></script>
-  <script type='text/javascript' src='js/jquery.simplemodal.1.4.4.min.js'></script>
-
+  <script type='text/javascript' src='js/script.min.js'></script>
+  <script type="text/javascript">
+$script.path('js/');
+$script('jquery.min', function () {
+    $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min'], 'jquery_bundle');
+    $script('stock');
+});
+  </script>
 </head>
 <body>
+    
 
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -79,6 +83,5 @@
   </div>
 
   <div id="neat_val_window"><pre id="neat_val"></pre></div>
-  <script type='text/javascript' src='js/stock.js'></script>
 </body>
 </html>
