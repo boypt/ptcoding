@@ -230,10 +230,3 @@ $(function () {
     });
 });
 
-
-$(function() {
-    var cur_pfid = localStorage.getItem('cur_pfid');
-    resumenums();
-    show_data_table(cur_pfid);
-});
-
