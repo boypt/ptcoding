@@ -27,8 +27,7 @@
   <script type="text/javascript">
 $script.path('js/');
 $script('jquery.min', function () {
-    $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min'], 'jquery_bundle');
-    $script('stock');
+    $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min'], function () { $script('stock'); });
 });
   </script>
 </head>

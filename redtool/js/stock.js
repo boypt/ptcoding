@@ -1,4 +1,3 @@
-$script.ready('jquery_bundle', function() {
 
 function stoset(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
 function stoget(key) {
@@ -238,4 +237,3 @@ $(function() {
     show_data_table(cur_pfid);
 });
 
-});
