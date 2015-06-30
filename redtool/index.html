@@ -28,6 +28,7 @@
 $script.path('js/');
 $script('jquery.min', function () {
     $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min', 'stock'], function () {
+        init_profile_button();
         resumenums();
         var cur_pfid = localStorage.getItem('cur_pfid');
         show_data_table(cur_pfid);
@@ -53,17 +54,16 @@ $script('jquery.min', function () {
             <button class="u-full-width button-primary" id="show_neat_value">输出净值</button>
           </div>
           <div class="three columns">
-            <button class="u-full-width button-primary" id="dontknow1">...</button>
+            <button class="u-full-width button-primary" id="clear_current">清除本组</button>
           </div>
       </div>
 
 
 
       <div class="row">
-        <div id="profile_nav" class="two columns">
-            <button class="u-full-width profile_btn" data-pfid="1">1</button>
-            <button class="u-full-width profile_btn" data-pfid="2">2</button>
-            <button class="u-full-width profile_btn" data-pfid="3">3</button>
+        <div class="two columns">
+            <div id="profile_nav"></div>
+            <button id="btn_add_profile" class="u-full-width">+</button>
         </div>
         <div id="data_table_div" class="ten columns">
             <div id="msgbar" class="u-full-width"></div>

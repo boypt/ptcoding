@@ -155,6 +155,20 @@ function show_data_table(pfid) {
     tb.clear().rows.add(dataSet).draw();
 }
 
+function init_profile_button() {
+    var list = stoget('pf_list');
+    if(list === null) {
+        list = ["1"];
+        stoset("pf_list", list);
+    }
+
+    $.each(list, function(i,v) { add_profile_btn(v); });
+}
+
+function add_profile_btn (pfid) {
+    $("#profile_nav").append($("<button>").addClass("u-full-width profile_btn").attr("data-pfid", pfid).text("组合"+pfid));
+}
+
 $(function () {
 
     $('#update_share').click(function(evn) {
@@ -174,10 +188,10 @@ $(function () {
         return false;
     });
 
-    $(".profile_btn").click(function(evn) {
+    $("#profile_nav").on("click", "button.profile_btn", function(evn) {
         var btn = $(evn.target)
         var pfid = btn.data("pfid");
-        var lo_cur_pfid = parseInt(localStorage.getItem('cur_pfid'));
+        var lo_cur_pfid = parseInt(CURPFID);
 
         if (lo_cur_pfid !== pfid) {
             $(".profile_btn").removeClass('button-primary');
@@ -186,14 +200,15 @@ $(function () {
             localStorage.setItem('cur_pfid', pfid);
             resumenums();
 
-            $("#data_table_div .dataTables_wrapper").fadeOut(400, function(){
+            $("#data_table_div .dataTables_wrapper").fadeOut();
+            if($("#data_table_tb"+pfid).length > 0) {
+                $("#data_table_tb"+pfid).parent(".dataTables_wrapper").fadeIn();
+            } else {
                 show_data_table(pfid);
-            });
-            $("#data_table_tb"+pfid).parent(".dataTables_wrapper").fadeIn();
+            }
         }
 
         return false;
-
     });
 
     $("#show_neat_value").click(function() {
@@ -227,6 +242,33 @@ $(function () {
     $('#is_fund').click(function () {
         $("#data_table_tb"+CURPFID).DataTable().destroy(true);
         savenums();
+    });
+
+
+    $("#btn_add_profile").click(function () {
+        var list = stoget('pf_list');
+        var max = Math.max.apply(Math, list);
+        max += 1;
+        list.push(max.toString());
+        stoset("pf_list", list);
+        add_profile_btn(max.toString());
+    });
+
+    $("#clear_current").click(function () {
+        var r = confirm("Confirm");
+        if (r === true) {
+            var list = stoget('pf_list');
+            $("#data_table_tb"+CURPFID).DataTable().destroy(true);
+            $(".profile_btn[data-pfid="+CURPFID+"]").remove();
+            list = list.filter(function(x) { return x !== CURPFID;});
+            stoset("pf_list", list);
+            localStorage.removeItem("profile_data"+CURPFID);
+
+            var max = Math.max.apply(Math, list);
+            $(".profile_btn[data-pfid="+max+"]").trigger('click');
+
+        }
+        return false;
     });
 });
 
