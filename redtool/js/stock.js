@@ -289,15 +289,13 @@ $(function () {
 
     /* ----------- Profile Button ------------*/
     $("#profile_nav").on("click", "button.profile_btn", function(evn) {
-        var btn = $(evn.target)
-        var pfid = btn.attr("data-pfid");
-        var lo_cur_pfid = CURPFID;
+        var pfid = $(evn.target).attr("data-pfid");
 
         // switch
-        if (lo_cur_pfid !== pfid) {
-            localStorage.setItem('cur_pfid', pfid);
+        if (CURPFID !== pfid) {
+            _Portfolio[CURPFID].deactivate();
             CURPFID = pfid;
-            _Portfolio[lo_cur_pfid].deactivate();
+            localStorage.setItem('cur_pfid', pfid);
             _Portfolio[pfid].activate();
         }
 
