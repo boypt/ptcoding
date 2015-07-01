@@ -30,9 +30,7 @@ Portfolio.prototype.restore = function () {
 Portfolio.prototype.remove_data = function () {
     var qs = this.parse_ids();
     if(qs.length > 0) {
-        $.each(qs, function (i,v) {
-            localStorage.removeItem(v);
-        });
+        $.each(qs, function (i,v) { localStorage.removeItem(v); });
     }
     localStorage.removeItem(this.storage_key);
 }
@@ -40,16 +38,15 @@ Portfolio.prototype.remove_data = function () {
 Portfolio.prototype.sync_from_dom = function () {
     var ids = $.trim($('#sharenums').val());
     var is_fund = $("#is_fund").prop('checked');
-    this.ids = ids;
     if(is_fund != this.is_fund) {
         this.destroy_table();
     }
+    this.ids = ids;
     this.is_fund = is_fund;
 }
 
 
 Portfolio.prototype.sync_to_dom = function () {
-    $('#sharenums').val('');
     $('#sharenums').val(this.ids);
     $("#is_fund").prop("checked", this.is_fund);
 }
@@ -155,11 +152,8 @@ Portfolio.prototype.show_data_table = function () {
         }
     });
 
-    var tb = $(this.table_id).DataTable();
-    if(tb.length === 0){
-        tb = this.init_data_table();
-    }
-    tb.clear().rows.add(dataSet).draw();
+    var tbapi = this.init_data_table();
+    tbapi.clear().rows.add(dataSet).draw();
 
     $(this.table_id).parent(".dataTables_wrapper").fadeIn();
 }
@@ -170,15 +164,14 @@ Portfolio.prototype.update_data_table = function () {
 
     if(qs.length > 0) {
         var qsstr = 'list='+qs.join(',');
-        var _obj = this;
+        var _self = this;
         $.getScript('api.php?'+qsstr, function () {
             $.each(qs, function (i,v) {
                 localStorage.setItem(v, window['hq_str_'+v]);
             });
-            _obj.show_data_table();
-            //
+            _self.show_data_table();
+
             $("#msgbar").slideUp();
-            //
         });
     }
 }
@@ -258,17 +251,6 @@ $(function () {
     /*----------------------------------------*/
 
     /* ----------- Profile Button ------------*/
-    $("#btn_add_profile").click(function () {
-        var list = stoget('pf_list');
-        var max = Math.max.apply(Math, list);
-        max += 1;
-        var key = max.toString();
-        list.push(key);
-        stoset("pf_list", list);
-        var _o = new Portfolio(key);
-        window._Portfolio[key] = _o;
-    });
-
     $("#profile_nav").on("click", "button.profile_btn", function(evn) {
         var btn = $(evn.target)
         var pfid = btn.attr("data-pfid");
@@ -280,6 +262,23 @@ $(function () {
             CURPFID = pfid;
             _Portfolio[lo_cur_pfid].deactivate();
             _Portfolio[pfid].activate();
+        }
+
+        return false;
+    });
+
+    $("#btn_add_profile").click(function () {
+        var list = stoget('pf_list');
+        var max = Math.max.apply(Math, list);
+        max += 1;
+        var key = max.toString();
+        list.push(key);
+        stoset("pf_list", list);
+        var _o = new Portfolio(key);
+        window._Portfolio[key] = _o;
+    });
+    /*----------------------------------------*/
+
     /*--------------Input Controls -----------*/
     $('#sharenums').blur(function () {
         var o = _Portfolio[CURPFID];
@@ -292,7 +291,6 @@ $(function () {
         o.save();
     });
     /*----------------------------------------*/
-
 
 
     /*-------------- Target Links -----------*/
@@ -341,7 +339,6 @@ function _main() {
 
 
     /* ------------- */
-
     var cur_pfid = localStorage.getItem('cur_pfid');
     window.CURPFID = cur_pfid;
 
