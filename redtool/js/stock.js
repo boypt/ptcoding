@@ -165,6 +165,7 @@ Portfolio.prototype.update_data_table = function () {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
+        $("#msgbar").text('Loading ...').slideDown();
         var qsstr = 'list='+qs.join(',');
         var _self = this;
         $.getScript('api.php?'+qsstr, function () {
@@ -261,7 +262,6 @@ $(function () {
 
     /* ----- NAV Buttons ------- */
     $('#update_share').click(function(evn) {
-        $("#msgbar").text('Loading ...').slideDown();
         var o = _Portfolio[CURPFID];
         o.update_data_table();
         return false;
@@ -349,13 +349,10 @@ $(function () {
 function _main() {
     window._List = new PortfolioIdList();
     window._Portfolio = {};
+    window.CURPFID = localStorage.getItem('cur_pfid') || "1";
 
     _List.restore();
     _List.build_buttons();
-
-    /* ------------- */
-    var cur_pfid = localStorage.getItem('cur_pfid');
-    window.CURPFID = cur_pfid;
 
     pfo = _Portfolio[CURPFID];
     pfo.activate();
