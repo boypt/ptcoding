@@ -115,6 +115,7 @@ Portfolio.prototype.init_data_table = function () {
         }
 
 
+        var _self = this;
         var tb = $(tbid).dataTable( {
             "paging":   false,
             "ordering": false,
@@ -127,7 +128,7 @@ Portfolio.prototype.init_data_table = function () {
                 tb.rows().every( function () {
                     var row = this.data();
                     var incr = 0;
-                    if(this.is_fund) { incr = parseFloat(row[1]) - parseFloat(row[3]);; }
+                    if(_self.is_fund) { incr = parseFloat(row[1]) - parseFloat(row[3]);; }
                     else { incr = parseFloat(row[2]); }
 
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
