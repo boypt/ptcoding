@@ -1,3 +1,4 @@
+/* ---------------------------------  Portfolio -----------------------------------------------------*/
 var Portfolio = function (pfid)  {
     this.pfid = pfid;
     this.storage_key = "profile_data"+this.pfid;
@@ -213,8 +214,49 @@ Portfolio.prototype.activate = function () {
         this.button.addClass("button-primary")
     }
 }
+/* --------------------------------------------------------------------------------------------------------*/
 
+/* ---------------------------------  PortfolioIdList -----------------------------------------------------*/
 
+var PortfolioIdList = function ()  {
+    this.storage_key = "pf_list";
+    this.list = ["1"];
+}
+
+PortfolioIdList.prototype.save = function () {
+    localStorage.setItem(this.storage_key, JSON.stringify(this.list)); 
+}
+
+PortfolioIdList.prototype.restore = function () {
+    var dt = localStorage.getItem(this.storage_key);
+    if (dt !== null) { 
+        this.list = JSON.parse(dt);
+    }
+}
+
+PortfolioIdList.prototype.add = function () {
+    var max = Math.max.apply(Math, this.list);
+    max += 1;
+    var key = max.toString();
+    this.list.push(key);
+    this.save();
+    return max;
+}
+
+PortfolioIdList.prototype.remove = function (pfid) {
+    this.list = this.list.filter(function(x) { return x !== pfid;});
+    this.save();
+}
+
+PortfolioIdList.prototype.build_buttons = function () {
+    $.each(this.list, function(i,v) {
+        var _o = new Portfolio(v);
+        window._Portfolio[v] = _o;
+    });
+}
+/* --------------------------------------------------------------------------------------------------------*/
+
+/* ------------------------------------jQuery Event Handlings----------------------------------------------*/
 $(function () {
 
     /* ----- NAV Buttons ------- */
@@ -234,18 +276,12 @@ $(function () {
     $("#clear_current").click(function () {
         var r = confirm("Confirm");
         if (r === true) {
-            var list = stoget('pf_list');
             var o = _Portfolio[CURPFID];
             o.destroy_table();
             o.destroy_button();
             o.remove_data();
-
-            list = list.filter(function(x) { return x !== CURPFID;});
-            stoset("pf_list", list);
-
-            var max = Math.max.apply(Math, list);
-            $(".profile_btn[data-pfid="+max+"]").trigger('click');
-
+            _List.remove(CURPFID);
+            $(".profile_btn:last").trigger('click');
         }
         return false;
     });
@@ -269,14 +305,10 @@ $(function () {
     });
 
     $("#btn_add_profile").click(function () {
-        var list = stoget('pf_list');
-        var max = Math.max.apply(Math, list);
-        max += 1;
-        var key = max.toString();
-        list.push(key);
-        stoset("pf_list", list);
+        var key = _List.add();
         var _o = new Portfolio(key);
         window._Portfolio[key] = _o;
+        return false;
     });
     /*----------------------------------------*/
 
@@ -313,31 +345,13 @@ $(function () {
 });
 
 
-function stoset(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
-function stoget(key) {
-    var dt = localStorage.getItem(key);
-    if (dt !== null) {
-        return JSON.parse(dt);
-    }else{
-        return null;
-    }
-}
-
 
 function _main() {
-
+    window._List = new PortfolioIdList();
     window._Portfolio = {};
-    var list = stoget('pf_list');
-    if(list === null) {
-        list = ["1"];
-        stoset("pf_list", list);
-    }
 
-    $.each(list, function(i,v) {
-        var _o = new Portfolio(v);
-        window._Portfolio[v] = _o;
-    });
-
+    _List.restore();
+    _List.build_buttons();
 
     /* ------------- */
     var cur_pfid = localStorage.getItem('cur_pfid');
@@ -346,3 +360,4 @@ function _main() {
     pfo = _Portfolio[CURPFID];
     pfo.activate();
 }
+
