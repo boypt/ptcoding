@@ -107,8 +107,7 @@ Portfolio.prototype.init_data_table = function () {
                 var tb = this.api();
                 tb.rows().every( function () {
                     var row = this.data();
-                    var incr = 0;
-                    incr = parseFloat(row[1]) - parseFloat(row[3]);
+                    var incr = parseFloat(row[1]) - parseFloat(row[3]);
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
@@ -133,8 +132,7 @@ Portfolio.prototype.init_data_table = function () {
                 var tb = this.api();
                 tb.rows().every( function () {
                     var row = this.data();
-                    var incr = 0;
-                    incr = parseFloat(row[2]);
+                    var incr = parseFloat(row[2]);
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
@@ -183,7 +181,6 @@ Portfolio.prototype.update_data_table = function () {
                 localStorage.setItem(v, window['hq_str_'+v]);
             });
             _self.show_data_table();
-
             $("#msgbar").slideUp();
         });
     }
@@ -351,8 +348,6 @@ $(function () {
     /*----------------------------------------*/
 
 });
-
-
 
 function _main() {
     window._List = new PortfolioIdList();
