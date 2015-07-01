@@ -28,10 +28,7 @@
 $script.path('js/');
 $script('jquery.min', function () {
     $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min', 'stock'], function () {
-        init_profile_button();
-        resumenums();
-        var cur_pfid = localStorage.getItem('cur_pfid');
-        show_data_table(cur_pfid);
+        _main();
     });
 });
   </script>

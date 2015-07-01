@@ -1,70 +1,81 @@
+var Portfolio = function (pfid)  {
+    this.pfid = pfid;
+    this.storage_key = "profile_data"+this.pfid;
+    this.table_id = "#data_table_tb"+this.pfid;
+    this.is_fund = true;
+    this.ids = '';
+    this.button = $("<button>")
+        .addClass("u-full-width profile_btn")
+        .attr("data-pfid", pfid)
+        .text("组合"+pfid)
+        .appendTo("#profile_nav");
+}
 
-function stoset(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
-function stoget(key) {
-    var dt = localStorage.getItem(key);
+Portfolio.prototype.save = function () {
+    var vals = {
+        "is_fund":this.is_fund,
+        "ids":this.ids
+    }
+    localStorage.setItem(this.storage_key, JSON.stringify(vals)); 
+}
+
+Portfolio.prototype.restore = function () {
+    var dt = localStorage.getItem(this.storage_key);
     if (dt !== null) {
-        return JSON.parse(dt);
-    }else{
-        return null;
+        var vals = JSON.parse(dt);
+        $.extend(this, vals);
     }
 }
 
-function savenums(pfid) {
-    if(pfid===undefined)
-        pfid = CURPFID;
+Portfolio.prototype.remove_data = function () {
+    var qs = this.parse_ids();
+    if(qs.length > 0) {
+        $.each(qs, function (i,v) {
+            localStorage.removeItem(v);
+        });
+    }
+    localStorage.removeItem(this.storage_key);
+}
+
+Portfolio.prototype.sync_from_dom = function () {
     var ids = $.trim($('#sharenums').val());
     var is_fund = $("#is_fund").prop('checked');
-    stoset("profile_data"+pfid, {"ids":ids, "is_fund":is_fund});
-};
-
-
-function resumenums () {
-    var cur_pfid = localStorage.getItem('cur_pfid');
-    if(cur_pfid === null) {
-        cur_pfid = '1';
-        localStorage.setItem('cur_pfid',cur_pfid);
+    this.ids = ids;
+    if(is_fund != this.is_fund) {
+        this.destroy_table();
     }
-    window.CURPFID = cur_pfid;
-
-    $(".profile_btn[data-pfid="+cur_pfid+"]").addClass('button-primary')
-    var dt = stoget("profile_data"+cur_pfid);
-
-    $('#sharenums').val('');
-    if(dt!==null) {
-        $('#sharenums').val(dt.ids);
-        $("#is_fund").prop("checked", dt.is_fund);
-    } else {
-        savenums(cur_pfid);
-    }
+    this.is_fund = is_fund;
 }
 
 
+Portfolio.prototype.sync_to_dom = function () {
+    $('#sharenums').val('');
+    $('#sharenums').val(this.ids);
+    $("#is_fund").prop("checked", this.is_fund);
+}
 
-function parsenums (pfid) {
+Portfolio.prototype.parse_ids = function () {
 
-    if(pfid===undefined) {
-        pfid = CURPFID;
-    }
+    var qs = [];
 
-    var dt = stoget("profile_data"+pfid);
-
-    if(dt===null || dt.ids.length===0) { return []; }
-
-    if(dt.is_fund) {
-        var qs = $.map(dt.ids.match(/[0-9]{6}/g), function(v) { return 'f_'+v; });
-    }else{
-        var qs = $.map(dt.ids.match(/[0-9]{6}/g), function(v) {
-            var marketsig = parseInt(v.substr(0,1));
-            var pfx = marketsig>=5?'s_sh':'s_sz';
-            return pfx+v;
-        });
+    if (this.ids.length > 0) {
+        if(this.is_fund) {
+            qs = $.map(this.ids.match(/[0-9]{6}/g), function(v) { return 'f_'+v; });
+        }else{
+            qs = $.map(this.ids.match(/[0-9]{6}/g), function(v) {
+                var marketsig = parseInt(v.substr(0,1));
+                var pfx = marketsig>=5?'s_sh':'s_sz';
+                return pfx+v;
+            });
+        }
     }
 
     return qs;
 }
 
+Portfolio.prototype.init_data_table = function () {
 
-function init_data_table(tbid, dt) {
+    var tbid = this.table_id;
 
     if(!$(tbid).length) {
         $("<table>").attr("id", tbid.substr(1)).addClass("compact").appendTo("#data_table_div");
@@ -72,7 +83,7 @@ function init_data_table(tbid, dt) {
 
     if(!$.fn.dataTable.isDataTable(tbid)) {
 
-        if(dt.is_fund) {
+        if(this.is_fund) {
             var colms = [
                 { "title": "名称", "className":"dt-nowrap",
                     "render": function ( data, type, row ) { 
@@ -107,7 +118,7 @@ function init_data_table(tbid, dt) {
         }
 
 
-        $(tbid).dataTable( {
+        var tb = $(tbid).dataTable( {
             "paging":   false,
             "ordering": false,
             "info":     false,
@@ -119,7 +130,7 @@ function init_data_table(tbid, dt) {
                 tb.rows().every( function () {
                     var row = this.data();
                     var incr = 0;
-                    if(dt.is_fund) { incr = parseFloat(row[1]) - parseFloat(row[3]);; }
+                    if(this.is_fund) { incr = parseFloat(row[1]) - parseFloat(row[3]);; }
                     else { incr = parseFloat(row[2]); }
 
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
@@ -127,23 +138,15 @@ function init_data_table(tbid, dt) {
                 });
             }
         });
+
+        return tb.api();
+    } else {
+        return $(tbid).DataTable();
     }
 }
 
-function show_data_table(pfid) {
-
-    var tbid = "#data_table_tb"+pfid;
-    var dt = stoget("profile_data"+pfid);
-
-    if(dt===null || dt.ids.length === 0)
-        return false;
-
-    if(!$.fn.dataTable.isDataTable(tbid)) {
-        init_data_table(tbid, dt);
-    }
-
-    var tb = $(tbid).DataTable();
-    var dataSet = $.map(parsenums(), function (v) {
+Portfolio.prototype.show_data_table = function () {
+    var dataSet = $.map(this.parse_ids(), function (v) {
         var val = localStorage.getItem(v);
         if(val !== null) {
             var r = val.split(',');
@@ -152,78 +155,147 @@ function show_data_table(pfid) {
         }
     });
 
-    tb.clear().rows.add(dataSet).draw();
-}
-
-function init_profile_button() {
-    var list = stoget('pf_list');
-    if(list === null) {
-        list = ["1"];
-        stoset("pf_list", list);
+    var tb = $(this.table_id).DataTable();
+    if(tb.length === 0){
+        tb = this.init_data_table();
     }
+    tb.clear().rows.add(dataSet).draw();
 
-    $.each(list, function(i,v) { add_profile_btn(v); });
+    $(this.table_id).parent(".dataTables_wrapper").fadeIn();
 }
 
-function add_profile_btn (pfid) {
-    $("#profile_nav").append($("<button>").addClass("u-full-width profile_btn").attr("data-pfid", pfid).text("组合"+pfid));
+
+Portfolio.prototype.update_data_table = function () {
+    var qs = this.parse_ids();
+
+    if(qs.length > 0) {
+        var qsstr = 'list='+qs.join(',');
+        var _obj = this;
+        $.getScript('api.php?'+qsstr, function () {
+            $.each(qs, function (i,v) {
+                localStorage.setItem(v, window['hq_str_'+v]);
+            });
+            _obj.show_data_table();
+            //
+            $("#msgbar").slideUp();
+            //
+        });
+    }
 }
+
+
+Portfolio.prototype.deactivate = function () {
+    $(this.table_id).parent(".dataTables_wrapper").fadeOut();
+    this.button.removeClass("button-primary");
+}
+
+
+Portfolio.prototype.show_neat_value = function () {
+    var tb = $(this.table_id).DataTable();
+    var dt = tb.column(1).data();
+    var netv = $("#neat_val").empty().text(dt.join('\n'));
+    $("#neat_val_window").modal({
+        opacity:80,
+        overlayCss: {backgroundColor:"#333"},
+        minHeight:400,
+        minWidth: 100,
+    });
+}
+
+Portfolio.prototype.destroy_table = function () {
+    $(this.table_id).DataTable().destroy(true);
+}
+
+Portfolio.prototype.destroy_button = function () {
+    $(".profile_btn[data-pfid="+this.pfid+"]").remove();
+}
+
+Portfolio.prototype.activate = function () {
+    this.restore();
+    this.sync_to_dom();
+    this.init_data_table();
+    this.show_data_table();
+    if(!this.button.hasClass("button-primary")) {
+        this.button.addClass("button-primary")
+    }
+}
+
 
 $(function () {
 
+    /* ----- NAV Buttons ------- */
     $('#update_share').click(function(evn) {
         $("#msgbar").text('Loading ...').slideDown();
-        var qs = parsenums();
-
-        if(qs.length > 0) {
-            var qsstr = 'list='+qs.join(',');
-            $.getScript('api.php?'+qsstr, function () {
-                $.each(qs, function (i,v) {
-                    localStorage.setItem(v, window['hq_str_'+v]);
-                });
-                show_data_table(CURPFID);
-                $("#msgbar").slideUp();
-            });
-        }
-        return false;
-    });
-
-    $("#profile_nav").on("click", "button.profile_btn", function(evn) {
-        var btn = $(evn.target)
-        var pfid = btn.data("pfid");
-        var lo_cur_pfid = parseInt(CURPFID);
-
-        if (lo_cur_pfid !== pfid) {
-            $(".profile_btn").removeClass('button-primary');
-            btn.addClass('button-primary');
-
-            localStorage.setItem('cur_pfid', pfid);
-            resumenums();
-
-            $("#data_table_div .dataTables_wrapper").fadeOut();
-            if($("#data_table_tb"+pfid).length > 0) {
-                $("#data_table_tb"+pfid).parent(".dataTables_wrapper").fadeIn();
-            } else {
-                show_data_table(pfid);
-            }
-        }
-
+        var o = _Portfolio[CURPFID];
+        o.update_data_table();
         return false;
     });
 
     $("#show_neat_value").click(function() {
-        var tb = $("#data_table_tb"+CURPFID).DataTable();
-        var dt = tb.column(1).data();
-        var netv = $("#neat_val").empty().text(dt.join('\n'));
-        $("#neat_val_window").modal({
-            opacity:80,
-            overlayCss: {backgroundColor:"#333"},
-            minHeight:400,
-            minWidth: 100,
-        });
-
+        var o = _Portfolio[CURPFID];
+        o.show_neat_value();
+        return false;
     });
 
+    $("#clear_current").click(function () {
+        var r = confirm("Confirm");
+        if (r === true) {
+            var list = stoget('pf_list');
+            var o = _Portfolio[CURPFID];
+            o.destroy_table();
+            o.destroy_button();
+            o.remove_data();
+
+            list = list.filter(function(x) { return x !== CURPFID;});
+            stoset("pf_list", list);
+
+            var max = Math.max.apply(Math, list);
+            $(".profile_btn[data-pfid="+max+"]").trigger('click');
+
+        }
+        return false;
+    });
+    /*----------------------------------------*/
+
+    /* ----------- Profile Button ------------*/
+    $("#btn_add_profile").click(function () {
+        var list = stoget('pf_list');
+        var max = Math.max.apply(Math, list);
+        max += 1;
+        var key = max.toString();
+        list.push(key);
+        stoset("pf_list", list);
+        var _o = new Portfolio(key);
+        window._Portfolio[key] = _o;
+    });
+
+    $("#profile_nav").on("click", "button.profile_btn", function(evn) {
+        var btn = $(evn.target)
+        var pfid = btn.attr("data-pfid");
+        var lo_cur_pfid = CURPFID;
+
+        // switch
+        if (lo_cur_pfid !== pfid) {
+            localStorage.setItem('cur_pfid', pfid);
+            CURPFID = pfid;
+            _Portfolio[lo_cur_pfid].deactivate();
+            _Portfolio[pfid].activate();
+    /*--------------Input Controls -----------*/
+    $('#sharenums').blur(function () {
+        var o = _Portfolio[CURPFID];
+        o.sync_from_dom();
+        o.save();
+    });
+    $('#is_fund').click(function () {
+        var o = _Portfolio[CURPFID];
+        o.sync_from_dom();
+        o.save();
+    });
+    /*----------------------------------------*/
+
+
+
+    /*-------------- Target Links -----------*/
     $("#data_table_div").on('click', 'a.val_target', function(evn) {
         var elm = $(evn.target);
         var code = elm.data('code');
@@ -237,38 +309,42 @@ $(function () {
         window.open(url, '_blank');
         return false;
     });
+    /*----------------------------------------*/
 
-    $('#sharenums').blur(function () {savenums();});
-    $('#is_fund').click(function () {
-        $("#data_table_tb"+CURPFID).DataTable().destroy(true);
-        savenums();
-    });
-
-
-    $("#btn_add_profile").click(function () {
-        var list = stoget('pf_list');
-        var max = Math.max.apply(Math, list);
-        max += 1;
-        list.push(max.toString());
-        stoset("pf_list", list);
-        add_profile_btn(max.toString());
-    });
-
-    $("#clear_current").click(function () {
-        var r = confirm("Confirm");
-        if (r === true) {
-            var list = stoget('pf_list');
-            $("#data_table_tb"+CURPFID).DataTable().destroy(true);
-            $(".profile_btn[data-pfid="+CURPFID+"]").remove();
-            list = list.filter(function(x) { return x !== CURPFID;});
-            stoset("pf_list", list);
-            localStorage.removeItem("profile_data"+CURPFID);
-
-            var max = Math.max.apply(Math, list);
-            $(".profile_btn[data-pfid="+max+"]").trigger('click');
-
-        }
-        return false;
-    });
 });
 
+
+function stoset(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
+function stoget(key) {
+    var dt = localStorage.getItem(key);
+    if (dt !== null) {
+        return JSON.parse(dt);
+    }else{
+        return null;
+    }
+}
+
+
+function _main() {
+
+    window._Portfolio = {};
+    var list = stoget('pf_list');
+    if(list === null) {
+        list = ["1"];
+        stoset("pf_list", list);
+    }
+
+    $.each(list, function(i,v) {
+        var _o = new Portfolio(v);
+        window._Portfolio[v] = _o;
+    });
+
+
+    /* ------------- */
+
+    var cur_pfid = localStorage.getItem('cur_pfid');
+    window.CURPFID = cur_pfid;
+
+    pfo = _Portfolio[CURPFID];
+    pfo.activate();
+}
