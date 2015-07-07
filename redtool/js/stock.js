@@ -6,8 +6,8 @@ var Portfolio = function (pfid)  {
     this.table_api = null;
     this.is_fund = true;
     this.ids = '';
-    this.button = $("<button>")
-        .addClass("u-full-width profile_btn")
+    this.button = $($("#tpl_pfbtn").html())
+        .attr("id", "_pfbtn"+pfid)
         .attr("data-pfid", pfid)
         .text("组合"+pfid)
         .appendTo("#profile_nav");
@@ -77,7 +77,7 @@ Portfolio.prototype.init_data_table = function () {
     var tbid = this.table_id;
 
     if(!$(tbid).length) {
-        $("<table>").attr("id", tbid.substr(1)).addClass("compact").appendTo("#data_table_div");
+        $($("#tpl_datatable").html()).attr("id", tbid.substr(1)).appendTo("#data_table_div");
     }
 
     var colms, drawcb;
@@ -206,7 +206,7 @@ Portfolio.prototype.destroy_table = function () {
 }
 
 Portfolio.prototype.destroy_button = function () {
-    $(".profile_btn[data-pfid="+this.pfid+"]").remove();
+    $("#_pfbtn"+this.pfid).remove();
 }
 
 Portfolio.prototype.activate = function () {
@@ -300,7 +300,7 @@ $(function () {
         var pfid = $(evn.target).attr("data-pfid");
 
         // switch
-        if (CURPFID !== pfid) {
+        if (typeof(CURPFID) !== "undefined" && CURPFID !== pfid) {
             _Portfolio[CURPFID].deactivate();
             CURPFID = pfid;
             localStorage.setItem('cur_pfid', pfid);
