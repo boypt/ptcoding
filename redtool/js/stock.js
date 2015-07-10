@@ -145,6 +145,7 @@ Portfolio.prototype.init_data_table = function () {
             "info":     false,
             "searching":false,
             "deferRender": true,
+            "autoWidth": false,
             "columns": colms,
             "drawCallback":drawcb
         });
