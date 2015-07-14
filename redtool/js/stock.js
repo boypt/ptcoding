@@ -6,6 +6,7 @@ var Portfolio = function (pfid)  {
     this.table_api = null;
     this.is_fund = true;
     this.ids = '';
+    this.last_update = null;
     this.button = $($("#tpl_pfbtn").html())
         .attr("id", "_pfbtn"+pfid)
         .attr("data-pfid", pfid)
@@ -16,7 +17,8 @@ var Portfolio = function (pfid)  {
 Portfolio.prototype.save = function () {
     var vals = {
         "is_fund":this.is_fund,
-        "ids":this.ids
+        "ids":this.ids,
+        "last_update":this.last_update
     }
     localStorage.setItem(this.storage_key, JSON.stringify(vals)); 
 }
@@ -154,6 +156,8 @@ Portfolio.prototype.init_data_table = function () {
 }
 
 Portfolio.prototype.show_data_table = function () {
+    $("#last_update").text(this.last_update);
+
     var dataSet = $.map(this.parse_ids(), function (v) {
         var val = localStorage.getItem(v);
         if(val !== null) {
@@ -175,12 +179,15 @@ Portfolio.prototype.update_data_table = function () {
     if(qs.length > 0) {
         $("#msgbar").text('Loading ...').slideDown();
         var qsstr = 'list='+qs.join(',');
-        var _self = this;
+        var _this = this;
         $.getScript('api.php?'+qsstr, function () {
             $.each(qs, function (i,v) {
                 localStorage.setItem(v, window['hq_str_'+v]);
             });
-            _self.show_data_table();
+            var now = new Date().toLocaleString();
+            _this.last_update = now;
+            _this.show_data_table();
+            _this.save();
             $("#msgbar").slideUp();
         });
     }
@@ -350,6 +357,7 @@ $(function () {
 });
 
 function _main() {
+    $("#msgbar").text('Initiating ...').slideDown();
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     window.CURPFID = localStorage.getItem('cur_pfid') || "1";
@@ -359,5 +367,6 @@ function _main() {
 
     pfo = _Portfolio[CURPFID];
     pfo.activate();
+    $("#msgbar").slideUp();
 }
 
