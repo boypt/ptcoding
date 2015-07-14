@@ -27,6 +27,7 @@
   <script type="text/javascript">
 $script.path('js/');
 $script('jquery.min', function () {
+    $("#msgbar").text("Initiating Modules ...");
     $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min', 'stock'], function () {
         _main();
     });
@@ -72,7 +73,7 @@ $script('jquery.min', function () {
             <button id="btn_add_profile" class="u-full-width">+</button>
         </div>
         <div id="data_table_div" class="ten columns">
-            <div id="msgbar" class="u-full-width"></div>
+            <div id="msgbar" class="u-full-width">Loading ...</div>
             <div class="u-full-width">Last Update: <span id="last_update"></span></div>
         </div>
       </div>

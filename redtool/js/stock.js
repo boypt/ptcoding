@@ -147,7 +147,6 @@ Portfolio.prototype.init_data_table = function () {
             "info":     false,
             "searching":false,
             "deferRender": true,
-            "autoWidth": false,
             "columns": colms,
             "drawCallback":drawcb
         });
@@ -178,7 +177,7 @@ Portfolio.prototype.update_data_table = function () {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
-        $("#msgbar").text('Loading ...').slideDown();
+        $("#msgbar").text('Updating ...').slideDown();
         var qsstr = 'list='+qs.join(',');
         var _this = this;
         $.getScript('api.php?'+qsstr, function () {
@@ -274,7 +273,8 @@ PortfolioIdList.prototype.build_buttons = function () {
 /* --------------------------------------------------------------------------------------------------------*/
 
 /* ------------------------------------jQuery Event Handlings----------------------------------------------*/
-$(function () {
+
+function _event_handlers() {
 
     /* ----- NAV Buttons ------- */
     $('#update_share').click(function(evn) {
@@ -355,10 +355,9 @@ $(function () {
     });
     /*----------------------------------------*/
 
-});
+}
 
 function _main() {
-    $("#msgbar").text('Initiating ...').slideDown();
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     window.CURPFID = localStorage.getItem('cur_pfid') || "1";
@@ -369,5 +368,6 @@ function _main() {
     pfo = _Portfolio[CURPFID];
     pfo.activate();
     $("#msgbar").slideUp();
+    _event_handlers();
 }
 
