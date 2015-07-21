@@ -84,6 +84,11 @@ Portfolio.prototype.init_data_table = function () {
 
     var colms, drawcb;
 
+    var val_render = function ( data, type, row ) {
+        var cls = data.substr(0,1) === '-' ? "price negtive":"price";
+        return '<span class="'+cls+'">'+data+'</span>';
+    }
+
     if(!$.fn.dataTable.isDataTable(tbid) && this.table_api === null) {
 
         if(this.is_fund) {
@@ -92,20 +97,15 @@ Portfolio.prototype.init_data_table = function () {
                     "render": function ( data, type, row ) { 
                         return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
                 { "title": "净值",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'</span>'; },
+                    "render": val_render,
                 },
                 { "title": "累计净值",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'</span>'; },
+                    "render": val_render,
                 },
                 { "title": "昨净",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'</span>'; },
+                    "render": val_render,
                 },
                 { "title": "净值日期",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'</span>'; },
                 },
                 { "title": "？？", "visible": false },
                 { "title": "涨跌幅", 
@@ -113,7 +113,8 @@ Portfolio.prototype.init_data_table = function () {
                         var val = parseFloat(row[1]);
                         var lastval = parseFloat(row[3]);
                         return ((val-lastval)/lastval*100).toFixed(2)+'%';
-                    } 
+                    },
+                    "render": val_render,
                 }
             ];
 
@@ -134,16 +135,13 @@ Portfolio.prototype.init_data_table = function () {
                     "render": function ( data, type, row ) {
                         return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
                 { "title": "现价",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'</span>'; },
+                    "render": val_render,
                 },
                 { "title": "涨跌",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'</span>'; },
+                    "render": val_render,
                 },
                 { "title": "涨跌幅",
-                    "render": function ( data, type, row ) {
-                        return '<span class="price">'+data+'%</span>'; },
+                    "render": function (d,t,r){return val_render(d+'%',t,r);},
                 },
                 { "title": "现量", "visible": false },
                 { "title": "现手", "visible": false }

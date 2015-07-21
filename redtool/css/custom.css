@@ -1,7 +1,8 @@
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
 .right { float: right; }
-.price { font-family: monospace; font-size: 14px; }
+.price { font-family: monospace; font-size: 1.2em; }
+.negtive { margin-left:-0.6em; }
 
 #sharenums { height: 100px; }
 #neat_val_window {background-color:#fff; padding: 5px 20px; border: 2px solid; border-radius: 5px; display:none;}
