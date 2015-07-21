@@ -91,10 +91,22 @@ Portfolio.prototype.init_data_table = function () {
                 { "title": "名称", "className":"dt-nowrap",
                     "render": function ( data, type, row ) { 
                         return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
-                { "title": "净值" },
-                { "title": "累计净值" },
-                { "title": "昨净" },
-                { "title": "净值日期" },
+                { "title": "净值",
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'</span>'; },
+                },
+                { "title": "累计净值",
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'</span>'; },
+                },
+                { "title": "昨净",
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'</span>'; },
+                },
+                { "title": "净值日期",
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'</span>'; },
+                },
                 { "title": "？？", "visible": false },
                 { "title": "涨跌幅", 
                     "data": function ( row, type, val, meta ) {
@@ -119,12 +131,19 @@ Portfolio.prototype.init_data_table = function () {
         } else {
             colms = [
                 { "title": "名称", "className":"dt-nowrap",
-                    "render": function ( data, type, row ) { 
+                    "render": function ( data, type, row ) {
                         return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
-                { "title": "现价" },
-                { "title": "涨跌" },
+                { "title": "现价",
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'</span>'; },
+                },
+                { "title": "涨跌",
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'</span>'; },
+                },
                 { "title": "涨跌幅",
-                    "render": function ( data, type, row ) { return data+'%'; },
+                    "render": function ( data, type, row ) {
+                        return '<span class="price">'+data+'%</span>'; },
                 },
                 { "title": "现量", "visible": false },
                 { "title": "现手", "visible": false }

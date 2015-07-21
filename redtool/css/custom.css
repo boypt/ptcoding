@@ -1,12 +1,18 @@
-#sharenums { height: 100px; }
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
 .right { float: right; }
+.price { font-family: monospace; font-size: 14px; }
 
+#sharenums { height: 100px; }
 #neat_val_window {background-color:#fff; padding: 5px 20px; border: 2px solid; border-radius: 5px; display:none;}
-#neat_value { background-color:#F1F1F1; padding: 0 20px;}
+#neat_value {
+    background-color:#F1F1F1; padding: 0 20px;
+    font-family: monospace;
+    font-size: 14px;
+}
 #data_table_div tr.reddata { background-color:#FFA7A7;}
 #data_table_div tr.greendata { background-color:#A9FFC4;}
+
 a:link.val_target, a:visited.val_target{color:#000; text-decoration: none;}
 a:hover.val_target, a:active.val_target{text-decoration:underline;}
 
@@ -21,3 +27,4 @@ a:hover.val_target, a:active.val_target{text-decoration:underline;}
 	right:-10px;
 	cursor:pointer;
 }
+
