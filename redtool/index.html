@@ -23,14 +23,16 @@
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="icon" type="image/png" href="images/favicon.png">
-  <script type='text/javascript' src='js/script.min.js'></script>
+  <script type='text/javascript' src='http://cdn.staticfile.org/script.js/2.5.7/script.min.js'></script>
   <script type="text/javascript">
 $script.path('js/');
-$script('jquery.min', function () {
+$script('http://cdn.staticfile.org/jquery/2.1.1/jquery.min.js', function () {
     $("#msgbar").text("Initiating Modules ...");
-    $script(['jquery.dataTables.min', 'jquery.simplemodal.1.4.4.min', 'stock'], function () {
-        _main();
-    });
+    $script(
+        ['jquery.dataTables.min', 'stock',
+         'http://cdn.staticfile.org/simplemodal/1.4.4/jquery.simplemodal.min.js'
+    ], function () { _main(); }
+    );
 });
   </script>
 
