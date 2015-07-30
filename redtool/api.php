@@ -21,7 +21,7 @@ function getapi($url) {
     return $resp;
 }
 
-$sinaurl = 'http://hq.sinajs.cn/ran='.(float)rand()/(float)getrandmax().'&list='.$_GET['list'];
+$sinaurl = 'http://hq.sinajs.cn/ran='.$_GET['_'].'&list='.$_GET['list'];
 #echo $sinaurl;
 
 header('Content-Type: application/x-javascript; charset=GBK');
