@@ -6,10 +6,18 @@
 
 #sharenums { height: 100px; }
 #neat_val_window {background-color:#fff; padding: 5px 20px; border: 2px solid; border-radius: 5px; display:none;}
-#neat_value {
-    background-color:#F1F1F1; padding: 0 20px;
+#neat_val {
+    background-color:#F1F1F1;
+    margin: 1em auto;
+    display:block;
     font-family: monospace;
     font-size: 14px;
+    min-width: 270px;
+    width: 100px;
+    line-height: 24px;
+    min-height: 22px;
+    overflow-y: hidden; /* fixes scrollbar flash - kudos to @brettjonesdev */
+    padding-top: 1.1em; /* fixes text jump on Enter keypress */
 }
 #data_table_div tr.reddata { background-color:#FFA7A7;}
 #data_table_div tr.greendata { background-color:#A9FFC4;}

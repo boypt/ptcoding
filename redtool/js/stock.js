@@ -221,6 +221,12 @@ Portfolio.prototype.show_neat_value = function () {
         overlayCss: {backgroundColor:"#333"},
         minHeight:400,
         minWidth: 100,
+        overlayClose: true,
+        onShow: function () {
+            var _v = $('#neat_val');
+            _v.outerHeight(0);
+            _v.outerHeight(_v.get(0).scrollHeight);
+        }
     });
 }
 
@@ -353,6 +359,9 @@ function _event_handlers() {
         var o = _Portfolio[CURPFID];
         o.sync_from_dom();
         o.save();
+    });
+    $('#neat_val').mouseover(function () {
+        $(this).select();
     });
     /*----------------------------------------*/
 
