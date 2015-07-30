@@ -23,16 +23,19 @@
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="icon" type="image/png" href="images/favicon.png">
-  <script type='text/javascript' src='http://cdn.staticfile.org/script.js/2.5.7/script.min.js'></script>
+  <script type="text/javascript" src="//cdn.staticfile.org/script.js/2.5.7/script.min.js"></script>
   <script type="text/javascript">
 $script.path('js/');
-$script('http://cdn.staticfile.org/jquery/2.1.1/jquery.min.js', function () {
+$script(["//cdn.staticfile.org/jquery/2.1.1/jquery.min.js", "stock"], function () {
     $("#msgbar").text("Initiating Modules ...");
-    $script(
-        ['jquery.dataTables.min', 'stock',
-         'http://cdn.staticfile.org/simplemodal/1.4.4/jquery.simplemodal.min.js'
-    ], function () { _main(); }
-    );
+    _reg_event_handlers();
+    _main_init();
+    $script(["jquery.dataTables.min",
+        "//cdn.staticfile.org/simplemodal/1.4.4/jquery.simplemodal.min.js"
+    ], function () {
+        _Portfolio[CURPFID].activate();
+        $("#msgbar").slideUp();
+    });
 });
   </script>
 

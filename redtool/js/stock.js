@@ -297,7 +297,7 @@ PortfolioIdList.prototype.build_buttons = function () {
 
 /* ------------------------------------jQuery Event Handlings----------------------------------------------*/
 
-function _event_handlers() {
+function _reg_event_handlers() {
 
     /* ----- NAV Buttons ------- */
     $('#update_share').click(function(evn) {
@@ -383,7 +383,7 @@ function _event_handlers() {
 
 }
 
-function _main() {
+function _main_init() {
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     window.CURPFID = localStorage.getItem('cur_pfid') || "1";
@@ -391,9 +391,5 @@ function _main() {
     _List.restore();
     _List.build_buttons();
 
-    pfo = _Portfolio[CURPFID];
-    pfo.activate();
-    $("#msgbar").slideUp();
-    _event_handlers();
 }
 
