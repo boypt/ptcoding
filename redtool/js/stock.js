@@ -367,14 +367,18 @@ function _reg_event_handlers() {
 
     /*-------------- Target Links -----------*/
     $("#data_table_div").on('click', 'a.val_target', function(evn) {
-        var elm = $(evn.target);
-        var code = elm.data('code');
-        if(code.substr(0,2) == "f_") {
+        var elm = $(evn.target),
+        code = elm.data('code'),
+        url;
+        if(code.substr(0,2) === "f_") {
             code = code.match(/[0-9]{6}$/)[0];
-            var url = 'http://fund.eastmoney.com/'+code+'.html';
-        }else if(code.substr(0,2) == "s_") {
+            url = 'http://fund.eastmoney.com/'+code+'.html';
+        }else if(code.substr(0,2) === "s_") {
             code = code.substr(2);
-            var url = 'http://quote.eastmoney.com/'+code+'.html';
+            url = 'http://quote.eastmoney.com/'+code+'.html';
+        } else {
+            // ???
+            return false;
         }
         window.open(url, '_blank');
         return false;
@@ -387,9 +391,7 @@ function _main_init() {
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     window.CURPFID = localStorage.getItem('cur_pfid') || "1";
-
     _List.restore();
     _List.build_buttons();
-
 }
 

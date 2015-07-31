@@ -28,8 +28,8 @@
 $script.path('js/');
 $script(["//cdn.staticfile.org/jquery/2.1.1/jquery.min.js", "stock"], function () {
     $("#msgbar").text("Initiating Modules ...");
-    _reg_event_handlers();
     _main_init();
+    $(_reg_event_handlers);
     $script(["jquery.dataTables.min",
         "//cdn.staticfile.org/simplemodal/1.4.4/jquery.simplemodal.min.js"
     ], function () {
