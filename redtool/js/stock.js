@@ -388,6 +388,7 @@ function _reg_event_handlers() {
 }
 
 function _main_init() {
+    $(_reg_event_handlers);
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     window.CURPFID = localStorage.getItem('cur_pfid') || "1";
