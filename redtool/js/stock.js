@@ -93,9 +93,11 @@ Portfolio.prototype.init_data_table = function () {
 
         if(this.is_fund) {
             colms = [
-                { "title": "名称", "className":"dt-nowrap",
+                { "title": "名称",
+                    "className":"dt-nowrap tg_name",
                     "render": function ( data, type, row ) { 
-                        return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
+			            var code = row[row.length-1].substr(2);
+                        return '<a target="_blank" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
                 { "title": "净值",
                     "render": val_render,
                 },
@@ -131,9 +133,10 @@ Portfolio.prototype.init_data_table = function () {
 
         } else {
             colms = [
-                { "title": "名称", "className":"dt-nowrap",
+                { "title": "名称", "className":"dt-nowrap tg_name",
                     "render": function ( data, type, row ) {
-                        return '<a data-code="'+row[row.length-1]+'" class="val_target" href="#">'+data+'</a>'; },},
+                        var code = row[row.length-1].substr(2);
+                        return '<a target="_blank" href="http://quote.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
                 { "title": "现价",
                     "render": val_render,
                 },
@@ -362,26 +365,6 @@ function _reg_event_handlers() {
     });
     $('#neat_val').mouseover(function () {
         $(this).select();
-    });
-    /*----------------------------------------*/
-
-    /*-------------- Target Links -----------*/
-    $("#data_table_div").on('click', 'a.val_target', function(evn) {
-        var elm = $(evn.target),
-        code = elm.data('code'),
-        url;
-        if(code.substr(0,2) === "f_") {
-            code = code.match(/[0-9]{6}$/)[0];
-            url = 'http://fund.eastmoney.com/'+code+'.html';
-        }else if(code.substr(0,2) === "s_") {
-            code = code.substr(2);
-            url = 'http://quote.eastmoney.com/'+code+'.html';
-        } else {
-            // ???
-            return false;
-        }
-        window.open(url, '_blank');
-        return false;
     });
     /*----------------------------------------*/
 
