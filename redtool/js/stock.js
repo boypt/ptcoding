@@ -95,6 +95,7 @@ Portfolio.prototype.init_data_table = function () {
             colms = [
                 { "title": "名称",
                     "className":"dt-nowrap tg_name",
+                    "orderable": false,
                     "render": function ( data, type, row ) { 
 			            var code = row[row.length-1].substr(2);
                         return '<a target="_blank" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
@@ -107,7 +108,7 @@ Portfolio.prototype.init_data_table = function () {
                 { "title": "昨净",
                     "render": val_render,
                 },
-                { "title": "净值日期",
+                { "title": "净值日期", "orderable": false,
                 },
                 { "title": "？？", "visible": false },
                 { "title": "涨跌幅", 
@@ -133,7 +134,9 @@ Portfolio.prototype.init_data_table = function () {
 
         } else {
             colms = [
-                { "title": "名称", "className":"dt-nowrap tg_name",
+                { "title": "名称",
+                    "className":"dt-nowrap tg_name",
+                    "orderable": false,
                     "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2);
                         return '<a target="_blank" href="http://quote.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
@@ -163,7 +166,8 @@ Portfolio.prototype.init_data_table = function () {
 
         var tb = $(tbid).dataTable( {
             "paging":   false,
-            "ordering": false,
+            "ordering": true,
+            "order":    [],
             "info":     false,
             "searching":false,
             "deferRender": true,
@@ -303,6 +307,13 @@ PortfolioIdList.prototype.build_buttons = function () {
 function _reg_event_handlers() {
 
     /* ----- NAV Buttons ------- */
+    $('#redraw').click(function(evn) {
+        var o = _Portfolio[CURPFID];
+        //o.destroy_table();
+        o.show_data_table();
+        return false;
+    });
+
     $('#update_share').click(function(evn) {
         var o = _Portfolio[CURPFID];
         o.update_data_table();
