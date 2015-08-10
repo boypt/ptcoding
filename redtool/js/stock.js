@@ -309,7 +309,7 @@ function _reg_event_handlers() {
     /* ----- NAV Buttons ------- */
     $('#redraw').click(function(evn) {
         var o = _Portfolio[CURPFID];
-        //o.destroy_table();
+        o.destroy_table();
         o.show_data_table();
         return false;
     });
