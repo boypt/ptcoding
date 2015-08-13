@@ -379,6 +379,14 @@ function _reg_event_handlers() {
     });
     /*----------------------------------------*/
 
+    $("#input_identity").on("keypress", function(ev) {
+        var keycode = (ev.keyCode ? ev.keyCode : ev.which);
+        if (keycode == '13') {
+            var elem = $(ev.target);
+            var name = elem.val();
+            elem.parent().text(name);
+        }
+    });
 }
 
 function _main_init() {
