@@ -56,10 +56,10 @@ $script(["//cdn.staticfile.org/jquery/2.1.1/jquery.min.js", "stock"], function (
 
       <div class="row nav_row">
           <div class="three columns">
-            <button class="u-full-width button-primary" id="update_share">更新数据</button>
+            <button class="u-full-width button-primary" id="dontknow">...</button>
           </div>
           <div class="three columns">
-            <button class="u-full-width button-primary" id="redraw">表格重绘</button>
+            <button class="u-full-width button-primary" id="update_share">更新数据</button>
           </div>
           <div class="three columns">
             <button class="u-full-width button-primary" id="show_neat_value">输出净值</button>
@@ -69,20 +69,17 @@ $script(["//cdn.staticfile.org/jquery/2.1.1/jquery.min.js", "stock"], function (
           </div>
       </div>
 
-
-
       <div class="row">
-        <div class="two columns">
-            <div id="profile_nav"></div>
+        <div class="two columns"> <div id="profile_nav"></div>
             <button id="btn_add_profile" class="u-full-width">+</button>
         </div>
-        <div id="data_table_div" class="ten columns">
+        <div class="ten columns">
             <div id="msgbar" class="u-full-width">Loading ...</div>
-            <div class="u-full-width">Last Update: <span id="last_update"></span></div>
+            <div class="two-thirds column keepleft">更新时间 <span id="last_update"></span></div>
+            <div class="one-third column keepleft" id="redraw"><img src="images/refresh.png"></img></div>
+            <div id="data_table_div" class="twelve columns"></div>
         </div>
       </div>
-
-
 
       <div class="row input_row">
         <div class="two columns">

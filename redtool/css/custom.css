@@ -35,3 +35,10 @@
 	cursor:pointer;
 }
 
+.keepleft { margin-left:0; }
+#redraw img {
+    width:20px;
+    height:20px;
+    position: absolute;
+    right:0;
+}
