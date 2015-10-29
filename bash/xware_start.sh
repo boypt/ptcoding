@@ -57,11 +57,16 @@ case "$1" in
         monstop)
             util_kill `cat $MONPID`
             ;;
+        allstop)
+            util_kill `cat $PID`
+            util_kill `cat $MONPID`
+            ;;
         status)
             xware_status
             ;;
         restart)
-            xware_stop
+            util_kill `cat $PID`
+            sleep 2
             xware_start
             ;;
         check)
