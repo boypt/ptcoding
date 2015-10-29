@@ -197,7 +197,7 @@ Portfolio.prototype.show_data_table = function () {
 }
 
 
-Portfolio.prototype.update_data_table = function (refresh_table = false) {
+Portfolio.prototype.update_data_table = function (refresh_table) {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
@@ -318,7 +318,7 @@ var _reg_event_handlers = function () {
 
     $('#update_share').click(function(evn) {
         $.each(_Portfolio, function () {
-            this.update_data_table(refresh_table = (this === _Portfolio[CURPFID]));
+            this.update_data_table((this === _Portfolio[CURPFID]));
         });
         return false;
     });
