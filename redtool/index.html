@@ -20,16 +20,15 @@
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/skeleton.css">
   <link rel="stylesheet" href="css/custom.css">
-  <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.9/css/jquery.dataTables.min.css">
 
-  <script type="text/javascript" src="//cdn.staticfile.org/script.js/2.5.7/script.min.js"></script>
+  <script type="text/javascript" src="//cdn.css.net/libs/script.js/2.5.8/script.min.js"></script>
   <script type="text/javascript">
-$script.path('js/');
-$script(["//cdn.staticfile.org/jquery/2.1.1/jquery.min.js", "stock"], function () {
+$script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js"], function () {
     $("#msgbar").text("Initiating Modules ...");
     _main_init();
-    $script(["//cdn.css.net/libs/datatables/1.10.7/js/jquery.dataTables.min.js",
-             "//cdn.staticfile.org/simplemodal/1.4.4/jquery.simplemodal.min.js" ],
+    $script(["//cdn.css.net/libs/datatables/1.10.9/js/jquery.dataTables.min.js",
+             "//cdn.css.net/libs/simplemodal/1.4.4/jquery.simplemodal.min.js" ],
         function () {
             _Portfolio[CURPFID].activate();
             $("#msgbar").slideUp();
@@ -38,13 +37,13 @@ $script(["//cdn.staticfile.org/jquery/2.1.1/jquery.min.js", "stock"], function (
 });
   </script>
 
-<script id="tpl_pfbtn" type="text/template">
+  <script id="tpl_pfbtn" type="text/template">
     <button class="u-full-width profile_btn" />
-</script>
+  </script>
 
-<script id="tpl_datatable" type="text/template">
+  <script id="tpl_datatable" type="text/template">
     <table class="compact" />
-</script>
+  </script>
 
 </head>
 <body>

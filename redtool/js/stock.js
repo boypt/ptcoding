@@ -197,7 +197,7 @@ Portfolio.prototype.show_data_table = function () {
 }
 
 
-Portfolio.prototype.update_data_table = function () {
+Portfolio.prototype.update_data_table = function (refresh_table = false) {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
@@ -210,9 +210,11 @@ Portfolio.prototype.update_data_table = function () {
             });
             var now = new Date().toLocaleString();
             _this.last_update = now;
-            _this.show_data_table();
             _this.save();
-            $("#msgbar").slideUp();
+            if(refresh_table) {
+                _this.show_data_table();
+                $("#msgbar").slideUp();
+            }
         });
     }
 }
@@ -304,7 +306,7 @@ PortfolioIdList.prototype.build_buttons = function () {
 
 /* ------------------------------------jQuery Event Handlings----------------------------------------------*/
 
-function _reg_event_handlers() {
+var _reg_event_handlers = function () {
 
     /* ----- NAV Buttons ------- */
     $('#redraw').click(function(evn) {
@@ -315,8 +317,9 @@ function _reg_event_handlers() {
     });
 
     $('#update_share').click(function(evn) {
-        var o = _Portfolio[CURPFID];
-        o.update_data_table();
+        $.each(_Portfolio, function () {
+            this.update_data_table(refresh_table = (this === _Portfolio[CURPFID]));
+        });
         return false;
     });
 
@@ -380,7 +383,7 @@ function _reg_event_handlers() {
     /*----------------------------------------*/
 }
 
-function _main_init() {
+var _main_init = function () {
     $(_reg_event_handlers);
     window._List = new PortfolioIdList();
     window._Portfolio = {};
