@@ -198,6 +198,11 @@ Portfolio.prototype.show_data_table = function () {
 
 
 Portfolio.prototype.update_data_table = function (refresh_table) {
+
+    if(refresh_table == null) {
+        refresh_table = false;
+    }
+
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
@@ -213,8 +218,10 @@ Portfolio.prototype.update_data_table = function (refresh_table) {
             _this.save();
             if(refresh_table) {
                 _this.show_data_table();
-                $("#msgbar").slideUp();
+            } else {
+                _this.destroy_table();
             }
+            $("#msgbar").slideUp();
         });
     }
 }
@@ -308,6 +315,8 @@ PortfolioIdList.prototype.build_buttons = function () {
 
 var _reg_event_handlers = function () {
 
+    $("#msgbar").text("Initiating ... Registering Handlers ...");
+
     /* ----- NAV Buttons ------- */
     $('#redraw').click(function(evn) {
         var o = _Portfolio[CURPFID];
@@ -383,8 +392,8 @@ var _reg_event_handlers = function () {
     /*----------------------------------------*/
 }
 
-var _main_init = function () {
-    $(_reg_event_handlers);
+var _ui_init = function () {
+    $("#msgbar").text("Building Dynamic UI Components ...");
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     window.CURPFID = localStorage.getItem('cur_pfid') || "1";
