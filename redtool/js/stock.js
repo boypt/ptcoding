@@ -6,18 +6,23 @@ var Portfolio = function (pfid)  {
     this.table_api = null;
     this.is_fund = true;
     this.ids = '';
+    this.sina_ids = [];
     this.last_update = null;
+    this.values = {};
     this.button = $($("#tpl_pfbtn").html())
         .attr("id", "_pfbtn"+pfid)
         .attr("data-pfid", pfid)
         .text("组合"+pfid)
         .appendTo("#profile_nav");
+    this.restore();
 }
 
 Portfolio.prototype.save = function () {
     var vals = {
         "is_fund":this.is_fund,
         "ids":this.ids,
+        "sina_ids":this.sina_ids,
+        "values":this.values,
         "last_update":this.last_update
     }
     localStorage.setItem(this.storage_key, JSON.stringify(vals)); 
@@ -25,17 +30,13 @@ Portfolio.prototype.save = function () {
 
 Portfolio.prototype.restore = function () {
     var dt = localStorage.getItem(this.storage_key);
-    if (dt !== null) {
+    if (dt != null) {
         var vals = JSON.parse(dt);
         $.extend(this, vals);
     }
 }
 
 Portfolio.prototype.remove_data = function () {
-    var qs = this.parse_ids();
-    if(qs.length > 0) {
-        $.each(qs, function (i,v) { localStorage.removeItem(v); });
-    }
     localStorage.removeItem(this.storage_key);
 }
 
@@ -47,8 +48,9 @@ Portfolio.prototype.sync_from_dom = function () {
     }
     this.ids = ids;
     this.is_fund = is_fund;
+    this.parse_ids();
+    this.save();
 }
-
 
 Portfolio.prototype.sync_to_dom = function () {
     $('#sharenums').val(this.ids);
@@ -71,6 +73,7 @@ Portfolio.prototype.parse_ids = function () {
         }
     }
 
+    this.sina_ids = qs;
     return qs;
 }
 
@@ -182,9 +185,10 @@ Portfolio.prototype.init_data_table = function () {
 Portfolio.prototype.show_data_table = function () {
     $("#last_update").text(this.last_update);
 
-    var dataSet = $.map(this.parse_ids(), function (v) {
-        var val = localStorage.getItem(v);
-        if(val !== null) {
+    var _this = this;
+    var dataSet = $.map(this.sina_ids, function (v) {
+        var val = _this.values[v];
+        if(val) {
             var r = val.split(',');
             r.push(v);
             return [r];
@@ -196,36 +200,29 @@ Portfolio.prototype.show_data_table = function () {
     $(this.table_id).parent(".dataTables_wrapper").fadeIn();
 }
 
-
-Portfolio.prototype.update_data_table = function (refresh_table) {
-
-    if(refresh_table == null) {
-        refresh_table = false;
-    }
-
-    var qs = this.parse_ids();
+Portfolio.prototype.update_data = function (refresh_ui) {
+    var qs = this.sina_ids;
 
     if(qs.length > 0) {
         $("#msgbar").text('Updating ...').slideDown();
+        console.log("update pfid " + this.pfid);
         var qsstr = 'list='+qs.join(',');
         var _this = this;
         $.getScript('api.php?'+qsstr, function () {
             $.each(qs, function (i,v) {
-                localStorage.setItem(v, window['hq_str_'+v]);
+                _this.values[v] = window['hq_str_'+v];
             });
-            var now = new Date().toLocaleString();
-            _this.last_update = now;
+            _this.last_update = new Date().toLocaleString();
             _this.save();
-            if(refresh_table) {
+            console.log("updated pfid" + _this.pfid);
+            if(refresh_ui) {
+                console.log("refresh pfid" + _this.pfid);
                 _this.show_data_table();
-            } else {
-                _this.destroy_table();
             }
-            $("#msgbar").slideUp();
         });
     }
-}
 
+}
 
 Portfolio.prototype.show_neat_value = function () {
     if(this.table_api === null)
@@ -256,7 +253,6 @@ Portfolio.prototype.destroy_button = function () {
 }
 
 Portfolio.prototype.activate = function () {
-    this.restore();
     this.sync_to_dom();
     this.init_data_table();
     this.show_data_table();
@@ -277,6 +273,8 @@ Portfolio.prototype.deactivate = function () {
 var PortfolioIdList = function ()  {
     this.storage_key = "pf_list";
     this.list = ["1"];
+    window.CURPFID = localStorage.getItem('cur_pfid') || "1";
+    this.restore();
 }
 
 PortfolioIdList.prototype.save = function () {
@@ -285,7 +283,7 @@ PortfolioIdList.prototype.save = function () {
 
 PortfolioIdList.prototype.restore = function () {
     var dt = localStorage.getItem(this.storage_key);
-    if (dt !== null) { 
+    if (dt != null) {
         this.list = JSON.parse(dt);
     }
 }
@@ -327,8 +325,9 @@ var _reg_event_handlers = function () {
 
     $('#update_share').click(function(evn) {
         $.each(_Portfolio, function () {
-            this.update_data_table((this === _Portfolio[CURPFID]));
+            this.update_data(this.pfid === CURPFID);
         });
+        $("#msgbar").slideUp();
         return false;
     });
 
@@ -396,8 +395,6 @@ var _ui_init = function () {
     $("#msgbar").text("Building Dynamic UI Components ...");
     window._List = new PortfolioIdList();
     window._Portfolio = {};
-    window.CURPFID = localStorage.getItem('cur_pfid') || "1";
-    _List.restore();
     _List.build_buttons();
 }
 
