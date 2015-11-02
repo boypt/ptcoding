@@ -201,7 +201,7 @@ Portfolio.prototype.show_data_table = function () {
 }
 
 Portfolio.prototype.update_data = function (refresh_ui) {
-    var qs = this.sina_ids;
+    var qs = this.parse_ids();
 
     if(qs.length > 0) {
         $("#msgbar").text('Updating ...').slideDown();
@@ -301,10 +301,10 @@ PortfolioIdList.prototype.remove = function (pfid) {
     this.save();
 }
 
-PortfolioIdList.prototype.build_buttons = function () {
+PortfolioIdList.prototype.build_portfolios = function (pfos) {
     $.each(this.list, function(i,v) {
         var _o = new Portfolio(v);
-        window._Portfolio[v] = _o;
+        pfos[v] = _o;
     });
 }
 /* --------------------------------------------------------------------------------------------------------*/
@@ -392,9 +392,9 @@ var _reg_event_handlers = function () {
 }
 
 var _ui_init = function () {
-    $("#msgbar").text("Building Dynamic UI Components ...");
+    $("#msgbar").text("Building UI Components ...");
     window._List = new PortfolioIdList();
     window._Portfolio = {};
-    _List.build_buttons();
+    _List.build_portfolios(window._Portfolio);
 }
 
