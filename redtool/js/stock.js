@@ -100,7 +100,7 @@ Portfolio.prototype.init_data_table = function () {
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
                     "render": function ( data, type, row ) { 
-			            var code = row[row.length-1].substr(2);
+                        var code = row[row.length-1].substr(2);
                         return '<a target="_blank" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
                 { "title": "净值",
                     "render": val_render,
@@ -200,7 +200,7 @@ Portfolio.prototype.show_data_table = function () {
     $(this.table_id).parent(".dataTables_wrapper").fadeIn();
 }
 
-Portfolio.prototype.update_data = function (refresh_ui) {
+Portfolio.prototype.update_data = function (callback) {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
@@ -214,10 +214,9 @@ Portfolio.prototype.update_data = function (refresh_ui) {
             });
             _this.last_update = new Date().toLocaleString();
             _this.save();
-            console.log("updated pfid" + _this.pfid);
-            if(refresh_ui) {
-                console.log("refresh pfid" + _this.pfid);
-                _this.show_data_table();
+
+            if(typeof callback === 'function') {
+                callback(_this);
             }
         });
     }
@@ -324,10 +323,19 @@ var _reg_event_handlers = function () {
     });
 
     $('#update_share').click(function(evn) {
+        var cnt = 0;
         $.each(_Portfolio, function () {
-            this.update_data(this.pfid === CURPFID);
+            cnt++;
+            this.update_data(function (pfo) {
+                if(pfo.pfid === CURPFID) {
+                    console.log("refresh pfid" + pfo.pfid);
+                    pfo.show_data_table();
+                }
+                if(--cnt === 0) {
+                    $("#msgbar").slideUp();
+                }
+            });
         });
-        $("#msgbar").slideUp();
         return false;
     });
 
