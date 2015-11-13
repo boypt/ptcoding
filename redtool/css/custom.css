@@ -6,12 +6,12 @@
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
 .main_container { margin: 5px auto; max-width: 1000px;}
-.section { margin: 3px auto; }
-.menu { margin: 10px auto; }
-.profiles_container { margin: 0 20px 0 0;}
-.profiles_container button {width:100%; margin-bottom: 10px; margin-right: 10px;}
+.section { margin: 10px auto; }
+.fcmenu { margin-left:35%;  }
+.pfmenu { margin-top:6px; }
+.pfmenu button {width:50%; margin-bottom: 10px; margin-left: 25%;}
 
-#sharenums { height: 100px; }
+#sharenums { height: 100px; width:100%;}
 #neat_val_window {background-color:#fff; padding: 5px 20px; border: 2px solid; border-radius: 5px; display:none;}
 #neat_val {
     background-color:#F1F1F1;
@@ -49,5 +49,4 @@
 .keepleft { margin-left:0; }
 #redraw {
     width:20px;
-    height:20px;
 }
