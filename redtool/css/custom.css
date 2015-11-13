@@ -7,11 +7,13 @@
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
 .main_container { margin: 5px auto; max-width: 1000px;}
 .section { margin: 10px auto; }
-.fcmenu { margin-left:35%;  }
+.fcmenu {  }
 .pfmenu { margin-top:6px; }
-.pfmenu button {width:50%; margin-bottom: 10px; margin-left: 25%;}
+.pfmenu li, .pfmenu .btnplus {width:130px; margin:0 auto;}
+.pfmenu button {width:100%; margin-bottom: 10px; }
 
-#sharenums { height: 100px; width:100%;}
+
+#sharenums { padding:0; height: 100px; width:100%;}
 #neat_val_window {background-color:#fff; padding: 5px 20px; border: 2px solid; border-radius: 5px; display:none;}
 #neat_val {
     background-color:#F1F1F1;
