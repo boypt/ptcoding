@@ -17,9 +17,9 @@
 
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
+
   <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="//cdn.css.net/libs/pure/0.6.0/pure-min.css">
   <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.9/css/jquery.dataTables.min.css">
 
   <script type="text/javascript" src="//cdn.css.net/libs/script.js/2.5.8/script.min.js"></script>
@@ -38,11 +38,11 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
   </script>
 
   <script id="tpl_pfbtn" type="text/template">
-    <button class="u-full-width profile_btn" />
+      <li class="pure-menu-item"><button class="pure-button profile_btn" /></li>
   </script>
 
   <script id="tpl_datatable" type="text/template">
-    <table class="compact" />
+    <table class="pure-table compact" />
   </script>
 
 </head>
@@ -51,45 +51,46 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container">
-
-      <div class="row nav_row">
-          <div class="three columns">
-            <button class="u-full-width button-primary" id="dontknow">...</button>
-          </div>
-          <div class="three columns">
-            <button class="u-full-width button-primary" id="update_share">更新数据</button>
-          </div>
-          <div class="three columns">
-            <button class="u-full-width button-primary" id="show_neat_value">输出净值</button>
-          </div>
-          <div class="three columns">
-            <button class="u-full-width button-primary" id="clear_current">清除本组</button>
-          </div>
-      </div>
-
-      <div class="row">
-        <div class="two columns"> <div id="profile_nav"></div>
-            <button id="btn_add_profile" class="u-full-width">+</button>
-        </div>
-        <div class="ten columns">
-            <div id="msgbar" class="u-full-width">Loading ...</div>
-            <div class="two-thirds column keepleft">更新时间 <span id="last_update"></span></div>
-            <div class="one-third column keepleft" id="redraw"><img src="images/refresh.png"></img></div>
-            <div id="data_table_div" class="twelve columns"></div>
-        </div>
-      </div>
-
-      <div class="row input_row">
-        <div class="two columns">
-            <div class="right">
-                <input type="checkbox" id="is_fund" name="is_fund" checked="">
-                <label class="right" for="is_fund">基金</label>
+    <div class="main_container">
+        <div class="pure-g">
+            <div class="section pure-u-1-1">
+                <div class="menu pure-menu pure-menu-horizontal">
+                    <ul class="pure-menu-list">
+                        <li class="pure-menu-item"><button class="pure-button pure-button-primary" id="update_share">更新数据</button></li>
+                        <li class="pure-menu-item"><button class="pure-button pure-button-primary" id="show_neat_value">输出净值</button></li>
+                        <li class="pure-menu-item"><button class="pure-button pure-button-primary" id="clear_current">清除本组</button></li>
+                    </ul>
+                </div>
             </div>
-        </div>
-        <div class="ten columns">
-            <textarea class="u-full-width" id="sharenums"></textarea>
-        </div>
+
+                <div id="msgbar" class="pure-u-1-1">Loading ...</div>
+                <div class="pure-u-1-1">更新时间 <span id="last_update"></span><img id="redraw" alt="" src="images/refresh.png" /></div>
+            <div class="pure-g">
+                <div class="section pure-u-1-1">
+                    <div class="pure-u-1-5">
+                        <div class="menu pure-menu">
+                            <ul class="pure-menu-list" id="profile_nav"></ul>
+                            <button id="btn_add_profile" class="pure-button">+</button>
+                        </div>
+                    </div>
+                    <div class="pure-u-4-5">
+                        <div class="pure-u-1-1" id="data_table_div"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section pure-u-1-1">
+                <div class="pure-u-1-5">
+                    <div class="right">
+                        <input type="checkbox" id="is_fund" name="is_fund" checked="">
+                        <label class="u-pull-right" for="is_fund">基金</label>
+                    </div>
+                </div>
+
+                <div class="pure-u-4-5">
+                    <textarea class="pure-u-1-1" id="sharenums"></textarea>
+                </div>
+            </div>
       </div>
   </div>
 

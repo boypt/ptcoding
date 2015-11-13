@@ -9,11 +9,7 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button = $($("#tpl_pfbtn").html())
-        .attr("id", "_pfbtn"+pfid)
-        .attr("data-pfid", pfid)
-        .text("组合"+pfid)
-        .appendTo("#profile_nav");
+    this.button = $('<li class="pure-menu-item">').append( $('<button class="profile_btn pure-button">').attr("id", "_pfbtn"+pfid).attr("data-pfid", pfid).text("组合"+pfid)).appendTo("#profile_nav");
     this.restore();
 }
 
@@ -256,14 +252,14 @@ Portfolio.prototype.activate = function () {
     this.sync_to_dom();
     this.init_data_table();
     this.show_data_table();
-    if(!this.button.hasClass("button-primary")) {
-        this.button.addClass("button-primary")
+    if(!this.button.hasClass("pure-menu-selected")) {
+        this.button.addClass("pure-menu-selected")
     }
 }
 
 Portfolio.prototype.deactivate = function () {
     $(this.table_id).parent(".dataTables_wrapper").fadeOut();
-    this.button.removeClass("button-primary");
+    this.button.removeClass("pure-menu-selected");
 }
 
 /* --------------------------------------------------------------------------------------------------------*/
