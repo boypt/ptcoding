@@ -197,7 +197,7 @@ Portfolio.prototype.show_data_table = function () {
 
     this.init_data_table();
     this.table_api.clear().rows.add(dataSet).draw();
-    $(this.table_id).parent(".dataTables_wrapper").fadeIn();
+    $(this.table_id).parent(".dataTables_wrapper").slideDown();
 }
 
 Portfolio.prototype.update_data = function (callback) {
@@ -262,7 +262,7 @@ Portfolio.prototype.activate = function () {
 }
 
 Portfolio.prototype.deactivate = function () {
-    $(this.table_id).parent(".dataTables_wrapper").fadeOut();
+    $(this.table_id).parent(".dataTables_wrapper").slideUp();
     this.button.removeClass("pure-button-active");
 }
 
