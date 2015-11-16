@@ -15,6 +15,7 @@ i {margin:0 5px;}
 .pfmenu { }
 .pfmenu li, .pfmenu .btnplus {width:60%; margin:0 auto;}
 .pfmenu button {width:100%; margin-bottom: 10px; }
+#redraw {font-size: 70%;}
 
 
 #sharenums { padding:0; height: 100px; width:100%;}
