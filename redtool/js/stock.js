@@ -9,7 +9,11 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button =  $('<button class="profile_btn pure-button">').attr("id", "_pfbtn"+pfid).attr("data-pfid", pfid).text("组合"+pfid);
+    this.button =  $('<button class="profile_btn pure-button">')
+					.attr("id", "_pfbtn"+pfid)
+					.attr("data-pfid", pfid)
+					.append($('<i class="fa fa-bar-chart"></i>'))
+					.append($('<span>组合'+pfid+'</span>'));
     this.button_wrap = $('<li class="pure-menu-item">').append(this.button).appendTo("#profile_nav");
     this.restore();
     if (pfid == CURPFID) {
@@ -366,12 +370,13 @@ var _reg_event_handlers = function () {
 
     /* ----------- Profile Button ------------*/
     $("#profile_nav").on("click", "button.profile_btn", function(evn) {
-        var pfid = $(evn.target).attr("data-pfid");
+        var pfid = $(evn.currentTarget).attr("data-pfid");
 
         // switch
-        if (typeof(CURPFID) !== "undefined" && CURPFID !== pfid) {
+        if (typeof(CURPFID) != "undefined" && CURPFID != pfid) {
             _Portfolio[CURPFID].deactivate();
             CURPFID = pfid;
+			console.log(typeof(pfid));
             localStorage.setItem('cur_pfid', pfid);
             _Portfolio[pfid].activate();
         }

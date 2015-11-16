@@ -20,6 +20,7 @@
 
   <link rel="stylesheet" href="//cdn.css.net/libs/pure/0.6.0/pure-min.css">
   <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.9/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="//cdn.css.net/libs/font-awesome/4.4.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="css/custom.css">
 
   <script type="text/javascript" src="//cdn.css.net/libs/script.js/2.5.8/script.min.js"></script>
@@ -47,13 +48,13 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                 <div class="pure-menu pure-menu-horizontal fcmenu">
                     <ul class="pure-menu-list">
                         <li class="pure-menu-item">
-                            <button class="button-success pure-button" id="update_share">更新数据</button>
+                            <button class="button-success pure-button" id="update_share"><i class="fa fa-refresh"></i>更新数据</button>
                         </li>
                         <li class="pure-menu-item">
-                            <button class="button-secondary pure-button" id="show_neat_value">输出净值</button>
+                            <button class="button-secondary pure-button" id="show_neat_value"><i class="fa fa-file-text"></i>输出净值</button>
                         </li>
                         <li class="pure-menu-item">
-                            <button class="button-error pure-button" id="clear_current">清除本组</button>
+                            <button class="button-error pure-button" id="clear_current"><i class="fa fa-times"></i>清除本组</button>
                         </li>
                     </ul>
                 </div>
@@ -64,12 +65,15 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 			<div class="pure-u-1-5">
 				<div class="pfmenu pure-menu">
 					<ul class="pure-menu-list" id="profile_nav"></ul>
-					<div class="btnplus"><button id="btn_add_profile" class="pure-button">+</button></div>
+					<div class="btnplus"><button id="btn_add_profile" class="pure-button"><i class="fa fa-plus"></i></button></div>
 				</div>
 			</div>
 			<div class="pure-u-4-5">
 				<div class="pure-u-1" id="msgbar" >Loading ...</div>
-				<div class="pure-u-1">更新时间 <span id="last_update"></span><img id="redraw" alt="" src="images/refresh.png" /></div>
+				<div class="pure-u-1">
+					<span><i class="fa fa-clock-o"></i>更新时间 </span><span id="last_update"></span>
+					<button class="right" id="redraw"><i class="fa fa-repeat"></i></button>
+				</div>
 				<div class="pure-u-1" id="data_table_div"></div>
 			</div>
 		</div>

@@ -1,5 +1,6 @@
 html { overflow-x: hidden; overflow-y:scroll;}
 body { margin-bottom: 40px;}
+i {margin:0 5px;}
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
 .right { float: right; }
@@ -52,7 +53,6 @@ body { margin-bottom: 40px;}
 }
 
 .keepleft { margin-left:0; }
-#redraw { width:20px; }
 .inputsec {
     font-size: 12px;
     position:fixed;
@@ -61,8 +61,6 @@ body { margin-bottom: 40px;}
     width: 160px;
     margin-left:30px;
 }
-
-
 
 .button-success,
 .button-error,
