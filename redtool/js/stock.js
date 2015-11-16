@@ -82,7 +82,7 @@ Portfolio.prototype.init_data_table = function () {
     var tbid = this.table_id;
 
     if(!$(tbid).length) {
-        $($("#tpl_datatable").html()).attr("id", tbid.substr(1)).appendTo("#data_table_div");
+        $("<table>").attr("id", tbid.substr(1)).appendTo("#data_table_div");
     }
 
     var colms, drawcb;

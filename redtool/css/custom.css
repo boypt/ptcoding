@@ -1,4 +1,4 @@
-html { overflow: hidden; }
+html { overflow-x: hidden; overflow-y:scroll;}
 body { margin-bottom: 40px;}
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
@@ -12,7 +12,7 @@ body { margin-bottom: 40px;}
 
 .fcmenu ul {float:right;}
 .pfmenu { margin-top:6px; }
-.pfmenu li, .pfmenu .btnplus {width:130px; margin:0 auto;}
+.pfmenu li, .pfmenu .btnplus {width:60%; margin:0 auto;}
 .pfmenu button {width:100%; margin-bottom: 10px; }
 
 
@@ -60,4 +60,31 @@ body { margin-bottom: 40px;}
     bottom:0;
     width: 160px;
     margin-left:30px;
+}
+
+
+
+.button-success,
+.button-error,
+.button-warning,
+.button-secondary {
+    color: white;
+    border-radius: 4px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.button-success {
+    background: rgb(28, 184, 65); /* this is a green */
+}
+
+.button-error {
+    background: rgb(202, 60, 60); /* this is a maroon */
+}
+
+.button-warning {
+    background: rgb(223, 117, 20); /* this is an orange */
+}
+
+.button-secondary {
+    background: rgb(66, 184, 221); /* this is a light blue */
 }
