@@ -9,8 +9,12 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button = $('<li class="pure-menu-item">').append( $('<button class="profile_btn pure-button">').attr("id", "_pfbtn"+pfid).attr("data-pfid", pfid).text("组合"+pfid)).appendTo("#profile_nav");
+    this.button =  $('<button class="profile_btn pure-button">').attr("id", "_pfbtn"+pfid).attr("data-pfid", pfid).text("组合"+pfid);
+    this.button_wrap = $('<li class="pure-menu-item">').append(this.button).appendTo("#profile_nav");
     this.restore();
+    if (pfid == CURPFID) {
+        this.button.addClass("pure-button-active");
+    }
 }
 
 Portfolio.prototype.save = function () {
@@ -217,6 +221,7 @@ Portfolio.prototype.update_data = function (callback) {
         });
     }
 
+    return qs.length;
 }
 
 Portfolio.prototype.show_neat_value = function () {
@@ -251,14 +256,14 @@ Portfolio.prototype.activate = function () {
     this.sync_to_dom();
     this.init_data_table();
     this.show_data_table();
-    if(!this.button.hasClass("pure-menu-selected")) {
-        this.button.addClass("pure-menu-selected")
+    if(!this.button.hasClass("pure-button-active")) {
+        this.button.addClass("pure-button-active")
     }
 }
 
 Portfolio.prototype.deactivate = function () {
     $(this.table_id).parent(".dataTables_wrapper").fadeOut();
-    this.button.removeClass("pure-menu-selected");
+    this.button.removeClass("pure-button-active");
 }
 
 /* --------------------------------------------------------------------------------------------------------*/
@@ -321,16 +326,18 @@ var _reg_event_handlers = function () {
     $('#update_share').click(function(evn) {
         var cnt = 0;
         $.each(_Portfolio, function () {
-            cnt++;
-            this.update_data(function (pfo) {
+            var len = this.update_data(function (pfo) {
                 if(pfo.pfid === CURPFID) {
                     console.log("refresh pfid" + pfo.pfid);
                     pfo.show_data_table();
                 }
+                console.log("cnt out "+cnt);
                 if(--cnt === 0) {
                     $("#msgbar").slideUp();
                 }
             });
+            if (len > 0) cnt++;
+            console.log("cnt in "+cnt);
         });
         return false;
     });
@@ -349,7 +356,9 @@ var _reg_event_handlers = function () {
             o.destroy_button();
             o.remove_data();
             _List.remove(CURPFID);
+            var _oldpfid = CURPFID;
             $(".profile_btn:last").trigger('click');
+            delete _Portfolio[ _oldpfid ];
         }
         return false;
     });

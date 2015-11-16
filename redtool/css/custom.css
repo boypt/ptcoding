@@ -1,3 +1,5 @@
+html { overflow: hidden; }
+body { margin-bottom: 40px;}
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
 .right { float: right; }
@@ -7,7 +9,8 @@
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
 .main_container { margin: 5px auto; max-width: 1000px;}
 .section { margin: 10px auto; }
-.fcmenu {  }
+
+.fcmenu ul {float:right;}
 .pfmenu { margin-top:6px; }
 .pfmenu li, .pfmenu .btnplus {width:130px; margin:0 auto;}
 .pfmenu button {width:100%; margin-bottom: 10px; }
@@ -49,6 +52,12 @@
 }
 
 .keepleft { margin-left:0; }
-#redraw {
-    width:20px;
+#redraw { width:20px; }
+.inputsec {
+    font-size: 12px;
+    position:fixed;
+    overflow: hidden;
+    bottom:0;
+    width: 160px;
+    margin-left:30px;
 }

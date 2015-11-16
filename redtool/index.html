@@ -51,7 +51,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <div class="main_container">
         <div class="section pure-g">
-            <div class="pure-u-1-1">
+            <div class="pure-u-1">
                 <div class="pure-menu pure-menu-horizontal fcmenu">
                     <ul class="pure-menu-list">
                         <li class="pure-menu-item"><button class="pure-button pure-button-primary" id="update_share">更新数据</button></li>
@@ -70,24 +70,21 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 				</div>
 			</div>
 			<div class="pure-u-4-5">
-				<div class="pure-u-1-1" id="msgbar" >Loading ...</div>
-				<div class="pure-u-1-1">更新时间 <span id="last_update"></span><img id="redraw" alt="" src="images/refresh.png" /></div>
-				<div class="pure-u-1-1" id="data_table_div"></div>
+				<div class="pure-u-1" id="msgbar" >Loading ...</div>
+				<div class="pure-u-1">更新时间 <span id="last_update"></span><img id="redraw" alt="" src="images/refresh.png" /></div>
+				<div class="pure-u-1" id="data_table_div"></div>
 			</div>
 		</div>
 
-		<div class="section pure-g">
-			<div class="pure-u-1-5">
-				<div class="right">
-					<input type="checkbox" id="is_fund" name="is_fund" checked="">
-					<label for="is_fund">基金</label>
-				</div>
-			</div>
-			<div class="pure-u-4-5">
-				<textarea class="" id="sharenums"></textarea>
-			</div>
-		</div>
+        <div class="inputsec">
+            <input type="checkbox" id="is_fund" name="is_fund" checked="">
+            <label for="is_fund">基金</label>
+            <textarea id="sharenums"></textarea>
+        </div>
+
 	</div>
+
+
 
 	<div id="neat_val_window"><textarea id="neat_val" readonly></textarea></div>
 </body>
