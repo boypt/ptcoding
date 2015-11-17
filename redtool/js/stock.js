@@ -9,7 +9,7 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button =  $('<button class="profile_btn pure-button">')
+    this.button =  $('<button class="profile_btn btn btn-default">')
 					.attr("id", "_pfbtn"+pfid)
 					.attr("data-pfid", pfid)
 					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
@@ -17,7 +17,7 @@ var Portfolio = function (pfid)  {
     this.button_wrap = $('<li class="pure-menu-item">').append(this.button).appendTo("#profile_nav");
     this.restore();
     if (pfid == CURPFID) {
-        this.button.addClass("pure-button-active");
+        this.button.addClass("active");
     }
 }
 
@@ -86,7 +86,7 @@ Portfolio.prototype.init_data_table = function () {
     var tbid = this.table_id;
 
     if(!$(tbid).length) {
-        $("<table>").attr("id", tbid.substr(1)).appendTo("#data_table_div");
+        $('<table class="table">').attr("id", tbid.substr(1)).appendTo("#data_table_div");
     }
 
     var colms, drawcb;
@@ -100,8 +100,8 @@ Portfolio.prototype.init_data_table = function () {
 
         if(this.is_fund) {
             colms = [
-                { "title": "ID",
-                  "width": "3%"},
+                { "title": "No",
+                  "width": "5%"},
                 { "title": "名称",
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
@@ -143,8 +143,8 @@ Portfolio.prototype.init_data_table = function () {
 
         } else {
             colms = [
-                { "title": "ID",
-                  "width": "3%"},
+                { "title": "No",
+                  "width": "5%"},
                 { "title": "名称",
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
@@ -262,14 +262,14 @@ Portfolio.prototype.activate = function () {
     this.sync_to_dom();
     this.init_data_table();
     this.show_data_table();
-    if(!this.button.hasClass("pure-button-active")) {
-        this.button.addClass("pure-button-active")
+    if(!this.button.hasClass("active")) {
+        this.button.addClass("active")
     }
 }
 
 Portfolio.prototype.deactivate = function () {
     $(this.table_id).parent(".dataTables_wrapper").slideUp();
-    this.button.removeClass("pure-button-active");
+    this.button.removeClass("active");
 }
 
 /* --------------------------------------------------------------------------------------------------------*/
