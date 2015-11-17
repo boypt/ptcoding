@@ -150,7 +150,7 @@ Portfolio.prototype.init_data_table = function () {
                     "orderable": false,
                     "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2);
-                        return '<a target="_blank" href="http://quote.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
+                        return '<a target="_blank" data-toggle="tooltip" data-placement="right" data-code="'+code+'" href="http://quote.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
                 { "title": "现价",
                     "render": val_render,
                 },
@@ -171,6 +171,15 @@ Portfolio.prototype.init_data_table = function () {
                     var incr = parseFloat(row[3]);
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
+                });
+
+
+                $('a[data-toggle="tooltip"]').tooltip({
+                    'html':true,
+                    'title':function () {
+                        var code = $(this).data("code");
+                        return '<img src="http://image.sinajs.cn/newchart/daily/n/'+ $(this).data("code") +'.gif" />';
+                    }
                 });
             }
         }
@@ -233,23 +242,11 @@ Portfolio.prototype.update_data = function (callback) {
     return qs.length;
 }
 
-Portfolio.prototype.show_neat_value = function () {
+Portfolio.prototype.get_neat_value = function () {
     if(this.table_api === null)
         return;
-    var dt = this.table_api.column(1).data();
-    var netv = $("#neat_val").empty().text(dt.join('\n'));
-    $("#neat_val_window").modal({
-        opacity:80,
-        overlayCss: {backgroundColor:"#333"},
-        minHeight:400,
-        minWidth: 100,
-        overlayClose: true,
-        onShow: function () {
-            var _v = $('#neat_val');
-            _v.outerHeight(0);
-            _v.outerHeight(_v.get(0).scrollHeight);
-        }
-    });
+    var dt = this.table_api.column(2).data();
+    return dt.join('\n');
 }
 
 Portfolio.prototype.destroy_table = function () {
@@ -339,20 +336,12 @@ var _reg_event_handlers = function () {
                     console.log("refresh pfid" + pfo.pfid);
                     pfo.show_data_table();
                 }
-                console.log("cnt out "+cnt);
                 if(--cnt === 0) {
                     $("#msgbar").slideUp();
                 }
             });
             if (len > 0) cnt++;
-            console.log("cnt in "+cnt);
         });
-        return false;
-    });
-
-    $("#show_neat_value").click(function() {
-        var o = _Portfolio[CURPFID];
-        o.show_neat_value();
         return false;
     });
 
@@ -380,7 +369,6 @@ var _reg_event_handlers = function () {
         if (typeof(CURPFID) != "undefined" && CURPFID != pfid) {
             _Portfolio[CURPFID].deactivate();
             CURPFID = pfid;
-			console.log(typeof(pfid));
             localStorage.setItem('cur_pfid', pfid);
             _Portfolio[pfid].activate();
         }
@@ -411,6 +399,17 @@ var _reg_event_handlers = function () {
         $(this).select();
     });
     /*----------------------------------------*/
+
+
+    $('#neat_val_window').on('show.bs.modal', function (event) {
+        var o = _Portfolio[CURPFID];
+        $("#neat_val").empty().text(o.get_neat_value());
+    });
+    $('#neat_val_window').on('shown.bs.modal', function (event) {
+        var _v = $("#neat_val");
+        _v.outerHeight(0);
+        _v.outerHeight(_v.get(0).scrollHeight);
+    });
 }
 
 var _ui_init = function () {
