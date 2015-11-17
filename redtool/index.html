@@ -60,24 +60,20 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                 </div>
 
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-sm-4">
                         <button class="btn" id="redraw"><span class="glyphicon glyphicon-time" aria-hidden="true"></span>更新时间<span id="last_update">-</span></button>
                     </div>
+                    <div class="col-sm-2"> </div>
 
-                    <div class="col-md-8">
-                        <div class="">
-                            <ul class="list-inline pull-right">
-                                <li class="">
-                                    <button class="btn btn-success" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
-                                </li>
-                                <li class="">
-                                    <button class="btn btn-info" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
-                                </li>
-                                <li class="">
-                                    <button class="btn btn-danger" id="clear_current"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>清除本组</button>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-success" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
+                    </div>
+                    <div class="col-sm-2">
+
+                        <button class="btn btn-info" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-danger" id="clear_current"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>清除本组</button>
                     </div>
                 </div>
 

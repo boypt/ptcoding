@@ -12,8 +12,7 @@ button span {margin:0 5px;}
 
 .menusec { position: fixed; }
 
-.pfmenu { width:60%; }
-.pfmenu button {font-size:80%; width:100%; margin-bottom: 10px; }
+.pfmenu button {font-size:80%; width:100%; margin-bottom: 10px;}
 
 #neat_val {
     background-color:#F1F1F1;
