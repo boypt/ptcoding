@@ -1,6 +1,6 @@
 html { overflow-x: hidden; overflow-y:scroll;}
 body { margin-bottom: 40px;}
-i {margin:0 5px;}
+i.fa {margin:0 5px;}
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
 .right { float: right; }
@@ -11,7 +11,7 @@ i {margin:0 5px;}
 .main_container { margin: 5px auto; max-width: 1000px;}
 .section { margin: 10px auto; }
 
-.fcmenu ul {float:right;}
+.menusec { position: fixed; }
 .pfmenu { }
 .pfmenu li, .pfmenu .btnplus {width:60%; margin:0 auto;}
 .pfmenu button {font-size:80%; width:100%; margin-bottom: 10px; }
