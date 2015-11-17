@@ -32,7 +32,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
         function () {
             _reg_event_handlers();
             _Portfolio[CURPFID].activate();
-            $("#msgbar").slideUp();
+            msgbar('', false);
         }
     );
 });
@@ -54,8 +54,9 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 				</div>
 			</div>
 			<div class="col-md-10">
-                <div class="row">
-                    <div class="col-md-12" id="msgbar" >Loading ...</div>
+                <div class="alert alert-success alert-dismissible fade in" role="alert" id="msgbar">
+                   <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                   <span class="msg">Loading ...</span>
                 </div>
 
                 <div class="row">

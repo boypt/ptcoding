@@ -222,7 +222,7 @@ Portfolio.prototype.update_data = function (callback) {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
-        $("#msgbar").text('Updating ...').slideDown();
+        msgbar('Updating ...', true);
         console.log("update pfid " + this.pfid);
         var qsstr = 'list='+qs.join(',');
         var _this = this;
@@ -319,7 +319,7 @@ PortfolioIdList.prototype.build_portfolios = function (pfos) {
 
 var _reg_event_handlers = function () {
 
-    $("#msgbar").text("Initiating ... Registering Handlers ...");
+    msgbar("Initiating ... Registering Handlers ...", true);
 
     /* ----- NAV Buttons ------- */
     $('#redraw').click(function(evn) {
@@ -337,7 +337,7 @@ var _reg_event_handlers = function () {
                     pfo.show_data_table();
                 }
                 if(--cnt === 0) {
-                    $("#msgbar").slideUp();
+                    msgbar('', false);
                 }
             });
             if (len > 0) cnt++;
@@ -413,9 +413,20 @@ var _reg_event_handlers = function () {
 }
 
 var _ui_init = function () {
-    $("#msgbar").text("Building UI Components ...");
+    msgbar("Building UI Components ...", true);
     window._List = new PortfolioIdList();
     window._Portfolio = {};
     _List.build_portfolios(window._Portfolio);
 }
 
+
+var msgbar = function (msg, show) {
+    var b = $("#msgbar");
+    if(msg.length>0)
+        b.find('span.msg').text(msg);
+    if(show === true) {
+        b.slideDown();
+    }else if(show === false) {
+        b.slideUp();
+    }
+}
