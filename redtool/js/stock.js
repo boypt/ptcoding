@@ -12,7 +12,7 @@ var Portfolio = function (pfid)  {
     this.button =  $('<button class="profile_btn pure-button">')
 					.attr("id", "_pfbtn"+pfid)
 					.attr("data-pfid", pfid)
-					.append($('<i class="fa fa-bar-chart"></i>'))
+					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
 					.append($('<span>组合'+pfid+'</span>'));
     this.button_wrap = $('<li class="pure-menu-item">').append(this.button).appendTo("#profile_nav");
     this.restore();
