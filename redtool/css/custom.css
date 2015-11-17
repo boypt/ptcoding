@@ -14,8 +14,9 @@ i {margin:0 5px;}
 .fcmenu ul {float:right;}
 .pfmenu { }
 .pfmenu li, .pfmenu .btnplus {width:60%; margin:0 auto;}
-.pfmenu button {width:100%; margin-bottom: 10px; }
-#redraw {font-size: 70%;}
+.pfmenu button {font-size:80%; width:100%; margin-bottom: 10px; }
+
+
 
 
 #sharenums { padding:0; height: 100px; width:100%;}
@@ -39,6 +40,7 @@ i {margin:0 5px;}
     box-shadow: none;
 
 }
+#data_table_div th {font-size:80%;}
 #data_table_div tr.reddata { background-color:#FFA7A7;}
 #data_table_div tr.greendata { background-color:#A9FFC4;}
 #simplemodal-container a.modalCloseImg {
@@ -53,7 +55,6 @@ i {margin:0 5px;}
 	cursor:pointer;
 }
 
-.keepleft { margin-left:0; }
 .inputsec {
     font-size: 12px;
     position:fixed;
@@ -87,3 +88,9 @@ i {margin:0 5px;}
 .button-secondary {
     background: rgb(66, 184, 221); /* this is a light blue */
 }
+
+.btn-small {
+    font-size: 70%;
+}
+
+

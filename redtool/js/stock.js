@@ -100,6 +100,8 @@ Portfolio.prototype.init_data_table = function () {
 
         if(this.is_fund) {
             colms = [
+                { "title": "ID",
+                  "width": "3%"},
                 { "title": "名称",
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
@@ -120,8 +122,8 @@ Portfolio.prototype.init_data_table = function () {
                 { "title": "？？", "visible": false },
                 { "title": "涨跌幅", 
                     "data": function ( row, type, val, meta ) {
-                        var val = parseFloat(row[1]);
-                        var lastval = parseFloat(row[3]);
+                        var val = parseFloat(row[2]);
+                        var lastval = parseFloat(row[4]);
                         return ((val-lastval)/lastval*100).toFixed(2)+'%';
                     },
                     "render": val_render,
@@ -132,7 +134,7 @@ Portfolio.prototype.init_data_table = function () {
                 var tb = this.api();
                 tb.rows().every( function () {
                     var row = this.data();
-                    var incr = parseFloat(row[1]) - parseFloat(row[3]);
+                    var incr = parseFloat(row[2]) - parseFloat(row[4]);
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
@@ -141,6 +143,8 @@ Portfolio.prototype.init_data_table = function () {
 
         } else {
             colms = [
+                { "title": "ID",
+                  "width": "3%"},
                 { "title": "名称",
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
@@ -164,7 +168,7 @@ Portfolio.prototype.init_data_table = function () {
                 var tb = this.api();
                 tb.rows().every( function () {
                     var row = this.data();
-                    var incr = parseFloat(row[2]);
+                    var incr = parseFloat(row[3]);
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
@@ -174,7 +178,7 @@ Portfolio.prototype.init_data_table = function () {
         var tb = $(tbid).dataTable( {
             "paging":   false,
             "ordering": true,
-            "order":    [],
+            "order":    [0,'asc'],
             "info":     false,
             "searching":false,
             "deferRender": true,
@@ -190,10 +194,11 @@ Portfolio.prototype.show_data_table = function () {
     $("#last_update").text(this.last_update);
 
     var _this = this;
-    var dataSet = $.map(this.sina_ids, function (v) {
+    var dataSet = $.map(this.sina_ids, function (v,i) {
         var val = _this.values[v];
         if(val) {
             var r = val.split(',');
+            r.unshift(i+1);
             r.push(v);
             return [r];
         }
@@ -322,8 +327,7 @@ var _reg_event_handlers = function () {
     /* ----- NAV Buttons ------- */
     $('#redraw').click(function(evn) {
         var o = _Portfolio[CURPFID];
-        o.destroy_table();
-        o.show_data_table();
+        o.table_api.order( [ 0, 'asc' ] ).draw();
         return false;
     });
 
