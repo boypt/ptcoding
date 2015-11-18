@@ -42,18 +42,18 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 <body>
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-    <div class="container-fluid main_container">
+    <div class="container-fluid container">
 
-		<div class="section row">
-			<div class="col-sm-2">
-				<div class="pfmenu center-block">
-					<ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
+        <div class="section row">
+            <div class="col-sm-2">
+                <div class="pfmenu center-block">
+                    <ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
                     <button id="btn_add_profile" class="btn btn-default">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     </button>
-				</div>
-			</div>
-			<div class="col-sm-10">
+                </div>
+            </div>
+            <div class="col-sm-10">
                 <div class="alert alert-success alert-dismissible fade in" role="alert" id="msgbar">
                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
                    <span class="msg">Loading ...</span>
@@ -63,25 +63,24 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                     <div class="col-sm-4">
                         <button class="btn" id="redraw"><span class="glyphicon glyphicon-time" aria-hidden="true"></span>更新时间<span id="last_update">-</span></button>
                     </div>
-                    <div class="col-sm-2"> </div>
+                    <div class="col-sm-2"></div>
 
                     <div class="col-sm-2">
-                        <button class="btn btn-success" data-loading-text="Loading..." autocomplete="off" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
+                        <button class="btn btn-success pull-right" data-loading-text="Loading..." autocomplete="off" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
                     </div>
                     <div class="col-sm-2">
-
-                        <button class="btn btn-info" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
+                        <button class="btn btn-info pull-right" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
                     </div>
                     <div class="col-sm-2">
-                        <button class="btn btn-danger" id="clear_current"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>清除本组</button>
+                        <button class="btn btn-danger pull-right" id="clear_current"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>清除本组</button>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-sm-12" id="data_table_div"></div>
                 </div>
-			</div>
-		</div>
+            </div>
+        </div>
 
         <div class="inputsec form-group">
             <div class="checkbox">
@@ -89,16 +88,15 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
             </div>
             <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
         </div>
-
-	</div>
+    </div>
 
 <!-- Modal -->
-<div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-        <textarea class="form-control" id="neat_val" readonly></textarea>
+<div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <textarea class="form-control" id="neat_val" readonly></textarea>
+        </div>
     </div>
-  </div>
 </div>
 
 
