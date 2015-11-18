@@ -225,7 +225,6 @@ Portfolio.prototype.update_data = function (callback) {
     var qs = this.parse_ids();
 
     if(qs.length > 0) {
-        msgbar('Updating ...', true);
         console.log("update pfid " + this.pfid);
         var qsstr = 'list='+qs.join(',');
         var _this = this;
@@ -324,8 +323,9 @@ var _reg_event_handlers = function () {
         return false;
     });
 
-    $('#update_share').click(function(evn) {
+    $('#update_share').click(function(event) {
         var cnt = 0;
+        var $btn = $(event.currentTarget).button('loading');
         $.each(_Portfolio, function () {
             var len = this.update_data(function (pfo) {
                 if(pfo.pfid === CURPFID) {
@@ -333,7 +333,7 @@ var _reg_event_handlers = function () {
                     pfo.show_data_table();
                 }
                 if(--cnt === 0) {
-                    msgbar('', false);
+                    $btn.button('reset');
                 }
             });
             if (len > 0) cnt++;

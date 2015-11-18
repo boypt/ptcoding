@@ -18,7 +18,7 @@
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 
-  <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.9/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="//cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="//cdn.css.net/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/custom.css">
 
@@ -26,7 +26,7 @@
   <script type="text/javascript">
 $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], function () {
     _ui_init();
-    $script(["//cdn.css.net/libs/datatables/1.10.9/js/jquery.dataTables.min.js",
+    $script(["//cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js",
              "//cdn.css.net/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"
             ],
         function () {
@@ -66,7 +66,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                     <div class="col-sm-2"> </div>
 
                     <div class="col-sm-2">
-                        <button class="btn btn-success" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
+                        <button class="btn btn-success" data-loading-text="Loading..." autocomplete="off" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
                     </div>
                     <div class="col-sm-2">
 
@@ -93,7 +93,6 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 	</div>
 
 <!-- Modal -->
-
 <div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
