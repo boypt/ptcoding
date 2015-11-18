@@ -42,17 +42,27 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 <body>
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-    <div class="container-fluid container">
-
-        <div class="section row">
+    <div class="container well well-lg">
+        <div class="row">
             <div class="col-sm-2">
-                <div class="pfmenu center-block">
+                <div class="pfmenu">
                     <ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
                     <button id="btn_add_profile" class="btn btn-default">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     </button>
                 </div>
+                
+                <hr />
+
+                <div class="form-group">
+                    <div class="checkbox">
+                        <label for="is_fund"><input type="checkbox" id="is_fund" name="is_fund">基金</label>
+                    </div>
+                    <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
+                </div>
             </div>
+            
+            
             <div class="col-sm-10">
                 <div class="alert alert-success alert-dismissible fade in" role="alert" id="msgbar">
                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
@@ -81,24 +91,16 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="inputsec form-group">
-            <div class="checkbox">
-                <label for="is_fund"><input type="checkbox" id="is_fund" name="is_fund">基金</label>
+    <!-- Modal -->
+    <div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <textarea class="form-control" id="neat_val" readonly></textarea>
             </div>
-            <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
         </div>
     </div>
-
-<!-- Modal -->
-<div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <textarea class="form-control" id="neat_val" readonly></textarea>
-        </div>
-    </div>
-</div>
-
 
 </body>
 </html>
