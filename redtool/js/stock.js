@@ -14,7 +14,7 @@ var Portfolio = function (pfid)  {
 					.attr("data-pfid", pfid)
 					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
 					.append($('<span>组合'+pfid+'</span>'));
-    this.button_wrap = $('<li class="pure-menu-item">').append(this.button).appendTo("#profile_nav");
+    this.button_wrap = $('<li>').append(this.button).appendTo("#profile_nav");
     this.restore();
     if (pfid == CURPFID) {
         this.button.addClass("active");
@@ -216,6 +216,9 @@ Portfolio.prototype.show_data_table = function () {
     this.init_data_table();
     this.table_api.clear().rows.add(dataSet).draw();
     $(this.table_id).parent(".dataTables_wrapper").slideDown();
+
+    var vals = $.map(dataSet, function (s) { return s[2]; });
+    $("#neat_val").text(vals.join("\n"));
 }
 
 Portfolio.prototype.update_data = function (callback) {
@@ -240,13 +243,6 @@ Portfolio.prototype.update_data = function (callback) {
     }
 
     return qs.length;
-}
-
-Portfolio.prototype.get_neat_value = function () {
-    if(this.table_api === null)
-        return;
-    var dt = this.table_api.column(2).data();
-    return dt.join('\n');
 }
 
 Portfolio.prototype.destroy_table = function () {
@@ -395,20 +391,13 @@ var _reg_event_handlers = function () {
         o.sync_from_dom();
         o.save();
     });
-    $('#neat_val').mouseover(function () {
-        $(this).select();
-    });
+
     /*----------------------------------------*/
-
-
-    $('#neat_val_window').on('show.bs.modal', function (event) {
-        var o = _Portfolio[CURPFID];
-        $("#neat_val").empty().text(o.get_neat_value());
-    });
-    $('#neat_val_window').on('shown.bs.modal', function (event) {
+    $('#neat_val_window').on('shown.bs.modal', function () {
         var _v = $("#neat_val");
         _v.outerHeight(0);
         _v.outerHeight(_v.get(0).scrollHeight);
+        _v.select();
     });
 }
 
