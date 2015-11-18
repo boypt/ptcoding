@@ -1,6 +1,4 @@
-html { overflow-x: hidden; overflow-y:scroll;}
-body { margin-bottom: 40px;}
-button span {margin:0 5px;}
+button span.glyphicon {margin:0 5px;}
 .input_row { margin-top: 20px;}
 .nav_row { margin: 5px 0 10px 0;}
 .price { font-family: monospace; font-size: 1.2em; }
