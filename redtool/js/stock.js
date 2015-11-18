@@ -107,7 +107,7 @@ Portfolio.prototype.init_data_table = function () {
                     "orderable": false,
                     "render": function ( data, type, row ) { 
                         var code = row[row.length-1].substr(2);
-                        return '<a target="_blank" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
+                        return '<a target="_blank" data-toggle="tooltip" data-placement="right" data-code="'+code+'" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
                 { "title": "净值",
                     "render": val_render,
                 },
@@ -138,6 +138,16 @@ Portfolio.prototype.init_data_table = function () {
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
+
+                $('a[data-toggle="tooltip"]').tooltip({
+                    'html':true,
+                    'title':function () {
+                        var code = $(this).data("code");
+                        var imgurl = "http://image.sinajs.cn/newchart/v5/fundpre/min/" + code + ".gif?_=" + Math.random();
+                        return '<img src="'+imgurl+'" />';
+                    }
+                });
+
             }
 
 
@@ -178,7 +188,8 @@ Portfolio.prototype.init_data_table = function () {
                     'html':true,
                     'title':function () {
                         var code = $(this).data("code");
-                        return '<img src="http://image.sinajs.cn/newchart/daily/n/'+ $(this).data("code") +'.gif" />';
+                        var imgurl = "http://image.sinajs.cn/newchart/daily/n/"+ code + ".gif?_=" + Math.random();
+                        return '<img src="'+imgurl+'" />';
                     }
                 });
             }
