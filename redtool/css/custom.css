@@ -49,3 +49,10 @@ button span {margin:0 5px;}
 #data_table_div .tooltip-inner {
     max-width: 800px;
 }
+#data_table_div .tooltip.right .tooltip-inner {
+    background-color:#fff;
+}
+#data_table_div .tooltip.right .tooltip-arrow {
+    border-top-color:#fff;
+}
+
