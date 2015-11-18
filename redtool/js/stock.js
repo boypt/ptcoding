@@ -291,6 +291,7 @@ PortfolioIdList.prototype.restore = function () {
 
 PortfolioIdList.prototype.add = function () {
     var last = $(".profile_btn:last").attr("data-pfid");
+    if(typeof last === 'undefined') last = 0;
     var _newpf = (parseInt(last)+1).toString();
     this.list.push(_newpf);
     this.save();
