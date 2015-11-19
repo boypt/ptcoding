@@ -14,7 +14,7 @@ var Portfolio = function (pfid)  {
 					.attr("data-pfid", pfid)
 					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
 					.append($('<span>组合'+pfid+'</span>'));
-    this.button_wrap = $('<li>').append(this.button).appendTo("#profile_nav");
+    this.button_wrap = $('<li>').css("display", "none").append(this.button).appendTo("#profile_nav").slideDown();
     this.restore();
     if (pfid == CURPFID) {
         this.button.addClass("active");
