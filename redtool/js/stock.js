@@ -396,10 +396,14 @@ var _reg_event_handlers = function () {
     /*----------------------------------------*/
     $('#neat_val_window').on('shown.bs.modal', function () {
         var _v = $("#neat_val");
-        _v.outerHeight(0);
-        _v.outerHeight(_v.get(0).scrollHeight);
-        _v.select();
+        var _h = _v.prop("scrollHeight");
+        _v.animate({"height":_h},100).select();
     });
+    
+    $('#neat_val_window').on('hidden.bs.modal', function () {
+        $("#neat_val").outerHeight(0);
+    });
+ 
 }
 
 var _ui_init = function () {

@@ -11,9 +11,9 @@ button span.glyphicon {margin:0 5px;}
     font-family: monospace;
     font-size: 14px;
     min-width: 270px;
-    width: 100px;
+    width: 100px;   
     line-height: 1.2em;
-    min-height: 22px;
+    height: 0;
     overflow-y: hidden; /* fixes scrollbar flash - kudos to @brettjonesdev */
     border: none;
     overflow: auto;
