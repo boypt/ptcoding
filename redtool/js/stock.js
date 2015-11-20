@@ -16,9 +16,6 @@ var Portfolio = function (pfid)  {
 					.append($('<span>组合'+pfid+'</span>'));
     this.button_wrap = $('<li>').css("display", "none").append(this.button).appendTo("#profile_nav").slideDown();
     this.restore();
-    if (pfid == CURPFID) {
-        this.button.addClass("active");
-    }
 }
 
 Portfolio.prototype.save = function () {
@@ -286,7 +283,8 @@ Portfolio.prototype.deactivate = function () {
 var PortfolioIdList = function ()  {
     this.storage_key = "pf_list";
     this.list = ["1"];
-    window.CURPFID = localStorage.getItem('cur_pfid') || "1";
+    this.portfolio = {};
+    this.curpfid = localStorage.getItem('cur_pfid') || "1";
     this.restore();
 }
 
@@ -301,26 +299,50 @@ PortfolioIdList.prototype.restore = function () {
     }
 }
 
-PortfolioIdList.prototype.add = function () {
-    var last = $(".profile_btn:last").attr("data-pfid");
-    if(typeof last === 'undefined') last = 0;
-    var _newpf = (parseInt(last)+1).toString();
-    this.list.push(_newpf);
+PortfolioIdList.prototype.add = function (pfid) {
+    if(typeof pfid !== 'string')
+        pfid = pfid.toString();
+    this.list.push(pfid);
+    this.portfolio[pfid] = new Portfolio(pfid);
     this.save();
-    return _newpf;
 }
 
 PortfolioIdList.prototype.remove = function (pfid) {
+    delete this.portfolio[pfid];
     this.list = this.list.filter(function(x) { return x !== pfid;});
     this.save();
 }
 
-PortfolioIdList.prototype.build_portfolios = function (pfos) {
+PortfolioIdList.prototype.restore_portfolios = function () {
+    var _this = this;
     $.each(this.list, function(i,v) {
-        var _o = new Portfolio(v);
-        pfos[v] = _o;
+        _this.portfolio[v] = new Portfolio(v);
     });
 }
+
+PortfolioIdList.prototype.current_portfolio = function () {
+    return this.portfolio[this.curpfid];
+}
+
+PortfolioIdList.prototype.remove_current_portfolio = function () {
+    this.remove(this.curpfid);
+}
+
+PortfolioIdList.prototype.is_current_portfolio = function (pfid) {
+    return this.curpfid == pfid;
+}
+
+PortfolioIdList.prototype.switch_portfolio = function (pfid) {
+    if(this.portfolio[this.curpfid]) {
+        this.portfolio[this.curpfid].deactivate();
+    }
+    this.curpfid = pfid;
+    this.portfolio[this.curpfid].activate();
+
+    localStorage.setItem('cur_pfid', this.curpfid);
+}
+
+
 /* --------------------------------------------------------------------------------------------------------*/
 
 /* ------------------------------------jQuery Event Handlings----------------------------------------------*/
@@ -331,7 +353,7 @@ var _reg_event_handlers = function () {
 
     /* ----- NAV Buttons ------- */
     $('#redraw').click(function(evn) {
-        var o = _Portfolio[CURPFID];
+        var o = _List.current_portfolio();
         o.table_api.order( [ 0, 'asc' ] ).draw();
         return false;
     });
@@ -339,9 +361,9 @@ var _reg_event_handlers = function () {
     $('#update_share').click(function(event) {
         var cnt = 0;
         var $btn = $(event.currentTarget).button('loading');
-        $.each(_Portfolio, function () {
+        $.each(_List.portfolio, function () {
             var len = this.update_data(function (pfo) {
-                if(pfo.pfid === CURPFID) {
+                if(pfo.pfid === _List.curpfid) {
                     console.log("refresh pfid" + pfo.pfid);
                     pfo.show_data_table();
                 }
@@ -357,14 +379,12 @@ var _reg_event_handlers = function () {
     $("#clear_current").click(function () {
         var r = confirm("Confirm");
         if (r === true) {
-            var o = _Portfolio[CURPFID];
+            var o = _List.current_portfolio();
             o.destroy_table();
             o.destroy_button();
             o.remove_data();
-            _List.remove(CURPFID);
-            var _oldpfid = CURPFID;
+            _List.remove_current_portfolio();
             $(".profile_btn:last").trigger('click');
-            delete _Portfolio[ _oldpfid ];
         }
         return false;
     });
@@ -373,56 +393,53 @@ var _reg_event_handlers = function () {
     /* ----------- Profile Button ------------*/
     $("#profile_nav").on("click", "button.profile_btn", function(evn) {
         var pfid = $(evn.currentTarget).attr("data-pfid");
-
-        // switch
-        if (typeof(CURPFID) != "undefined" && CURPFID != pfid) {
-            _Portfolio[CURPFID].deactivate();
-            CURPFID = pfid;
-            localStorage.setItem('cur_pfid', pfid);
-            _Portfolio[pfid].activate();
+        if (!_List.is_current_portfolio(pfid)) {
+            _List.switch_portfolio(pfid);
         }
 
         return false;
     });
 
     $("#btn_add_profile").click(function () {
-        var key = _List.add();
-        var _o = new Portfolio(key);
-        window._Portfolio[key] = _o;
+        var last = $(".profile_btn:last").attr("data-pfid");
+        if(typeof last === 'undefined') last = 0;
+        var pfid = (parseInt(last)+1).toString();
+        _List.add(pfid);
         return false;
     });
     /*----------------------------------------*/
 
     /*--------------Input Controls -----------*/
     $('#sharenums').blur(function () {
-        var o = _Portfolio[CURPFID];
+        var o = _List.current_portfolio();
         o.sync_from_dom();
         o.save();
     });
     $('#is_fund').click(function () {
-        var o = _Portfolio[CURPFID];
+        var o = _List.current_portfolio();
         o.sync_from_dom();
         o.save();
     });
 
     /*----------------------------------------*/
-    $('#neat_val_window').on('shown.bs.modal', function () {
+
+    /*--------------  Modal Events -----------*/
+    $('#neat_val_window')
+    .on('shown.bs.modal', function () {
         var _v = $("#neat_val");
         var _h = _v.prop("scrollHeight");
         _v.animate({"height":_h},100).select();
-    });
-    
-    $('#neat_val_window').on('hidden.bs.modal', function () {
+    })
+    .on('hidden.bs.modal', function () {
         $("#neat_val").outerHeight(0);
     });
- 
+    /*----------------------------------------*/
 }
 
 var _ui_init = function () {
     msgbar("Building UI Components ...", true);
     window._List = new PortfolioIdList();
-    window._Portfolio = {};
-    _List.build_portfolios(window._Portfolio);
+    _List.restore_portfolios();
 }
 
 

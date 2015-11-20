@@ -31,7 +31,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
             ],
         function () {
             _reg_event_handlers();
-            _Portfolio[CURPFID].activate();
+            _List.current_portfolio().activate();
             msgbar('', false);
         }
     );
