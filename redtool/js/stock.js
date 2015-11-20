@@ -139,7 +139,7 @@ Portfolio.prototype.init_data_table = function () {
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
 
-                $('a[data-toggle="tooltip"]').tooltip({
+                $(this).find('a[data-toggle="tooltip"]').tooltip({
                     'html':true,
                     'title':function () {
                         var code = $(this).data("code");
@@ -184,12 +184,13 @@ Portfolio.prototype.init_data_table = function () {
                 });
 
 
-                $('a[data-toggle="tooltip"]').tooltip({
+                $(this).find('a[data-toggle="tooltip"]').tooltip({
                     'html':true,
                     'title':function () {
                         var code = $(this).data("code");
-                        var imgurl = "http://image.sinajs.cn/newchart/daily/n/"+ code + ".gif?_=" + Math.random();
-                        return '<img src="'+imgurl+'" />';
+                        var rt = "http://image.sinajs.cn/newchart/min/n/"+ code + ".gif?_=" + Math.random();
+                        var kx = "http://image.sinajs.cn/newchart/daily/n/"+ code + ".gif?_=" + Math.random();
+                        return '<p><img src="'+rt+'" /></p><p><img src="'+kx+'" /></p>';
                     }
                 });
             }
