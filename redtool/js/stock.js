@@ -14,7 +14,7 @@ var Portfolio = function (pfid)  {
 					.attr("data-pfid", pfid)
 					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
 					.append($('<span>组合'+pfid+'</span>'));
-    this.button_wrap = $('<li>').append(this.button).appendTo("#profile_nav");
+    this.button_wrap = $('<li>').css("display", "none").append(this.button).appendTo("#profile_nav").slideDown();
     this.restore();
     if (pfid == CURPFID) {
         this.button.addClass("active");
@@ -407,10 +407,14 @@ var _reg_event_handlers = function () {
     /*----------------------------------------*/
     $('#neat_val_window').on('shown.bs.modal', function () {
         var _v = $("#neat_val");
-        _v.outerHeight(0);
-        _v.outerHeight(_v.get(0).scrollHeight);
-        _v.select();
+        var _h = _v.prop("scrollHeight");
+        _v.animate({"height":_h},100).select();
     });
+    
+    $('#neat_val_window').on('hidden.bs.modal', function () {
+        $("#neat_val").outerHeight(0);
+    });
+ 
 }
 
 var _ui_init = function () {

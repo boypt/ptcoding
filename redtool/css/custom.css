@@ -1,19 +1,9 @@
-html { overflow-x: hidden; overflow-y:scroll;}
-body { margin-bottom: 40px;}
-button span {margin:0 5px;}
-.input_row { margin-top: 20px;}
-.nav_row { margin: 5px 0 10px 0;}
+button span.glyphicon {margin:0 5px;}
 .price { font-family: monospace; font-size: 1.2em; }
 .negtive { margin-left:-0.6em; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
-.main_container { margin: 5px auto; max-width: 1000px;}
-.section { margin: 10px auto; }
-
-.menusec { position: fixed; }
-
 .pfmenu button {font-size:80%; width:100%; margin-bottom: 10px;}
-
 #neat_val {
     background-color:#F1F1F1;
     margin: 1em auto;
@@ -21,9 +11,9 @@ button span {margin:0 5px;}
     font-family: monospace;
     font-size: 14px;
     min-width: 270px;
-    width: 100px;
+    width: 100px;   
     line-height: 1.2em;
-    min-height: 22px;
+    height: 0;
     overflow-y: hidden; /* fixes scrollbar flash - kudos to @brettjonesdev */
     border: none;
     overflow: auto;
@@ -37,13 +27,6 @@ button span {margin:0 5px;}
 #data_table_div tr.reddata { background-color:#FFA7A7;}
 #data_table_div tr.greendata { background-color:#A9FFC4;}
 
-.inputsec {
-    position:fixed;
-    overflow: hidden;
-    bottom:0;
-    width: 140px;
-    margin-left:30px;
-}
 .inputsec textarea { padding:0; height: 100px; width:100%;}
 
 #data_table_div .tooltip-inner {
