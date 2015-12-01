@@ -102,6 +102,7 @@ Portfolio.prototype.init_data_table = function () {
                 { "title": "名称",
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
+                    "width": "30%",
                     "render": function ( data, type, row ) { 
                         var code = row[row.length-1].substr(2);
                         return '<a target="_blank" data-toggle="tooltip" data-placement="right" data-code="'+code+'" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
