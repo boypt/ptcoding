@@ -71,12 +71,15 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
                 <div class="row">
                     <div class="col-sm-4">
-                        <button class="btn" id="redraw"><span class="glyphicon glyphicon-time" aria-hidden="true"></span>更新时间<span id="last_update">-</span></button>
+                        <button class="btn" id="redraw"><span class="glyphicon glyphicon-time"></span>更新时间<span id="last_update">-</span></button>
                     </div>
                     <div class="col-sm-2"></div>
 
                     <div class="col-sm-2">
-                        <button class="btn btn-success pull-right" data-loading-text="Loading..." autocomplete="off" id="update_share"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>更新数据</button>
+                        <button class="btn btn-success pull-right" id="update_share"
+                            data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading..." >
+                            <span class="glyphicon glyphicon-refresh"></span>更新数据
+                        </button>
                     </div>
                     <div class="col-sm-2">
                         <button class="btn btn-info pull-right" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
