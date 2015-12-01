@@ -9,7 +9,7 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button =  $('<button class="profile_btn btn btn-default">')
+    this.button =  $('<button class="profile_btn btn btn-default btn-sm btn-block">')
 					.attr("id", "_pfbtn"+pfid)
 					.attr("data-pfid", pfid)
 					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
@@ -260,8 +260,10 @@ Portfolio.prototype.update_data = function (callback) {
 }
 
 Portfolio.prototype.destroy_table = function () {
-    this.table_api.destroy(true);
-    this.table_api = null;
+    if(this.table_api) {
+        this.table_api.destroy(true);
+        this.table_api = null;
+    }
 }
 
 Portfolio.prototype.destroy_button = function () {
@@ -307,6 +309,21 @@ PortfolioIdList.prototype.sync_svr = function () {
     return obj;
 }
 
+
+PortfolioIdList.prototype.reinitialize = function (pfid) {
+    $.each(this.portfolio, function() {
+        this.destroy_button();
+        this.destroy_table();
+    });
+    this.portfolio = {};
+    this.list = [];
+    this.restore();
+    this.restore_portfolios();
+    if(this.list.length > 0) {
+        this.switch_portfolio(this.list[0]);
+    }
+}
+
 PortfolioIdList.prototype.save = function () {
     localStorage.setItem(this.storage_key, JSON.stringify(this.list)); 
 }
@@ -340,7 +357,7 @@ PortfolioIdList.prototype.restore_portfolios = function () {
 }
 
 PortfolioIdList.prototype.current_portfolio = function () {
-    if(! this.curpfid in this.portfolio) {
+    if(!(this.curpfid in this.list)) {
         this.curpfid = this.list[0];
     }
     return this.portfolio[this.curpfid];
@@ -355,12 +372,11 @@ PortfolioIdList.prototype.is_current_portfolio = function (pfid) {
 }
 
 PortfolioIdList.prototype.switch_portfolio = function (pfid) {
-    if(this.portfolio[this.curpfid]) {
+    if(this.curpfid in this.portfolio) {
         this.portfolio[this.curpfid].deactivate();
     }
     this.curpfid = pfid;
     this.portfolio[this.curpfid].activate();
-
     localStorage.setItem('cur_pfid', this.curpfid);
 }
 
@@ -457,18 +473,8 @@ var _reg_event_handlers = function () {
     });
 
 
-    $("#sync_svr")
-        .on('show.bs.modal', function () {
-            var code = localStorage.getItem("sync_code");
-            $("#sync_code").val(code);
-        });
-
-
-    $('#sync_code').blur(function (evn) {
-        $("#sync_date").val('Loading...');
-        var code = $(evn.currentTarget).val();
-        localStorage.setItem("sync_code", code);
-
+    var check_sync = function (code) {
+        if(code.length == 0) {return;}
         $.getJSON("/json/"+code+".json")
             .done(function(json) {
                 $("#sync_date").val(json.syncdate);
@@ -477,9 +483,25 @@ var _reg_event_handlers = function () {
             .fail(function () {
                 $("#sync_date").val('No Object');
             });
+    }
+
+    $("#sync_svr")
+        .on('shown.bs.modal', function () {
+            var code = localStorage.getItem("sync_code");
+            $("#sync_code").val(code);
+            check_sync(code);
+        });
+
+
+    $('#sync_code').blur(function (evn) {
+        $("#sync_date").val('Loading...');
+        var code = $(evn.currentTarget).val();
+        localStorage.setItem("sync_code", code);
+        check_sync(code);
     });
 
-    $('#sync_upload').on('click', function () {
+    $('#sync_upload').on('click', function (env) {
+        var $btn = $(env.currentTarget).button('loading');
         var code = $("#sync_code").val();
         var sync = JSON.stringify(_List.sync_svr());
         $.ajax({
@@ -488,23 +510,32 @@ var _reg_event_handlers = function () {
             data: { code: code, sync: sync}
         })
         .done(function( msg ) {
+            //$btn.button('reset');
+        })
+        .always(function() {
+            $btn.button('reset');
         });
     });
 
 
-    $('#sync_download').on('click', function () {
+    $('#sync_download').on('click', function (env) {
+        var $btn = $(env.currentTarget).button('loading');
         var code = $("#sync_code").val();
+        if(code.length == 0) {return;}
         $.getJSON("/json/"+code+".json")
             .done(function(json) {
                 localStorage.setItem(_List.storage_key, JSON.stringify(json.pf_list));
                 $.each(json.portfolio, function (k,v) {
                     localStorage.setItem(k, JSON.stringify(v));
                 });
+                _List.reinitialize();
             })
             .fail(function () {
-                $("#sync_date").val('No Object');
+                $("#sync_date").val('No such code.');
+            })
+            .always(function() {
+                $btn.button('reset');
             });
-
     });
     /*----------------------------------------*/
 }

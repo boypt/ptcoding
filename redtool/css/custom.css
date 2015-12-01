@@ -3,7 +3,7 @@ button span.glyphicon {margin:0 5px;}
 .negtive { margin-left:-0.6em; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
-.pfmenu button {font-size:80%; width:100%; margin-bottom: 10px;}
+.pfbtn ul button {margin-bottom:10px;}
 #neat_val {
     background-color:#F1F1F1;
     margin: 1em auto;

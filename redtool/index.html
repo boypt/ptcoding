@@ -46,16 +46,16 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <div class="container well well-lg">
         <div class="row">
-            <div class="col-sm-2 pfmenu">
-                <div>
+            <div class="col-sm-2">
+                <div class="pfbtn">
                     <ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
-                    <button id="btn_add_profile" class="btn btn-default">
+                    <button id="btn_add_profile" class="btn btn-default btn-sm btn-block">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     </button>
                 </div>
                 
                 <hr />
-                    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#sync_svr">
+                    <button type="button" class="btn btn-info btn-sm btn-block" data-toggle="modal" data-target="#sync_svr">
                        <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>数据同步
                     </button>
 
@@ -135,9 +135,17 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="sync_upload">Upload</button>
-                    <button type="button" class="btn btn-primary" id="sync_download">Download</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class='glyphicon glyphicon-remove-circle'></span>Close
+                    </button>
+                    <button type="button" class="btn btn-primary" id="sync_upload"
+                        data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
+                        <span class='glyphicon glyphicon-upload'></span>Upload
+                    </button>
+                    <button type="button" class="btn btn-primary" id="sync_download"
+                        data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
+                        <span class='glyphicon glyphicon-download'></span>Download
+                    </button>
                 </div>
             </div>
         </div>
