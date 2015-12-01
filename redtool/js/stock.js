@@ -357,7 +357,7 @@ PortfolioIdList.prototype.restore_portfolios = function () {
 }
 
 PortfolioIdList.prototype.current_portfolio = function () {
-    if(!(this.curpfid in this.list)) {
+    if(!(this.curpfid in this.portfolio)) {
         this.curpfid = this.list[0];
     }
     return this.portfolio[this.curpfid];
