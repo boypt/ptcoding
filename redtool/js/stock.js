@@ -18,14 +18,19 @@ var Portfolio = function (pfid)  {
     this.restore();
 }
 
-Portfolio.prototype.save = function () {
-    var vals = {
+
+Portfolio.prototype.objectfy = function () {
+    return {
         "is_fund":this.is_fund,
         "ids":this.ids,
         "sina_ids":this.sina_ids,
         "values":this.values,
         "last_update":this.last_update
-    }
+    };
+}
+
+Portfolio.prototype.save = function () {
+    var vals = this.objectfy();
     localStorage.setItem(this.storage_key, JSON.stringify(vals)); 
 }
 
@@ -289,6 +294,19 @@ var PortfolioIdList = function ()  {
     this.restore();
 }
 
+PortfolioIdList.prototype.sync_svr = function () {
+    var obj = {};
+    obj[this.storage_key] = this.list;
+    obj["portfolio"] = {};
+    obj["syncdate"] = new Date().toLocaleString();
+
+    $.each(this.portfolio, function () {
+        obj["portfolio"][this.storage_key] = this.objectfy();
+    });
+
+    return obj;
+}
+
 PortfolioIdList.prototype.save = function () {
     localStorage.setItem(this.storage_key, JSON.stringify(this.list)); 
 }
@@ -322,6 +340,9 @@ PortfolioIdList.prototype.restore_portfolios = function () {
 }
 
 PortfolioIdList.prototype.current_portfolio = function () {
+    if(! this.curpfid in this.portfolio) {
+        this.curpfid = this.list[0];
+    }
     return this.portfolio[this.curpfid];
 }
 
@@ -433,6 +454,57 @@ var _reg_event_handlers = function () {
     })
     .on('hidden.bs.modal', function () {
         $("#neat_val").outerHeight(0);
+    });
+
+
+    $("#sync_svr")
+        .on('show.bs.modal', function () {
+            var code = localStorage.getItem("sync_code");
+            $("#sync_code").text(code);
+        });
+
+
+    $('#sync_code').blur(function (evn) {
+        $("#sync_date").val('Loading...');
+        var code = $(evn.currentTarget).val();
+        localStorage.setItem("sync_code", code);
+
+        $.getJSON("/json/"+code+".json")
+            .done(function(json) {
+                $("#sync_date").val(json.syncdate);
+                console.log(json);
+            })
+            .fail(function () {
+                $("#sync_date").val('No Object');
+            });
+    });
+
+    $('#sync_upload').on('click', function () {
+        var code = $("#sync_code").val();
+        var sync = JSON.stringify(_List.sync_svr());
+        $.ajax({
+            method: "POST",
+            url: "/storage.php",
+            data: { code: code, sync: sync}
+        })
+        .done(function( msg ) {
+        });
+    });
+
+
+    $('#sync_download').on('click', function () {
+        var code = $("#sync_code").val();
+        $.getJSON("/json/"+code+".json")
+            .done(function(json) {
+                localStorage.setItem(_List.storage_key, JSON.stringify(json.pf_list));
+                $.each(json.portfolio, function (k,v) {
+                    localStorage.setItem(k, JSON.stringify(v));
+                });
+            })
+            .fail(function () {
+                $("#sync_date").val('No Object');
+            });
+
     });
     /*----------------------------------------*/
 }

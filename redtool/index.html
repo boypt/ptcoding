@@ -46,14 +46,19 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <div class="container well well-lg">
         <div class="row">
-            <div class="col-sm-2">
-                <div class="pfmenu">
+            <div class="col-sm-2 pfmenu">
+                <div>
                     <ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
                     <button id="btn_add_profile" class="btn btn-default">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     </button>
                 </div>
                 
+                <hr />
+                    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#sync_svr">
+                       <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>数据同步
+                    </button>
+
                 <hr />
 
                 <div class="form-group">
@@ -106,6 +111,38 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
             </div>
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="sync_svr" tabindex="-1" role="dialog" aria-labelledby="syncLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="syncLabel">数据同步</h4>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <label class="col-sm-2 control-label" for="sync_code">Code</label>
+                        <div class="col-md-4"><input type="text" class="form-control" id="sync_code"></input></div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-2 control-label" for="sync_date">Date</label>
+                        <div class="col-md-4"><input type="text" class="form-control" id="sync_date" readonly></input></div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="sync_upload">Upload</button>
+                    <button type="button" class="btn btn-primary" id="sync_download">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 </body>
 </html>
