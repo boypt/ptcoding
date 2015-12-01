@@ -460,7 +460,7 @@ var _reg_event_handlers = function () {
     $("#sync_svr")
         .on('show.bs.modal', function () {
             var code = localStorage.getItem("sync_code");
-            $("#sync_code").text(code);
+            $("#sync_code").val(code);
         });
 
 
