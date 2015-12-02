@@ -300,7 +300,7 @@ PortfolioIdList.prototype.sync_svr = function () {
     var obj = {};
     obj[this.storage_key] = this.list;
     obj["portfolio"] = {};
-    obj["syncdate"] = new Date().toLocaleString();
+    obj["syncdate"] = new Date().getTime();
 
     $.each(this.portfolio, function () {
         obj["portfolio"][this.storage_key] = this.objectfy();
@@ -484,7 +484,7 @@ var _reg_event_handlers = function () {
             var code = localStorage.getItem("sync_code");
             $("#sync_code").val(code);
             check_sync(code).done(function(json) {
-                $("#sync_date").val(json.syncdate);
+                $("#sync_date").val(new Date(json.syncdate).toLocaleString());
             });
         });
 
