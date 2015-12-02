@@ -495,7 +495,7 @@ var _reg_event_handlers = function () {
         localStorage.setItem("sync_code", code);
         check_sync(code)
             .done(function(json) {
-                $("#sync_date").val(json.syncdate);
+                $("#sync_date").val(new Date(json.syncdate).toLocaleString());
             })
             .fail(function () {
                 $("#sync_date").val('No such code.');
@@ -514,7 +514,7 @@ var _reg_event_handlers = function () {
         .done(function( msg ) {
             check_sync(code)
                 .done(function(json) {
-                    $("#sync_date").val(json.syncdate);
+                    $("#sync_date").val(new Date(json.syncdate).toLocaleString());
                 })
                 .fail(function () {
                     $("#sync_date").val('No such code.');
