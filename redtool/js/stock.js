@@ -473,31 +473,33 @@ var _reg_event_handlers = function () {
     });
 
 
-    var check_sync = function (code) {
-        if(code.length == 0) {return;}
-        $.getJSON("/json/"+code+".json")
-            .done(function(json) {
-                $("#sync_date").val(json.syncdate);
-                console.log(json);
-            })
-            .fail(function () {
-                $("#sync_date").val('No Object');
-            });
+    var check_sync = function (code, succ) {
+        var json = "/json/"+code+".json";
+        console.log("getting "+json);
+        return $.getJSON(json)
     }
 
     $("#sync_svr")
         .on('shown.bs.modal', function () {
             var code = localStorage.getItem("sync_code");
             $("#sync_code").val(code);
-            check_sync(code);
+            check_sync(code).done(function(json) {
+                $("#sync_date").val(json.syncdate);
+            });
         });
 
 
     $('#sync_code').blur(function (evn) {
         $("#sync_date").val('Loading...');
-        var code = $(evn.currentTarget).val();
+        var code = $("#sync_code").val();
         localStorage.setItem("sync_code", code);
-        check_sync(code);
+        check_sync(code)
+            .done(function(json) {
+                $("#sync_date").val(json.syncdate);
+            })
+            .fail(function () {
+                $("#sync_date").val('No such code.');
+            });
     });
 
     $('#sync_upload').on('click', function (env) {
@@ -510,7 +512,13 @@ var _reg_event_handlers = function () {
             data: { code: code, sync: sync}
         })
         .done(function( msg ) {
-            //$btn.button('reset');
+            check_sync(code)
+                .done(function(json) {
+                    $("#sync_date").val(json.syncdate);
+                })
+                .fail(function () {
+                    $("#sync_date").val('No such code.');
+                });
         })
         .always(function() {
             $btn.button('reset');
@@ -522,12 +530,11 @@ var _reg_event_handlers = function () {
         var $btn = $(env.currentTarget).button('loading');
         var code = $("#sync_code").val();
         if(code.length == 0) {return;}
-        $.getJSON("/json/"+code+".json")
+
+        check_sync(code)
             .done(function(json) {
                 localStorage.setItem(_List.storage_key, JSON.stringify(json.pf_list));
-                $.each(json.portfolio, function (k,v) {
-                    localStorage.setItem(k, JSON.stringify(v));
-                });
+                $.each(json.portfolio, function (k,v) { localStorage.setItem(k, JSON.stringify(v)); });
                 _List.reinitialize();
             })
             .fail(function () {
