@@ -19,8 +19,9 @@ if (!empty($_SERVER['HTTP_USER_AGENT']) && strlen($_SERVER['HTTP_USER_AGENT']) <
     <style type="text/css">
 div.container {margin:20px auto;}
 table {width:100%;border-collapse:collapse;}
-th,td {padding:5px 10px;border: 1px solid #aaa;}
-td.value {font-size:10px;}
+th,td {padding:5px 10px;border: 1px solid #aaa;font-family:monospace;}
+td.key {font-size:8px;}
+td.value {font-size:12px;}
 textarea {width:100%; height: 200px;}
     </style>    
     </head>
@@ -31,7 +32,7 @@ textarea {width:100%; height: 200px;}
             <tbody>
 <?php foreach($fixed_key as $k) : ?>
 <tr>
-    <td><?=$k?></td>
+    <td class="key"><?=$k?></td>
     <td class="value"><?=$_SERVER[$k]?></td>
 </tr>
 <?php endforeach;
@@ -41,7 +42,7 @@ textarea {width:100%; height: 200px;}
                 if($pre_key === "HTTP" || $pre_key === "GEOI"):
 ?>
 <tr>
-    <td><?=$k?></td>
+    <td class="key"><?=$k?></td>
     <td class="value"><?=$v?></td>
 </tr>
 <?php           endif;
