@@ -1,0 +1,24 @@
+#----------------------------------------
+# Plugin paner
+# ---------------------------------------
+'atom-text-editor.vim-mode.normal-mode':
+  'ctrl-w x':     'paner:swap-item'
+  'ctrl-w X':     'paner:send-item'
+  'ctrl-w enter': 'paner:maximize'
+  'ctrl-w K':     'paner:very-top'
+  'ctrl-w J':     'paner:very-bottom'
+  'ctrl-w H':     'paner:very-left'
+  'ctrl-w L':     'paner:very-right'
+  'ctrl-w s':     'paner:split-up'
+  'ctrl-w v':     'paner:split-left'
+
+#----------------------------------------
+# Plugin autocomplete-plus - vim-mode
+# ---------------------------------------
+'body atom-text-editor.autocomplete-active':
+  'ctrl-p': 'autocomplete-plus:move-up'
+  'ctrl-n': 'autocomplete-plus:move-down'
+  'pageup': 'autocomplete-plus:page-up'
+  'pagedown': 'autocomplete-plus:page-down'
+  'home': 'autocomplete-plus:move-to-top'
+  'end': 'autocomplete-plus:move-to-bottom'
