@@ -31,7 +31,7 @@ Portfolio.prototype.objectfy = function () {
 
 Portfolio.prototype.save = function () {
     var vals = this.objectfy();
-    localStorage.setItem(this.storage_key, JSON.stringify(vals)); 
+    localStorage.setItem(this.storage_key, JSON.stringify(vals));
 }
 
 Portfolio.prototype.restore = function () {
@@ -108,7 +108,7 @@ Portfolio.prototype.init_data_table = function () {
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
                     "width": "30%",
-                    "render": function ( data, type, row ) { 
+                    "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2);
                         return '<a target="_blank" data-toggle="tooltip" data-placement="right" data-code="'+code+'" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
                 { "title": "净值",
@@ -123,7 +123,7 @@ Portfolio.prototype.init_data_table = function () {
                 { "title": "净值日期", "orderable": false,
                 },
                 { "title": "？？", "visible": false },
-                { "title": "涨跌幅", 
+                { "title": "涨跌幅",
                     "data": function ( row, type, val, meta ) {
                         var val = parseFloat(row[2]);
                         var lastval = parseFloat(row[4]);
@@ -325,7 +325,7 @@ PortfolioIdList.prototype.reinitialize = function (pfid) {
 }
 
 PortfolioIdList.prototype.save = function () {
-    localStorage.setItem(this.storage_key, JSON.stringify(this.list)); 
+    localStorage.setItem(this.storage_key, JSON.stringify(this.list));
 }
 
 PortfolioIdList.prototype.restore = function () {

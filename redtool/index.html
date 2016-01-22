@@ -19,7 +19,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 
   <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.10/css/dataTables.bootstrap.min.css">
-  <link rel="stylesheet" href="//cdn.css.net/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//cdn.css.net/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/custom.css">
 
   <!-- JavaScript
@@ -29,7 +29,7 @@
 $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], function () {
     _ui_init();
     $script(["//cdn.css.net/libs/datatables/1.10.10/js/jquery.dataTables.min.js",
-             "//cdn.css.net/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js",
+             "//cdn.css.net/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js",
             ],
         function () {
             _reg_event_handlers();
@@ -53,7 +53,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     </button>
                 </div>
-                
+
                 <hr />
                     <button type="button" class="btn btn-info btn-sm btn-block" data-toggle="modal" data-target="#sync_svr">
                        <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>数据同步
@@ -68,8 +68,8 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                     <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
                 </div>
             </div>
-            
-            
+
+
             <div class="col-sm-10">
                 <div class="alert alert-success alert-dismissible fade in" role="alert" id="msgbar">
                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
@@ -97,7 +97,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
                 </div>
 
                 <div class="row">
-                    <div class="col-sm-12" id="data_table_div"></div>
+                    <div class="col-sm-12 table-responsive" id="data_table_div"></div>
                 </div>
             </div>
         </div>
