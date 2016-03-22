@@ -101,6 +101,7 @@ Portfolio.prototype.init_data_table = function () {
     if(!$.fn.dataTable.isDataTable(tbid) && this.table_api === null) {
 
         if(this.is_fund) {
+            var tpl_fundimg = _.template($("#tpl_fundimg").html());
             colms = [
                 { "title": "No",
                   "width": "5%"},
@@ -110,7 +111,10 @@ Portfolio.prototype.init_data_table = function () {
                     "width": "30%",
                     "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2);
-                        return '<a target="_blank" data-toggle="tooltip" data-placement="right" data-code="'+code+'" href="http://fund.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
+                        var name = row[1];
+                        return tpl_fundimg({code:code, name:name});
+                       }
+                },
                 { "title": "净值",
                     "render": val_render,
                 },
@@ -141,20 +145,11 @@ Portfolio.prototype.init_data_table = function () {
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
-
-                $(this).find('a[data-toggle="tooltip"]').tooltip({
-                    'html':true,
-                    'title':function () {
-                        var code = $(this).data("code");
-                        var imgurl = "http://image.sinajs.cn/newchart/v5/fundpre/min/" + code + ".gif?_=" + Math.random();
-                        return '<img src="'+imgurl+'" />';
-                    }
-                });
-
             }
 
 
         } else {
+            var tpl_shareimg = _.template($("#tpl_shareimg").html());
             colms = [
                 { "title": "No",
                   "width": "5%"},
@@ -162,8 +157,10 @@ Portfolio.prototype.init_data_table = function () {
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
                     "render": function ( data, type, row ) {
-                        var code = row[row.length-1].substr(2);
-                        return '<a target="_blank" data-toggle="tooltip" data-placement="right" data-code="'+code+'" href="http://quote.eastmoney.com/'+code+'.html">'+data+'</a>'; },},
+                        var code = row[row.length-1].substr(2), name = row[1];
+                        return tpl_shareimg({code:code, name:name});
+                    }
+                },
                 { "title": "现价",
                     "render": val_render,
                 },
@@ -186,16 +183,6 @@ Portfolio.prototype.init_data_table = function () {
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
 
-
-                $(this).find('a[data-toggle="tooltip"]').tooltip({
-                    'html':true,
-                    'title':function () {
-                        var code = $(this).data("code");
-                        var rt = "http://image.sinajs.cn/newchart/min/n/"+ code + ".gif?_=" + Math.random();
-                        var kx = "http://image.sinajs.cn/newchart/daily/n/"+ code + ".gif?_=" + Math.random();
-                        return '<p><img src="'+rt+'" /></p><p><img src="'+kx+'" /></p>';
-                    }
-                });
             }
         }
 
@@ -544,6 +531,16 @@ var _reg_event_handlers = function () {
                 $btn.button('reset');
             });
     });
+
+    $(document.body).popover({
+      selector: '.has-popover',
+      placement: 'right',
+      container: 'body',
+      trigger: 'hover',
+      template: '<div class="popover pricepop" role="tooltip"><div class="popover-content"></div></div>',
+      html: true
+    });
+
     /*----------------------------------------*/
 }
 

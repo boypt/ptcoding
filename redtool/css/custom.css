@@ -11,7 +11,7 @@ button span.glyphicon {margin:0 5px;}
     font-family: monospace;
     font-size: 14px;
     min-width: 270px;
-    width: 100px;   
+    width: 100px;
     line-height: 1.2em;
     height: 0;
     overflow-y: hidden; /* fixes scrollbar flash - kudos to @brettjonesdev */
@@ -39,3 +39,6 @@ button span.glyphicon {margin:0 5px;}
     border-top-color:#fff;
 }
 
+.pricepop {
+  max-width: 600px;
+}
