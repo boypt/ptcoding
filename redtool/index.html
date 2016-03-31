@@ -156,7 +156,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
 <script class="tpl" id="tpl_shareimg" type="text/template">
 <% var r=Math.random(); %>
-<a class="has-popover" role="button" data-toggle="popover"
+<a class="has-popover" role="button" tabindex="-1" data-toggle="popover"
   href="#"
   title = '<a href="http://quote.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a>'
   data-content='<p><img src="http://image.sinajs.cn/newchart/min/n/<%- code %>.gif?<%- r %>" /></p><p><img src="http://image.sinajs.cn/newchart/daily/n/<%- code %>.gif?<%- r %>" /></p>'
@@ -167,7 +167,7 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
 <script class="tpl" id="tpl_fundimg" type="text/template">
 <% var r=Math.random(); %>
-<a class="has-popover" role="button" data-toggle="popover"
+<a class="has-popover" role="button" tabindex="-1" data-toggle="popover"
   href="#"
   title = '<a href="http://fund.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a>'
   data-content='<img src="http://image.sinajs.cn/newchart/v5/fundpre/min/<%- code %>.gif?<%- r %>" />'
