@@ -28,7 +28,7 @@
   <script type="text/javascript">
 $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], function () {
     _ui_init();
-    $script(["//cdn.css.net/libs/datatables/1.10.10/js/jquery.dataTables.min.js",
+    $script(["//cdn.css.net/libs/datatables/1.10.11/js/jquery.dataTables.min.js",
              "//cdn.css.net/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js",
              "//cdn.css.net/libs/underscore.js/1.8.3/underscore-min.js"
             ],
@@ -156,8 +156,9 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
 <script class="tpl" id="tpl_shareimg" type="text/template">
 <% var r=Math.random(); %>
-<a tabindex="0" class="has-popover" role="button" data-toggle="popover"
-  href="http://quote.eastmoney.com/<%- code %>.html"
+<a class="has-popover" role="button" data-toggle="popover"
+  href="#"
+  title = '<a href="http://quote.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a>'
   data-content='<p><img src="http://image.sinajs.cn/newchart/min/n/<%- code %>.gif?<%- r %>" /></p><p><img src="http://image.sinajs.cn/newchart/daily/n/<%- code %>.gif?<%- r %>" /></p>'
   >
 <%- name %>
@@ -166,8 +167,9 @@ $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], f
 
 <script class="tpl" id="tpl_fundimg" type="text/template">
 <% var r=Math.random(); %>
-<a tabindex="0" class="has-popover" role="button" data-toggle="popover"
-  href="http://fund.eastmoney.com/<%- code %>.html"
+<a class="has-popover" role="button" data-toggle="popover"
+  href="#"
+  title = '<a href="http://fund.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a>'
   data-content='<img src="http://image.sinajs.cn/newchart/v5/fundpre/min/<%- code %>.gif?<%- r %>" />'
 >
   <%- name %>

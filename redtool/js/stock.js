@@ -532,12 +532,16 @@ var _reg_event_handlers = function () {
             });
     });
 
+    $(document.body).on('click', 'a.has-popover', function (evn) {
+      evn.preventDefault();
+    });
+
     $(document.body).popover({
       selector: '.has-popover',
       placement: 'right',
       container: 'body',
-      trigger: 'hover',
-      template: '<div class="popover pricepop" role="tooltip"><div class="popover-content"></div></div>',
+      // trigger: 'click',
+      // template: '<div class="popover pricepop" role="tooltip"><div class="popover-content"></div></div>',
       html: true
     });
 
