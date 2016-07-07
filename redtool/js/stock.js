@@ -459,17 +459,17 @@ var _reg_event_handlers = function () {
     });
 
 
-    var tpl_fundchart = _.template($("#tpl_fundchart").html());
-    var tpl_stockchart = _.template($("#tpl_stockchart").html());
+    var render = {
+      fund: _.template($("#tpl_fundchart").html()),
+      stock: _.template($("#tpl_stockchart").html())
+    };
     $('#chart')
     .on('show.bs.modal', function (evn) {
       var $lnk = $(evn.relatedTarget);
       var $modal = $(evn.target);
-
-      if($lnk.data('type') == 'stock') {
-        $modal.html(tpl_stockchart({code:$lnk.data('code'), name:$lnk.data('name')}));
-      } else if ($lnk.data('type') == 'fund') {
-        $modal.html(tpl_fundchart({code:$lnk.data('code'), name:$lnk.data('name')}));
+      var type = $lnk.data('type');
+      if(_(render).has(type)) {
+        $modal.html(render[type]({code:$lnk.data('code'), name:$lnk.data('name')}));
       }
     });
 
@@ -543,29 +543,6 @@ var _reg_event_handlers = function () {
             .always(function() {
                 $btn.button('reset');
             });
-    });
-
-    $(document.body).on('click', 'a.has-popover', function (evn) {
-      evn.preventDefault();
-    });
-
-    $(document.body).popover({
-      selector: '.has-popover',
-      placement: 'right',
-      container: 'body',
-      // trigger: 'click',
-      // template: '<div class="popover pricepop" role="tooltip"><div class="popover-content"></div></div>',
-      html: true
-    });
-
-    $(document.body).on('click', function (e) {
-      $('[data-toggle="popover"]').each(function () {
-        //the 'is' for buttons that trigger popups
-        //the 'has' for icons within a button that triggers a popup
-        if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
-          $(this).popover('hide');
-        }
-      });
     });
 
     /*----------------------------------------*/
