@@ -9,15 +9,10 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button =  $('<button class="btn btn-secondary btn-sm btn-block profile_btn">')
-					.attr("id", "_pfbtn"+pfid)
-					.attr("data-pfid", pfid)
-					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
-					.append($('<span>组合'+pfid+'</span>'));
-    this.button_wrap = $('<li>').css("display", "none").append(this.button).appendTo("#profile_nav").slideDown();
+    this.button_wrap = $(window.render.profilobtn({pfid: pfid})).appendTo("#profile_nav").slideDown();
+    this.button = this.button_wrap.find('button');
     this.restore();
 }
-
 
 Portfolio.prototype.objectfy = function () {
     return {
@@ -110,8 +105,7 @@ Portfolio.prototype.init_data_table = function () {
                     "width": "30%",
                     "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2);
-                        var name = row[1];
-                        return '<a href="#" data-type="fund" data-name="'+name+'" data-code="'+code+'" data-toggle="modal" data-target="#chart">'+name+'</a>'
+                        return window.render.securityname({code: code, name: row[1], type: 'fund'});
                        }
                 },
                 { "title": "净值",
@@ -156,8 +150,8 @@ Portfolio.prototype.init_data_table = function () {
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
                     "render": function ( data, type, row ) {
-                        var code = row[row.length-1].substr(2), name = row[1];
-                        return '<a href="#" data-type="stock" data-name="'+name+'" data-code="'+code+'" data-toggle="modal" data-target="#chart">'+name+'</a>'
+                        var code = row[row.length-1].substr(2);
+                        return window.render.securityname({code: code, name: row[1], type: 'stock'});
                     }
                 },
                 { "title": "现价",
@@ -458,11 +452,6 @@ var _reg_event_handlers = function () {
         $("#neat_val").outerHeight(0);
     });
 
-
-    var render = {
-      fund: _.template($("#tpl_fundchart").html()),
-      stock: _.template($("#tpl_stockchart").html())
-    };
     $('#chart')
     .on('show.bs.modal', function (evn) {
       var $lnk = $(evn.relatedTarget);
