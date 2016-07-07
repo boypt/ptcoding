@@ -101,7 +101,6 @@ Portfolio.prototype.init_data_table = function () {
     if(!$.fn.dataTable.isDataTable(tbid) && this.table_api === null) {
 
         if(this.is_fund) {
-            var tpl_fundimg = _.template($("#tpl_fundimg").html());
             colms = [
                 { "title": "No",
                   "width": "5%"},
@@ -112,7 +111,7 @@ Portfolio.prototype.init_data_table = function () {
                     "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2);
                         var name = row[1];
-                        return tpl_fundimg({code:code, name:name});
+                        return '<a href="#" data-type="fund" data-name="'+name+'" data-code="'+code+'" data-toggle="modal" data-target="#chart">'+name+'</a>'
                        }
                 },
                 { "title": "净值",
@@ -149,7 +148,7 @@ Portfolio.prototype.init_data_table = function () {
 
 
         } else {
-            var tpl_shareimg = _.template($("#tpl_shareimg").html());
+            // var tpl_shareimg = _.template($("#tpl_shareimg").html());
             colms = [
                 { "title": "No",
                   "width": "5%"},
@@ -158,7 +157,7 @@ Portfolio.prototype.init_data_table = function () {
                     "orderable": false,
                     "render": function ( data, type, row ) {
                         var code = row[row.length-1].substr(2), name = row[1];
-                        return tpl_shareimg({code:code, name:name});
+                        return '<a href="#" data-type="stock" data-name="'+name+'" data-code="'+code+'" data-toggle="modal" data-target="#chart">'+name+'</a>'
                     }
                 },
                 { "title": "现价",
@@ -459,6 +458,20 @@ var _reg_event_handlers = function () {
         $("#neat_val").outerHeight(0);
     });
 
+
+    var tpl_fundchart = _.template($("#tpl_fundchart").html());
+    var tpl_stockchart = _.template($("#tpl_stockchart").html());
+    $('#chart')
+    .on('show.bs.modal', function (evn) {
+      var $lnk = $(evn.relatedTarget);
+      var $modal = $(evn.target);
+
+      if($lnk.data('type') == 'stock') {
+        $modal.html(tpl_stockchart({code:$lnk.data('code'), name:$lnk.data('name')}));
+      } else if ($lnk.data('type') == 'fund') {
+        $modal.html(tpl_fundchart({code:$lnk.data('code'), name:$lnk.data('name')}));
+      }
+    });
 
     var check_sync = function (code, succ) {
         var json = "/json/"+code+".json";

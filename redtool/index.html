@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
   <!-- Basic Page Needs
@@ -26,155 +27,172 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script type="text/javascript" src="//cdn.css.net/libs/script.js/2.5.8/script.min.js"></script>
   <script type="text/javascript">
-$script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], function () {
-    _ui_init();
-    $script(["//cdn.css.net/libs/datatables/1.10.11/js/jquery.dataTables.min.js",
-             "//cdn.css.net/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js",
-             "//cdn.css.net/libs/underscore.js/1.8.3/underscore-min.js"
-            ],
-        function () {
-            _reg_event_handlers();
-            _List.current_portfolio().activate();
-            msgbar('', false);
+    $script(["//cdn.css.net/libs/jquery/2.1.4/jquery.min.js", "js/stock.js?r=10"], function() {
+      _ui_init();
+      $script(["//cdn.css.net/libs/datatables/1.10.11/js/jquery.dataTables.min.js",
+          "//cdn.css.net/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js",
+          "//cdn.css.net/libs/underscore.js/1.8.3/underscore-min.js"
+        ],
+        function() {
+          _reg_event_handlers();
+          _List.current_portfolio().activate();
+          msgbar('', false);
         }
-    );
-});
+      );
+    });
   </script>
 
 </head>
+
 <body>
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-    <div class="container well well-lg">
+  <div class="container well well-lg">
+    <div class="row">
+      <div class="col-sm-2">
+        <div class="pfbtn">
+          <ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
+          <button id="btn_add_profile" class="btn btn-default btn-sm btn-block">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <hr />
+        <button type="button" class="btn btn-info btn-sm btn-block" data-toggle="modal" data-target="#sync_svr">
+          <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>数据同步
+        </button>
+
+        <hr />
+
+        <div class="form-group">
+          <div class="checkbox">
+            <label for="is_fund">
+              <input type="checkbox" id="is_fund" name="is_fund">基金</label>
+          </div>
+          <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
+        </div>
+      </div>
+
+
+      <div class="col-sm-10">
+        <div class="alert alert-success alert-dismissible fade in" role="alert" id="msgbar">
+          <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+          <span class="msg">Loading ...</span>
+        </div>
+
         <div class="row">
-            <div class="col-sm-2">
-                <div class="pfbtn">
-                    <ul class="nav nav-pills nav-stacked" id="profile_nav"></ul>
-                    <button id="btn_add_profile" class="btn btn-default btn-sm btn-block">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    </button>
-                </div>
+          <div class="col-sm-4">
+            <button class="btn" id="redraw"><span class="glyphicon glyphicon-time"></span>更新时间<span id="last_update">-</span></button>
+          </div>
+          <div class="col-sm-2"></div>
 
-                <hr />
-                    <button type="button" class="btn btn-info btn-sm btn-block" data-toggle="modal" data-target="#sync_svr">
-                       <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>数据同步
-                    </button>
-
-                <hr />
-
-                <div class="form-group">
-                    <div class="checkbox">
-                        <label for="is_fund"><input type="checkbox" id="is_fund" name="is_fund">基金</label>
-                    </div>
-                    <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
-                </div>
-            </div>
-
-
-            <div class="col-sm-10">
-                <div class="alert alert-success alert-dismissible fade in" role="alert" id="msgbar">
-                   <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-                   <span class="msg">Loading ...</span>
-                </div>
-
-                <div class="row">
-                    <div class="col-sm-4">
-                        <button class="btn" id="redraw"><span class="glyphicon glyphicon-time"></span>更新时间<span id="last_update">-</span></button>
-                    </div>
-                    <div class="col-sm-2"></div>
-
-                    <div class="col-sm-2">
-                        <button class="btn btn-success pull-right" id="update_share"
-                            data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading..." >
-                            <span class="glyphicon glyphicon-refresh"></span>更新数据
-                        </button>
-                    </div>
-                    <div class="col-sm-2">
-                        <button class="btn btn-info pull-right" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
-                    </div>
-                    <div class="col-sm-2">
-                        <button class="btn btn-danger pull-right" id="clear_current"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>清除本组</button>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-sm-12 table-responsive" id="data_table_div"></div>
-                </div>
-            </div>
+          <div class="col-sm-2">
+            <button class="btn btn-success pull-right" id="update_share" data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
+              <span class="glyphicon glyphicon-refresh"></span>更新数据
+            </button>
+          </div>
+          <div class="col-sm-2">
+            <button class="btn btn-info pull-right" data-toggle="modal" data-target="#neat_val_window"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>输出净值</button>
+          </div>
+          <div class="col-sm-2">
+            <button class="btn btn-danger pull-right" id="clear_current"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>清除本组</button>
+          </div>
         </div>
-    </div>
 
-    <!-- Modal -->
-    <div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <textarea class="form-control" id="neat_val" readonly></textarea>
-            </div>
+        <div class="row">
+          <div class="col-sm-12 table-responsive" id="data_table_div"></div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Modal -->
-    <div class="modal fade" id="sync_svr" tabindex="-1" role="dialog" aria-labelledby="syncLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="syncLabel">数据同步</h4>
-                </div>
-                <div class="modal-body">
+  <!-- Modal -->
+  <div id="neat_val_window" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <textarea class="form-control" id="neat_val" readonly></textarea>
+      </div>
+    </div>
+  </div>
 
-                    <div class="row">
-                        <label class="col-sm-2 control-label" for="sync_code">Code</label>
-                        <div class="col-md-4"><input type="text" class="form-control" id="sync_code"></input></div>
-                    </div>
-
-                    <div class="row">
-                        <label class="col-sm-2 control-label" for="sync_date">Date</label>
-                        <div class="col-md-4"><input type="text" class="form-control" id="sync_date" readonly></input></div>
-                    </div>
-
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                        <span class='glyphicon glyphicon-remove-circle'></span>Close
-                    </button>
-                    <button type="button" class="btn btn-primary" id="sync_upload"
-                        data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
-                        <span class='glyphicon glyphicon-upload'></span>Upload
-                    </button>
-                    <button type="button" class="btn btn-primary" id="sync_download"
-                        data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
-                        <span class='glyphicon glyphicon-download'></span>Download
-                    </button>
-                </div>
-            </div>
+  <!-- Modal -->
+  <div class="modal fade" id="sync_svr" tabindex="-1" role="dialog" aria-labelledby="syncLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="syncLabel">数据同步</h4>
         </div>
+        <div class="modal-body">
+
+          <div class="row">
+            <label class="col-sm-2 control-label" for="sync_code">Code</label>
+            <div class="col-md-4">
+              <input type="text" class="form-control" id="sync_code"></input>
+            </div>
+          </div>
+
+          <div class="row">
+            <label class="col-sm-2 control-label" for="sync_date">Date</label>
+            <div class="col-md-4">
+              <input type="text" class="form-control" id="sync_date" readonly></input>
+            </div>
+          </div>
+
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            <span class='glyphicon glyphicon-remove-circle'></span>Close
+          </button>
+          <button type="button" class="btn btn-primary" id="sync_upload" data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
+            <span class='glyphicon glyphicon-upload'></span>Upload
+          </button>
+          <button type="button" class="btn btn-primary" id="sync_download" data-loading-text="<span class='glyphicon glyphicon-refresh'></span>Loading...">
+            <span class='glyphicon glyphicon-download'></span>Download
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
+  <div id="chart" class="modal fade" tabindex="-1" role="dialog"></div>
 
+  <script class="tpl" id="tpl_stockchart" type="text/template">
+    <% var r=Math.random(); %>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title"><a href="http://quote.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a></h4>
+          </div>
+          <div class="modal-body">
+            <p><img src="http://image.sinajs.cn/newchart/min/n/<%- code %>.gif?<%- r %>" /></p>
+            <p><img src="http://image.sinajs.cn/newchart/daily/n/<%- code %>.gif?<%- r %>" /></p>
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+  </script>
 
-<script class="tpl" id="tpl_shareimg" type="text/template">
-<% var r=Math.random(); %>
-<a class="has-popover" role="button" tabindex="-1" data-toggle="popover"
-  href="#"
-  title = '<a href="http://quote.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a>'
-  data-content='<p><img src="http://image.sinajs.cn/newchart/min/n/<%- code %>.gif?<%- r %>" /></p><p><img src="http://image.sinajs.cn/newchart/daily/n/<%- code %>.gif?<%- r %>" /></p>'
-  >
-<%- name %>
-</a>
-</script>
-
-<script class="tpl" id="tpl_fundimg" type="text/template">
-<% var r=Math.random(); %>
-<a class="has-popover" role="button" tabindex="-1" data-toggle="popover"
-  href="#"
-  title = '<a href="http://fund.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a>'
-  data-content='<img src="http://image.sinajs.cn/newchart/v5/fundpre/min/<%- code %>.gif?<%- r %>" />'
->
-  <%- name %>
-</a>
-</script>
+  <script class="tpl" id="tpl_fundchart" type="text/template">
+    <% var r=Math.random(); %>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title"><a href="http://fund.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a></h4>
+          </div>
+          <div class="modal-body">
+            <img src="http://image.sinajs.cn/newchart/v5/fundpre/min/<%- code %>.gif?<%- r %>" />
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+  </script>
 
 </body>
+
 </html>
