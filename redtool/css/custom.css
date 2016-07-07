@@ -5,11 +5,12 @@
 .voffset4 { margin-top: 30px; }
 .voffset5 { margin-top: 40px; }
 .voffset6 { margin-top: 60px; }
-.price { font-family: monospace; font-size: 1.1em; }
-.negtive { margin-left:-0.6em; }
+.price { font-family: monospace; font-size: 0.9rem; }
+.negtive { margin-left: -0.5rem; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
 .pfbtn ul button {margin-bottom:10px;}
+#sharenums { font-size: 0.6rem; }
 #neat_val {
     background-color:#F1F1F1;
     margin: 1em auto;
@@ -32,5 +33,4 @@
 #data_table_div th {font-size:80%;}
 #data_table_div tr.reddata { background-color:#FFA7A7;}
 #data_table_div tr.greendata { background-color:#A9FFC4;}
-
 .inputsec textarea { padding:0; height: 100px; width:100%;}
