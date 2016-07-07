@@ -1,5 +1,11 @@
-button span.glyphicon {margin:0 5px;}
-.price { font-family: monospace; font-size: 1.2em; }
+.voffset  { margin-top: 2px; }
+.voffset1 { margin-top: 5px; }
+.voffset2 { margin-top: 10px; }
+.voffset3 { margin-top: 15px; }
+.voffset4 { margin-top: 30px; }
+.voffset5 { margin-top: 40px; }
+.voffset6 { margin-top: 60px; }
+.price { font-family: monospace; font-size: 1.1em; }
 .negtive { margin-left:-0.6em; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
@@ -28,17 +34,3 @@ button span.glyphicon {margin:0 5px;}
 #data_table_div tr.greendata { background-color:#A9FFC4;}
 
 .inputsec textarea { padding:0; height: 100px; width:100%;}
-
-#data_table_div .tooltip-inner {
-    max-width: 800px;
-}
-#data_table_div .tooltip.right .tooltip-inner {
-    background-color:#fff;
-}
-#data_table_div .tooltip.right .tooltip-arrow {
-    border-top-color:#fff;
-}
-
-.popover {
-  max-width: 600px;
-}

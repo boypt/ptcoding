@@ -9,7 +9,7 @@ var Portfolio = function (pfid)  {
     this.sina_ids = [];
     this.last_update = null;
     this.values = {};
-    this.button =  $('<button class="profile_btn btn btn-default btn-sm btn-block">')
+    this.button =  $('<button class="btn btn-secondary btn-sm btn-block profile_btn">')
 					.attr("id", "_pfbtn"+pfid)
 					.attr("data-pfid", pfid)
 					.append($('<span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>'))
@@ -384,7 +384,7 @@ var _reg_event_handlers = function () {
 
     $('#update_share').click(function(event) {
         var cnt = 0;
-        var $btn = $(event.currentTarget).button('loading');
+        var $btn = $(event.currentTarget);
         $.each(_List.portfolio, function () {
             var len = this.update_data(function (pfo) {
                 if(pfo.pfid === _List.curpfid) {
@@ -503,7 +503,7 @@ var _reg_event_handlers = function () {
     });
 
     $('#sync_upload').on('click', function (env) {
-        var $btn = $(env.currentTarget).button('loading');
+        var $btn = $(env.currentTarget);
         var code = $("#sync_code").val();
         var sync = JSON.stringify(_List.sync_svr());
         $.ajax({
@@ -527,7 +527,7 @@ var _reg_event_handlers = function () {
 
 
     $('#sync_download').on('click', function (env) {
-        var $btn = $(env.currentTarget).button('loading');
+        var $btn = $(env.currentTarget);
         var code = $("#sync_code").val();
         if(code.length == 0) {return;}
 
