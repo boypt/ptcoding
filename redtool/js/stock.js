@@ -195,7 +195,7 @@ Portfolio.prototype.init_data_table = function () {
 }
 
 Portfolio.prototype.show_data_table = function () {
-    $("#last_update").text(this.last_update);
+    $("#last_update").val(this.last_update);
 
     var _this = this;
     var dataSet = $.map(this.sina_ids, function (v,i) {
@@ -368,13 +368,6 @@ PortfolioIdList.prototype.switch_portfolio = function (pfid) {
 var _reg_event_handlers = function () {
 
     msgbar("Initiating ... Registering Handlers ...", true);
-
-    /* ----- NAV Buttons ------- */
-    $('#redraw').click(function(evn) {
-        var o = _List.current_portfolio();
-        o.table_api.order( [ 0, 'asc' ] ).draw();
-        return false;
-    });
 
     $('#update_share').click(function(event) {
         var cnt = 0;

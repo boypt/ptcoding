@@ -78,10 +78,7 @@
         <hr />
 
         <div class="form-group">
-          <div class="checkbox">
-            <label for="is_fund">
-              <input type="checkbox" id="is_fund" name="is_fund">基金</label>
-          </div>
+          <input type="checkbox" id="is_fund" name="is_fund"> 基金
           <textarea class="form-control input-sm" rows="8" id="sharenums"></textarea>
         </div>
       </div>
@@ -95,9 +92,13 @@
 
         <div class="row">
           <div class="col-sm-4">
-            <button class="btn btn-secondary" id="redraw">
-              <i class="fa fa-clock-o" aria-hidden="true"></i>
-              更新时间<span id="last_update">-</span></button>
+            <div class="input-group">
+              <span class="input-group-addon">
+                <i class="fa fa-clock-o" aria-hidden="true"></i>
+                <small>更新时间</small>
+              </span>
+              <input id="last_update" type="text" class="form-control" readonly>
+            </div>
           </div>
           <div class="col-sm-2"></div>
 
@@ -229,7 +230,8 @@
   <script class="tpl" id="tpl_profilobtn" type="text/template">
     <li style="display: none;">
       <button data-pfid="<%- pfid %>" id="_pfbtn<%- pfid %>" class="btn btn-secondary btn-sm btn-block profile_btn">
-        <span>组合<%- pfid %></span>
+        <i class="fa fa-th-large" aria-hidden="true"></i>
+        组合<%- pfid %>
       </button>
     </li>
   </script>
