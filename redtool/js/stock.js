@@ -367,8 +367,6 @@ PortfolioIdList.prototype.switch_portfolio = function (pfid) {
 
 var _reg_event_handlers = function () {
 
-    msgbar("Initiating ... Registering Handlers ...", true);
-
     $('#update_share').click(function(event) {
         var cnt = 0;
         var $btn = $(event.currentTarget);
@@ -458,14 +456,19 @@ var _reg_event_handlers = function () {
     var check_sync = function (code, succ) {
         var json = "/json/"+code+".json";
         console.log("getting "+json);
+        $.scojs_message("Loading /json/"+code, $.scojs_message.TYPE_OK)
         return $.getJSON(json)
-    }
+    };
 
     $("#sync_svr")
         .on('shown.bs.modal', function () {
             var code = localStorage.getItem("sync_code");
+            if(code == null) {
+              return;
+            }
             $("#sync_code").val(code);
             check_sync(code).done(function(json) {
+                $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
                 $("#sync_date").val(new Date(json.syncdate).toLocaleString());
             });
         });
@@ -477,10 +480,11 @@ var _reg_event_handlers = function () {
         localStorage.setItem("sync_code", code);
         check_sync(code)
             .done(function(json) {
+                $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
                 $("#sync_date").val(new Date(json.syncdate).toLocaleString());
             })
             .fail(function () {
-                $("#sync_date").val('No such code.');
+                $.scojs_message("Code not exists: "+code, $.scojs_message.TYPE_ERROR);
             });
     });
 
@@ -488,12 +492,14 @@ var _reg_event_handlers = function () {
         var $btn = $(env.currentTarget);
         var code = $("#sync_code").val();
         var sync = JSON.stringify(_List.sync_svr());
+        $.scojs_message("Sync to server: "+code, $.scojs_message.TYPE_OK);
         $.ajax({
             method: "POST",
             url: "/storage.php",
             data: { code: code, sync: sync}
         })
         .done(function( msg ) {
+          $.scojs_message("Done: "+code, $.scojs_message.TYPE_OK);
             check_sync(code)
                 .done(function(json) {
                     $("#sync_date").val(new Date(json.syncdate).toLocaleString());
@@ -528,22 +534,11 @@ var _reg_event_handlers = function () {
     });
 
     /*----------------------------------------*/
+    _bar.go(90);
 }
 
 var _ui_init = function () {
-    msgbar("Building UI Components ...", true);
     window._List = new PortfolioIdList();
     _List.restore_portfolios();
-}
-
-
-var msgbar = function (msg, show) {
-    var b = $("#msgbar");
-    if(msg.length>0)
-        b.find('span.msg').text(msg);
-    if(show === true) {
-        b.slideDown();
-    }else if(show === false) {
-        b.slideUp();
-    }
+    _bar.go(80);
 }
