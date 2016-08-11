@@ -223,6 +223,7 @@ Portfolio.prototype.update_data = function (callback) {
         console.log("update pfid " + this.pfid);
         var qsstr = 'list='+qs.join(',');
         var _this = this;
+        _bar.go(30);
         $.getScript('api.php?'+qsstr, function () {
             $.each(qs, function (i,v) {
                 _this.values[v] = window['hq_str_'+v];
@@ -233,6 +234,7 @@ Portfolio.prototype.update_data = function (callback) {
             if(typeof callback === 'function') {
                 callback(_this);
             }
+            _bar.go(100);
         });
     }
 
@@ -467,25 +469,34 @@ var _reg_event_handlers = function () {
               return;
             }
             $("#sync_code").val(code);
-            check_sync(code).done(function(json) {
-                $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
-                $("#sync_date").val(new Date(json.syncdate).toLocaleString());
+            check_sync(code)
+            .done(function(json) {
+              $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
+              $("#sync_date").val(new Date(json.syncdate).toLocaleString());
+            })
+            .fail(function () {
+              $.scojs_message("Code not exists: "+code, $.scojs_message.TYPE_ERROR);
+              $("#sync_code").val('');
+              localStorage.removeItem("sync_code");
             });
         });
 
 
     $('#sync_code').blur(function (evn) {
-        $("#sync_date").val('Loading...');
         var code = $("#sync_code").val();
-        localStorage.setItem("sync_code", code);
-        check_sync(code)
-            .done(function(json) {
-                $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
-                $("#sync_date").val(new Date(json.syncdate).toLocaleString());
-            })
-            .fail(function () {
-                $.scojs_message("Code not exists: "+code, $.scojs_message.TYPE_ERROR);
-            });
+        var lo_code = localStorage.getItem("sync_code");
+        if(lo_code != code) {
+          $("#sync_date").val('Loading...');
+          check_sync(code)
+          .done(function(json) {
+            localStorage.setItem("sync_code", code);
+            $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
+            $("#sync_date").val(new Date(json.syncdate).toLocaleString());
+          })
+          .fail(function () {
+            $.scojs_message("Code not exists: "+code, $.scojs_message.TYPE_ERROR);
+          });
+        }
     });
 
     $('#sync_upload').on('click', function (env) {
