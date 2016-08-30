@@ -68,7 +68,7 @@ Portfolio.prototype.parse_ids = function () {
         }else{
             qs = $.map(this.ids.match(/[0-9]{6}/g), function(v) {
                 var marketsig = parseInt(v.substr(0,1));
-                var pfx = marketsig>=5?'s_sh':'s_sz';
+                var pfx = marketsig>=5?'sh':'sz';
                 return pfx+v;
             });
         }
@@ -154,28 +154,39 @@ Portfolio.prototype.init_data_table = function () {
                         return window.render.securityname({code: code, name: row[1], type: 'stock'});
                     }
                 },
+                { "title": "open", "visible": false },
+                { "title": "last_close", "visible": false },
                 { "title": "现价",
                     "render": val_render,
                 },
+                // { "title": "high", "visible": false },
+                // { "title": "low", "visible": false },
+                // { "title": "b1", "visible": false },
+                // { "title": "s1", "visible": false },
+                // { "title": "vol", "visible": false },
+                // { "title": "amt", "visible": false },
                 { "title": "涨跌",
-                    "render": val_render,
+                    "render": function ( data, type, row ) {
+                        var diff = (row[4] - row[3]).toFixed(4);
+                        return val_render(diff, type, row);
+                    }
                 },
                 { "title": "涨跌幅",
-                    "render": function (d,t,r){return val_render(d+'%',t,r);},
-                },
-                { "title": "现量", "visible": false },
-                { "title": "现手", "visible": false }
+                    "render": function ( data, type, row ) {
+                        var diffamt = (((row[4] - row[3])/row[3])*100).toFixed(2);
+                        return val_render(diffamt+'%', type, row);
+                    }
+                }
             ];
 
             drawcb = function( settings ) {
                 var tb = this.api();
                 tb.rows().every( function () {
                     var row = this.data();
-                    var incr = parseFloat(row[3]);
+                    var incr = row[4] - row[3];
                     if(incr > 0) { $(this.node()).addClass('reddata'); }
                     else if (incr < 0) { $(this.node()).addClass('greendata'); }
                 });
-
             }
         }
 
@@ -212,7 +223,12 @@ Portfolio.prototype.show_data_table = function () {
     this.table_api.clear().rows.add(dataSet).draw();
     $(this.table_id).parent(".dataTables_wrapper").slideDown();
 
-    var vals = $.map(dataSet, function (s) { return s[2]; });
+    if(this.is_fund) {
+      var vals = $.map(dataSet, function (s) { return s[2]; });
+    } else {
+      var vals = $.map(dataSet, function (s) { return s[4]; });
+    }
+
     $("#neat_val").text(vals.join("\n"));
 }
 
