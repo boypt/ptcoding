@@ -150,7 +150,7 @@ Portfolio.prototype.init_data_table = function () {
                     "className":"dt-nowrap tg_name",
                     "orderable": false,
                     "render": function ( data, type, row ) {
-                        var code = row[row.length-1].substr(2);
+                        var code = row[row.length-1];
                         return window.render.securityname({code: code, name: row[1], type: 'stock'});
                     }
                 },
