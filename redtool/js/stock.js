@@ -167,7 +167,7 @@ Portfolio.prototype.init_data_table = function () {
                 // { "title": "amt", "visible": false },
                 { "title": "涨跌",
                     "render": function ( data, type, row ) {
-                        var diff = (row[4] - row[3]).toFixed(4);
+                        var diff = (row[4] - row[3]).toFixed(4).replace(/\.?0*$/,'');
                         return val_render(diff, type, row);
                     }
                 },
