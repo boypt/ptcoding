@@ -27,6 +27,10 @@ if [ "`stat -c '%a' $AUTHKEY`" != "600" ]; then
     chmod 600 $AUTHKEY;
 fi
 
+if hash selinuxenabled && selinuxenabled; then
+    restorecon -R -v $SSHHOME
+fi
+
 echo "Done Adding Keys. -- by Preston M."
 exit 0;
 
