@@ -6,25 +6,22 @@ import sys
 import shutil
 from os.path import basename
 
+chrome_ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36';
 
 req_hdrs = {
-    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
+    'User-Agent': chrome_ua,
     'Referer': 'http://www.waybig.com/blog/'
 }
 
-upld_hdrs = {
-    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
-    'Referer': 'http://www.imagebam.com/basic-upload',
-    'Origin': 'http://www.imagebam.com',
-    'Cookie': '__utmz=187550128.1479696868.1.1.utmccn=(direct)|utmcsr=(direct)|utmcmd=(none); IBsession=621396e45175fcf796ab80543eb92a09; __utma=187550128.1910678221.1479696868.1483059542.1483084225.10; __utmc=187550128; __utmb=187550128'
-}
+
+proxies = { 'http': 'http://localhost:7070' }
 
 def main():
 
     url=sys.argv[1]
     print("PostUrl: \n", url)
 
-    page = requests.get(url, req_hdrs)
+    page = requests.get(url, req_hdrs, proxies=proxies)
     content = page.content
     # with open('/tmp/men.html') as f:
     #     content = f.read()
@@ -36,10 +33,9 @@ def main():
     coverimg = doc('.entry-content img:first').attr('src')
 
     print("Title: \n", title)
-    print("Coverimg Url:\n", coverimg)
-
+    #print("Coverimg Url:\n", coverimg)
     # print(" ---download coverimg")
-    imgresp = requests.get(coverimg, req_hdrs , stream=True)
+    imgresp = requests.get(coverimg, req_hdrs , proxies=proxies, stream=True)
     text = upload(coverimg, imgresp.raw)
 
     print("BB Code:\n", text)
@@ -57,7 +53,12 @@ def upload(url, file_obj):
             'gallery_description':'',
             'gallery_existing':'',
         },
-        headers = upld_hdrs,
+    headers = {
+        'User-Agent': chrome_ua,
+        'Referer': 'http://www.imagebam.com/basic-upload',
+        'Cookie': 'IBsession=621396e45175fcf796ab80543eb92a09;' 
+    },
+        proxies=proxies,
         files = [
             ('file[]', (basename(url), file_obj)),
         ]);
