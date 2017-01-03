@@ -27,18 +27,25 @@ def main():
     #     content = f.read()
 
     doc = pq(content)
-
     title = doc('.entry-title').text()
-
     coverimg = doc('.entry-content img:first').attr('src')
 
     print("Title: \n", title)
-    #print("Coverimg Url:\n", coverimg)
-    # print(" ---download coverimg")
+    print("Coverimg Url:\n", coverimg)
+    print(" ---download coverimg")
     imgresp = requests.get(coverimg, req_hdrs , proxies=proxies, stream=True)
-    text = upload(coverimg, imgresp.raw)
+    imgbbtext = upload(coverimg, imgresp.raw)
+    print("done. ----------------\n\n")
 
-    print("BB Code:\n", text)
+
+    print("""
+[url={0}][size=6]{1}[/size][/url]
+
+[url]{0}[/url]
+{2}
+
+[emule][/emule]
+\n""".format(url, title, imgbbtext))
 
 def upload(url, file_obj):
     # print(" ---post coverimg")
@@ -56,7 +63,7 @@ def upload(url, file_obj):
     headers = {
         'User-Agent': chrome_ua,
         'Referer': 'http://www.imagebam.com/basic-upload',
-        'Cookie': 'IBsession=621396e45175fcf796ab80543eb92a09;' 
+        'Cookie': 'IBsession=621396e45175fcf796ab80543eb92a09;'
     },
         proxies=proxies,
         files = [
