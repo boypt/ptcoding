@@ -18,6 +18,10 @@ proxies = { 'http': 'http://localhost:7070' }
 
 def main():
 
+    if len(sys.argv) != 2:
+        print("{0} url".format(*sys.argv))
+        sys.exit(1)
+
     url=sys.argv[1]
     print("PostUrl: \n", url)
 
