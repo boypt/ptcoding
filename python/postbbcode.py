@@ -26,6 +26,10 @@ def main():
     print("PostUrl: \n", url)
 
     page = requests.get(url, req_hdrs, proxies=proxies)
+
+    if page.status_code != 200:
+        raise IOError("---- get page failed.")
+
     content = page.content
     # with open('/tmp/men.html') as f:
     #     content = f.read()
@@ -38,6 +42,10 @@ def main():
     print("Coverimg Url:\n", coverimg)
     print(" ---download coverimg")
     imgresp = requests.get(coverimg, req_hdrs , proxies=proxies, stream=True)
+
+    if imgresp.status_code != 200:
+        raise IOError("---- get img failed.")
+
     imgbbtext = upload(coverimg, imgresp.raw)
     print("done. ----------------\n\n")
 
@@ -52,7 +60,7 @@ def main():
 \n""".format(url, title, imgbbtext))
 
 def upload(url, file_obj):
-    # print(" ---post coverimg")
+    print(" ---post coverimg")
     imgbamresp = requests.post('http://www.imagebam.com/sys/upload/save',
         {
             'content_type': '1',
@@ -76,6 +84,9 @@ def upload(url, file_obj):
 
     # print(imgbamresp.content)
     # import pdb; pdb.set_trace()
+    if imgbamresp.status_code != 200:
+        raise IOError("---- upload failed.")
+
     doc = pq(imgbamresp.content)
     text = doc('table textarea:first').text()
 
