@@ -54,7 +54,7 @@ install -v -m755 ./$UNDIR/ngrok /usr/local/bin/
 cd -
 rm -rfv $TEMPDIR
 
-sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' rc.local
+sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' /etc/rc.local
 echo "---------------------"
 cat /etc/rc.local
 echo "Done"
