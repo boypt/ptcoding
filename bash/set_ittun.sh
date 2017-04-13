@@ -50,13 +50,7 @@ EOF
 
 cat /etc/ngrok.yml 
 echo "---------------------"
-
-if grep -q 'exit 0' /etc/rc.local; then
-    sed '/^exit/d' -i /etc/rc.local
-fi
-
-echo 'ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &' >> /etc/rc.local
-
+sed -e -i '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' rc.local
 echo "---------------------"
 cat /etc/rc.local
 echo "Done"
