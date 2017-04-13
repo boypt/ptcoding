@@ -16,4 +16,3 @@ if (isset($_POST["sync"]) && isset($_POST["code"])) {
     $path = $dir . "/${code}.json";
     file_put_contents($path,$sync,LOCK_EX);
 }
-

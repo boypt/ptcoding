@@ -472,7 +472,7 @@ var _reg_event_handlers = function () {
     });
 
     var check_sync = function (code, succ) {
-        var json = "/json/"+code+".json";
+        var json = "json/"+code+".json";
         console.log("getting "+json);
         $.scojs_message("Loading /json/"+code, $.scojs_message.TYPE_OK)
         return $.getJSON(json)
@@ -522,7 +522,7 @@ var _reg_event_handlers = function () {
         $.scojs_message("Sync to server: "+code, $.scojs_message.TYPE_OK);
         $.ajax({
             method: "POST",
-            url: "/storage.php",
+            url: "storage.php",
             data: { code: code, sync: sync}
         })
         .done(function( msg ) {
