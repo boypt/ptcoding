@@ -17,12 +17,12 @@ setconfig () {
     done
 
     cat > /etc/ngrok.yml << EOF
-    server_addr: "ittun.com:44433"
-    tunnels: 
+server_addr: "ittun.com:44433"
+tunnels: 
     ssh:
-    remote_port: $PORT
-    proto:
-    tcp: ":22"
+        remote_port: $PORT
+        proto:
+            tcp: ":22"
 EOF
 
     cat /etc/ngrok.yml 
