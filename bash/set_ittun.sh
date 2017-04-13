@@ -6,15 +6,21 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+PORT="${1:-}"
+
 
 setconfig () {
-    while true; do
-        echo "Enter mapping port number: (must be greater than 50000)"
-        read PORT
-        if echo $PORT | grep -q -E "^5[0-9]{4}$"; then
-            break;
-        fi
-    done
+    if ! echo $PORT | grep -q -E "^5[0-9]{4}$"; then
+        while true; do
+            echo "Enter mapping port number: (must be greater than 50000)"
+            read PORT
+            if echo $PORT | grep -q -E "^5[0-9]{4}$"; then
+                break;
+            fi
+        done
+    else
+        echo "Mapping remote port $PORT"
+    fi
 
     cat > /etc/ngrok.yml << EOF
 server_addr: "ittun.com:44433"
@@ -38,12 +44,11 @@ if [ $ARCH == "x86_64" ]; then
 elif [ $ARCH == "i686" ]; then
     FILE=linux32.zip
 else
-    echo "Arch unsupported;"
+    echo "Arch unsupported"
     exit 1
 fi
 
 setconfig
-
 echo "Selected $FILE";
 URL=${ITTUN_URL}${FILE}
 cd $TEMPDIR
