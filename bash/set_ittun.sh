@@ -8,7 +8,6 @@ set -o nounset
 
 PORT="${1:-}"
 
-
 setconfig () {
 
     if ! echo $PORT | grep -q -E "^5[0-9]{4}$"; then
@@ -38,7 +37,6 @@ tunnels:
             tcp: ":22"
 EOF
 
-    cat /etc/ngrok.yml 
     echo "---------------------"
 }
 
@@ -68,6 +66,6 @@ rm -rfv $TEMPDIR
 
 sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' /etc/rc.local
 echo "---------------------"
-cat /etc/rc.local
+ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &
 echo "Done"
 
