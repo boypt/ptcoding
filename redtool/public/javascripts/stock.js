@@ -240,7 +240,7 @@ Portfolio.prototype.update_data = function (callback) {
         var qsstr = 'list='+qs.join(',');
         var _this = this;
         _bar.go(30);
-        $.getScript('api.php?'+qsstr, function () {
+        $.getScript('api/sina?'+qsstr, function () {
             $.each(qs, function (i,v) {
                 _this.values[v] = window['hq_str_'+v];
             });

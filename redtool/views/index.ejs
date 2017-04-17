@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="//cdn.css.net/libs/twitter-bootstrap/4.0.0-alpha.3/css/bootstrap.css">
   <link rel="stylesheet" href="//cdn.css.net/libs/font-awesome/4.6.3/css/font-awesome.min.css">
   <link rel="stylesheet" href="//cdn.css.net/libs/sco.js/1.1.0/css/sco.message.min.css">
-  <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="stylesheets/custom.css">
 
   <!-- JavaScript
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -33,7 +33,8 @@
       "//cdn.css.net/libs/nanobar/0.4.2/nanobar.min.js",
       "//cdn.css.net/libs/jquery/3.1.0/jquery.min.js",
       "//cdn.css.net/libs/tether/1.3.2/js/tether.min.js", // require by bootstrap 4
-      "js/stock.js?r=10"
+      "javascripts/js_templates.js",
+      "javascripts/stock.js?r=10"
     ], function() {
       window._bar = new Nanobar();
       _bar.go(20);
@@ -48,10 +49,10 @@
           _bar.go(50);
           $(function () {
             window.render = {
-              fund: _.template($("#tpl_fundchart").html()),
-              stock: _.template($("#tpl_stockchart").html()),
-              securityname: _.template($("#tpl_securityname").html()),
-              profilobtn: _.template($("#tpl_profilobtn").html())
+              fund: JST['tpl_fundchart'],
+              stock: JST['tpl_stockchart'],
+              securityname: JST['tpl_securityname'],
+              profilobtn: JST['tpl_profilobtn']
             };
             _ui_init();
             _reg_event_handlers();
@@ -193,56 +194,15 @@
   <div id="chart" class="modal fade" tabindex="-1" role="dialog"></div>
 
   <script class="tpl" id="tpl_stockchart" type="text/template">
-    <% var r=Math.random(); %>
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title"><a href="http://quote.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a></h4>
-          </div>
-          <div class="modal-body">
-            <p><img src="http://image.sinajs.cn/newchart/min/n/<%- code %>.gif?<%- r %>" /></p>
-            <p><img src="http://image.sinajs.cn/newchart/daily/n/<%- code %>.gif?<%- r %>" /></p>
-          </div>
-        </div>
-        <!-- /.modal-content -->
-      </div>
-      <!-- /.modal-dialog -->
   </script>
 
   <script class="tpl" id="tpl_fundchart" type="text/template">
-    <% var r=Math.random(); %>
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title"><a href="http://fund.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a></h4>
-          </div>
-          <div class="modal-body">
-            <img src="http://image.sinajs.cn/newchart/v5/fundpre/min/<%- code %>.gif?<%- r %>" />
-          </div>
-        </div>
-        <!-- /.modal-content -->
-      </div>
-      <!-- /.modal-dialog -->
   </script>
 
   <script class="tpl" id="tpl_securityname" type="text/template">
-    <% var href;
-    if(type == 'fund') { href = "http://fund.eastmoney.com/"+code+".html"; }
-    else if(type == 'stock') { href = "http://quote.eastmoney.com/"+code+".html"; } %>
-    <a href="<%- href %>" data-type="<%- type %>" data-name="<%- name %>" data-code="<%- code %>" data-toggle="modal" data-target="#chart">
-      <%- name %>
-    </a>
   </script>
 
   <script class="tpl" id="tpl_profilobtn" type="text/template">
-    <li style="display: none;">
-      <button data-pfid="<%- pfid %>" id="_pfbtn<%- pfid %>" class="btn btn-secondary btn-sm btn-block profile_btn">
-        <i class="fa fa-th-large" aria-hidden="true"></i>
-        组合<%- pfid %>
-      </button>
-    </li>
   </script>
 
 </body>

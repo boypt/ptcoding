@@ -1,0 +1,15 @@
+    <% var r=Math.random(); %>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title"><a href="http://quote.eastmoney.com/<%- code %>.html" target="_blank"><%- name %></a></h4>
+          </div>
+          <div class="modal-body">
+            <p><img src="http://image.sinajs.cn/newchart/min/n/<%- code %>.gif?<%- r %>" /></p>
+            <p><img src="http://image.sinajs.cn/newchart/daily/n/<%- code %>.gif?<%- r %>" /></p>
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->

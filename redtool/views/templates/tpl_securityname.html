@@ -1,0 +1,6 @@
+    <% var href;
+    if(type == 'fund') { href = "http://fund.eastmoney.com/"+code+".html"; }
+    else if(type == 'stock') { href = "http://quote.eastmoney.com/"+code+".html"; } %>
+    <a href="<%- href %>" data-type="<%- type %>" data-name="<%- name %>" data-code="<%- code %>" data-toggle="modal" data-target="#chart">
+      <%- name %>
+    </a>
