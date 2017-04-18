@@ -71,7 +71,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <div class="container voffset4">
     <div class="row">
-      <div class="col-sm-2">
+      <div class="col col-sm-2">
         <div class="pfbtn">
           <ul class="nav flex-column" id="profile_nav"></ul>
           <button id="btn_add_profile" class="btn btn-secondary btn-sm btn-block">
@@ -92,33 +92,25 @@
         </div>
       </div>
 
-      <div class="col-sm-10">
-        <div class="row">
-          <div class="col-sm-4">
+      <div class="col-10 col-md-auto">
+        <div class="d-flex justify-content-md-between">
+          <div class="d-inline-flex">
             <div class="input-group">
-              <span class="input-group-addon">
-                <i class="fa fa-clock-o" aria-hidden="true"></i>
-                <small>更新时间</small>
-              </span>
+              <span class="input-group-addon"><i class="fa fa-clock-o" aria-hidden="true"></i></span>
               <input id="last_update" type="text" class="form-control" readonly>
             </div>
           </div>
-          <div class="col-sm-2"></div>
 
-          <div class="col-sm-2">
+          <div class="row justify-content-around main_btns">
             <button class="btn btn-success pull-right" id="update_share">
               <i class="fa fa-refresh" aria-hidden="true"></i>
               更新数据
             </button>
-          </div>
-          <div class="col-sm-2">
-            <button class="btn btn-info pull-right" data-toggle="modal" data-target="#neat_val_window">
+            <button class="btn btn-info" data-toggle="modal" data-target="#neat_val_window">
               <i class="fa fa-file" aria-hidden="true"></i>
               输出净值
             </button>
-          </div>
-          <div class="col-sm-2">
-            <button class="btn btn-danger pull-right" id="clear_current">
+            <button class="btn btn-danger" id="clear_current">
               <i class="fa fa-remove" aria-hidden="true"></i>
               清除本组
             </button>
@@ -190,7 +182,12 @@
     </div>
   </div>
 
-  <div id="chart" class="modal fade" tabindex="-1" role="dialog"></div>
+  <div id="chart" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+      </div>
+    </div>
+  </div>
 
 </body>
 

@@ -118,6 +118,9 @@ Portfolio.prototype.init_data_table = function () {
                     "render": val_render,
                 },
                 { "title": "净值日期", "orderable": false,
+                  "render": function (data, type, row) {
+                    return '<span class="last_date">'+data+'</span>'
+                  }
                 },
                 { "title": "？？", "visible": false },
                 { "title": "涨跌幅",
@@ -469,7 +472,7 @@ var _reg_event_handlers = function () {
       var $modal = $(evn.target);
       var type = $lnk.data('type');
       if(_(render).has(type)) {
-        $modal.html(render[type]({code:$lnk.data('code'), name:$lnk.data('name')}));
+        $modal.find(".modal-content:first").html(render[type]({code:$lnk.data('code'), name:$lnk.data('name')}));
       }
     });
 

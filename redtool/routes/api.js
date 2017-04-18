@@ -42,8 +42,6 @@ router.get('/sina', function(req, res, next) {
 router.post('/storage', function(req, res, next) {
 
   debug(req.body);
-  // res.json({msg:'ok'});
-  // res.json(req.body);
 
   storage.set(req.body.idnt, req.body, function (err) {
     res.json({msg:'ok', idnt: idnt});

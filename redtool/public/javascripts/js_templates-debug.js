@@ -6,17 +6,17 @@ obj || (obj = {});
 var __t, __p = '', __e = _.escape, __j = Array.prototype.join;
 function print() { __p += __j.call(arguments, '') }
 with (obj) {
-__p += '\n    ';
+
  var r=Math.random(); ;
-__p += '\n      <div class="modal-dialog">\n        <div class="modal-content">\n          <div class="modal-header">\n            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>\n            <h4 class="modal-title"><a href="http://fund.eastmoney.com/' +
+__p += '\n<div class="modal-header">\n  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>\n  <h4 class="modal-title"><a href="http://fund.eastmoney.com/' +
 __e( code ) +
 '.html" target="_blank">' +
 __e( name ) +
-'</a></h4>\n          </div>\n          <div class="modal-body">\n            <img src="http://image.sinajs.cn/newchart/v5/fundpre/min/' +
+'</a></h4>\n</div>\n<div class="modal-body">\n  <div class="d-flex justify-content-center">\n    <img src="http://image.sinajs.cn/newchart/v5/fundpre/min/' +
 __e( code ) +
 '.gif?' +
 __e( r ) +
-'" />\n          </div>\n        </div>\n        <!-- /.modal-content -->\n      </div>\n      <!-- /.modal-dialog -->\n';
+'" />\n  </div>\n</div>\n';
 
 }
 return __p
@@ -76,19 +76,19 @@ function print() { __p += __j.call(arguments, '') }
 with (obj) {
 __p += '    ';
  var r=Math.random(); ;
-__p += '\n      <div class="modal-dialog">\n        <div class="modal-content">\n          <div class="modal-header">\n            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>\n            <h4 class="modal-title"><a href="http://quote.eastmoney.com/' +
+__p += '\n    <div class="modal-header">\n      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>\n      <h4 class="modal-title"><a href="http://quote.eastmoney.com/' +
 __e( code ) +
 '.html" target="_blank">' +
 __e( name ) +
-'</a></h4>\n          </div>\n          <div class="modal-body">\n            <p><img src="http://image.sinajs.cn/newchart/min/n/' +
+'</a></h4>\n    </div>\n    <div class="modal-body">\n      <div class="d-flex justify-content-center"><img src="http://image.sinajs.cn/newchart/min/n/' +
 __e( code ) +
 '.gif?' +
 __e( r ) +
-'" /></p>\n            <p><img src="http://image.sinajs.cn/newchart/daily/n/' +
+'" /></div>\n      <div class="d-flex justify-content-center"><img src="http://image.sinajs.cn/newchart/daily/n/' +
 __e( code ) +
 '.gif?' +
 __e( r ) +
-'" /></p>\n          </div>\n        </div>\n        <!-- /.modal-content -->\n      </div>\n      <!-- /.modal-dialog -->\n';
+'" /></div>\n    </div>\n';
 
 }
 return __p
