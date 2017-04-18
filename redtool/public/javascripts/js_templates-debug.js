@@ -28,7 +28,7 @@ window["JST"]["tpl_profilobtn"] = function(obj) {
 obj || (obj = {});
 var __t, __p = '', __e = _.escape;
 with (obj) {
-__p += '    <li style="display: none;">\n      <button data-pfid="' +
+__p += '    <li class="nav-item" style="display: none;">\n      <button data-pfid="' +
 __e( pfid ) +
 '" id="_pfbtn' +
 __e( pfid ) +
