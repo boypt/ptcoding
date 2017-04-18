@@ -294,11 +294,13 @@ var PortfolioIdList = function ()  {
     this.restore();
 }
 
-PortfolioIdList.prototype.sync_svr = function () {
+PortfolioIdList.prototype.sync_svr = function (idnt) {
+    console.log('gening sync obj with idnt: '+idnt);
     var obj = {};
     obj[this.storage_key] = this.list;
     obj["portfolio"] = {};
-    obj["syncdate"] = new Date().getTime();
+    obj["idnt"] = idnt;
+    obj["syncts"] = new Date().getTime();
 
     $.each(this.portfolio, function () {
         obj["portfolio"][this.storage_key] = this.objectfy();
@@ -471,69 +473,73 @@ var _reg_event_handlers = function () {
       }
     });
 
-    var check_sync = function (code, succ) {
-        var json = "json/"+code+".json";
+    var check_sync = function (idnt, succ) {
+        var json = 'api/storage/'+idnt;
         console.log("getting "+json);
-        $.scojs_message("Loading /json/"+code, $.scojs_message.TYPE_OK)
+        $.scojs_message("Loading /json/"+idnt, $.scojs_message.TYPE_OK)
         return $.getJSON(json)
     };
 
     $("#sync_svr")
         .on('shown.bs.modal', function () {
-            var code = localStorage.getItem("sync_code");
-            if(code == null) {
-              return;
-            }
-            $("#sync_code").val(code);
-            check_sync(code)
+            var idnt = localStorage.getItem("sync_idnt");
+            if(!idnt) { return; }
+            $("#sync_idnt").val(idnt);
+            check_sync(idnt)
             .done(function(json) {
-              $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
-              $("#sync_date").val(new Date(json.syncdate).toLocaleString());
+              $.scojs_message("Loaded: "+json.idnt, $.scojs_message.TYPE_OK);
+              $("#sync_date").val(new Date(json.syncts).toLocaleString());
             })
             .fail(function () {
               $.scojs_message("Code not exists: "+code, $.scojs_message.TYPE_ERROR);
-              $("#sync_code").val('');
-              localStorage.removeItem("sync_code");
+              $("#sync_idnt").val('');
+              localStorage.removeItem("sync_idnt");
             });
         });
 
 
-    $('#sync_code').blur(function (evn) {
-        var code = $("#sync_code").val();
-        var lo_code = localStorage.getItem("sync_code");
-        if(lo_code != code) {
+    $('#sync_check').click(function (evn) {
+        var idnt = $("#sync_idnt").val();
+        var lo_idnt = localStorage.getItem("sync_idnt");
+        if(lo_idnt != idnt) {
           $("#sync_date").val('Loading...');
-          check_sync(code)
+          check_sync(idnt)
           .done(function(json) {
-            localStorage.setItem("sync_code", code);
-            $.scojs_message("Loaded: "+code, $.scojs_message.TYPE_OK);
-            $("#sync_date").val(new Date(json.syncdate).toLocaleString());
+            localStorage.setItem("sync_idnt", json.idnt);
+            $.scojs_message("Loaded: "+json.idnt, $.scojs_message.TYPE_OK);
+            $("#sync_date").val(new Date(json.syncts).toLocaleString());
           })
           .fail(function () {
-            $.scojs_message("Code not exists: "+code, $.scojs_message.TYPE_ERROR);
+            $("#sync_date").val('');
+            $.scojs_message("Code not exists: "+idnt, $.scojs_message.TYPE_ERROR);
           });
         }
     });
 
     $('#sync_upload').on('click', function (env) {
         var $btn = $(env.currentTarget);
-        var code = $("#sync_code").val();
-        var sync = JSON.stringify(_List.sync_svr());
-        $.scojs_message("Sync to server: "+code, $.scojs_message.TYPE_OK);
+        var idnt = $("#sync_idnt").val();
+        var data = _List.sync_svr(idnt);
+
+        $.scojs_message("Sync to server: "+idnt, $.scojs_message.TYPE_OK);
         $.ajax({
             method: "POST",
-            url: "storage.php",
-            data: { code: code, sync: sync}
+            url: "api/storage",
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data)
         })
-        .done(function( msg ) {
-          $.scojs_message("Done: "+code, $.scojs_message.TYPE_OK);
-            check_sync(code)
-                .done(function(json) {
-                    $("#sync_date").val(new Date(json.syncdate).toLocaleString());
-                })
-                .fail(function () {
-                    $("#sync_date").val('No such code.');
-                });
+        .done(function( json ) {
+          $.scojs_message("Done: "+json.idnt, $.scojs_message.TYPE_OK);
+          check_sync(json.idnt)
+
+          .done(function(json) {
+            localStorage.setItem("sync_idnt", json.idnt);
+            $("#sync_date").val(new Date(json.syncts).toLocaleString());
+          })
+          .fail(function () {
+            $("#sync_date").val('No such code.');
+          });
         })
         .always(function() {
             $btn.button('reset');
@@ -543,10 +549,10 @@ var _reg_event_handlers = function () {
 
     $('#sync_download').on('click', function (env) {
         var $btn = $(env.currentTarget);
-        var code = $("#sync_code").val();
-        if(code.length == 0) {return;}
+        var idnt = $("#sync_idnt").val();
+        if(!idnt) {return;}
 
-        check_sync(code)
+        check_sync(idnt)
             .done(function(json) {
                 localStorage.setItem(_List.storage_key, JSON.stringify(json.pf_list));
                 $.each(json.portfolio, function (k,v) { localStorage.setItem(k, JSON.stringify(v)); });

@@ -158,9 +158,9 @@
         <div class="modal-body">
 
           <div class="row">
-            <label class="col-sm-2 control-label" for="sync_code">Code</label>
+            <label class="col-sm-2 control-label" for="sync_idnt">Code</label>
             <div class="col-md-4">
-              <input type="text" class="form-control" id="sync_code"></input>
+              <input type="text" class="form-control" id="sync_idnt"></input>
             </div>
           </div>
 
@@ -173,13 +173,13 @@
 
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">
-            <i class="fa fa-remove" aria-hidden="true"></i>
-            Close
-          </button>
-          <button type="button" class="btn btn-primary" id="sync_upload">
+          <button type="button" class="btn btn-danger" id="sync_upload">
             <i class="fa fa-upload" aria-hidden="true"></i>
             Upload
+          </button>
+          <button type="button" class="btn btn-warning" id="sync_check">
+            <i class="fa fa-refresh" aria-hidden="true"></i>
+            Check
           </button>
           <button type="button" class="btn btn-primary" id="sync_download">
             <i class="fa fa-download" aria-hidden="true"></i>
@@ -191,18 +191,6 @@
   </div>
 
   <div id="chart" class="modal fade" tabindex="-1" role="dialog"></div>
-
-  <script class="tpl" id="tpl_stockchart" type="text/template">
-  </script>
-
-  <script class="tpl" id="tpl_fundchart" type="text/template">
-  </script>
-
-  <script class="tpl" id="tpl_securityname" type="text/template">
-  </script>
-
-  <script class="tpl" id="tpl_profilobtn" type="text/template">
-  </script>
 
 </body>
 

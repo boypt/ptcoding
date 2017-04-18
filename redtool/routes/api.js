@@ -2,6 +2,7 @@ var debug = require('debug')('redtool:api');
 var express = require('express');
 var router = express.Router();
 var http = require('http');
+var storage = require('../storage');
 
 router.get('/sina', function(req, res, next) {
 
@@ -33,6 +34,31 @@ router.get('/sina', function(req, res, next) {
     } else {
       debug(`http status code ${statusCode}`);
       res.status(500).send('Server Error');
+    }
+  });
+});
+
+
+router.post('/storage', function(req, res, next) {
+
+  debug(req.body);
+  // res.json({msg:'ok'});
+  // res.json(req.body);
+
+  storage.set(req.body.idnt, req.body, function (err) {
+    res.json({msg:'ok', idnt: idnt});
+  });
+});
+
+
+router.get('/storage/:idnt*', function(req, res, next) {
+  const idnt = req.param('idnt');
+  debug(`idnt: ${idnt}`)
+  storage.get(idnt, function (err, doc) {
+    if(doc === null) {
+      res.status(404).json({msg:'not found'});
+    } else {
+      res.json(doc);
     }
   });
 });
