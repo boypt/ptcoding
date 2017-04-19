@@ -94,15 +94,15 @@
 
       <div class="col-10 col-md-auto">
         <div class="d-flex justify-content-md-between">
-          <div class="d-inline-flex">
+          <div>
             <div class="input-group">
               <span class="input-group-addon"><i class="fa fa-clock-o" aria-hidden="true"></i></span>
               <input id="last_update" type="text" class="form-control" readonly>
             </div>
           </div>
 
-          <div class="row justify-content-around main_btns">
-            <button class="btn btn-success pull-right" id="update_share">
+          <div class="main_btns">
+            <button class="btn btn-success" id="update_share">
               <i class="fa fa-refresh" aria-hidden="true"></i>
               更新数据
             </button>
@@ -129,8 +129,10 @@
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title" id="syncLabel">当前净值/市价</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
         <div class="modal-body">
           <textarea class="form-control" id="neat_val" readonly></textarea>
@@ -144,8 +146,10 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title" id="syncLabel">数据同步</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
         <div class="modal-body">
 

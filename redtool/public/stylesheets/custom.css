@@ -5,8 +5,7 @@
 .voffset4 { margin-top: 30px; }
 .voffset5 { margin-top: 40px; }
 .voffset6 { margin-top: 60px; }
-/*.main_btns button { margin: 0 0.5rem; }*/
-#last_update { font-size: 0.6rem; }
+.main_btns > button:not(:last-child) { margin-right: .25rem; }
 .price, .last_date { font-family: monospace; font-size: 0.99rem; }
 .negtive { margin-left: -0.5rem; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
