@@ -17,7 +17,6 @@ router.get('/sina', function(req, res, next) {
 
   http.get(sinaurl, (resource) => {
     const { statusCode } = resource;
-
     let error;
     if (statusCode === 200) {
       let rawData;
@@ -31,11 +30,16 @@ router.get('/sina', function(req, res, next) {
       resource.on('end', () => {
         res.send(rawData);
       });
+      resource.on('error', (e) => {
+        debug(`problem with request: ${e.message}`);
+        res.status(500).send(`problem with request: ${e.message}`);
+      });
     } else {
       debug(`http status code ${statusCode}`);
+      debug(resource);
       res.status(500).send('Server Error');
     }
-  });
+  }).end();
 });
 
 
