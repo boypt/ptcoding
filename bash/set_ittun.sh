@@ -42,7 +42,6 @@ EOF
 
 ARCH=$(uname -m)
 ITTUN_URL=http://www.ittun.com/upload/17.4/
-TEMPDIR=$(mktemp -d)
 
 if [ $ARCH == "x86_64" ]; then
     FILE=linux64.zip
@@ -53,16 +52,27 @@ else
     exit 1
 fi
 
+if command -v curl > /dev/null 2>&1; then
+    DOWNLOAD="curl -O"
+elif command -v wget > /dev/null 2>&1; then
+    DOWNLOAD="wget"
+else
+    echo "wget or curl not exists."
+    exit 1
+fi
+
+
 setconfig
 echo "Selected $FILE";
 URL=${ITTUN_URL}${FILE}
-cd $TEMPDIR
-wget $URL
+cd /tmp
+if [[ ! -e /tmp/$FILE ]]; then
+    exec $DOWNLOAD $URL
+fi
 unzip $FILE
 UNDIR=${FILE%.*}
 install -v -m755 ./$UNDIR/ngrok /usr/local/bin/
-cd -
-rm -rfv $TEMPDIR
+rm -rf $UNDIR
 
 sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' /etc/rc.local
 echo "---------------------"
