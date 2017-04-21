@@ -6,10 +6,12 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+ngrok_CLIENT=http://wxdev.doctorcom.com/ngrok/ngrok-$(uname -m).tar.gz
+ngrok_SERVER=wx.ptsang.net:44443
+
 PORT="${1:-}"
-
 setconfig () {
-
+    local CONFIG=$1
     if ! echo $PORT | grep -q -E "^5[0-9]{4}$"; then
         while true; do
             echo "Enter mapping port number: (must be greater than 50000)"
@@ -25,57 +27,59 @@ setconfig () {
             fi
         done
     fi
-
     echo "Mapping remote port $PORT"
 
-    cat > /etc/ngrok.yml << EOF
-server_addr: "ittun.com:44433"
-tunnels: 
+    cat > $CONFIG << EOF
+server_addr: "$ngrok_SERVER"
+tunnels:
     ssh:
         remote_port: $PORT
         proto:
             tcp: ":22"
 EOF
-
     echo "---------------------"
 }
 
-ARCH=$(uname -m)
-ITTUN_URL=http://www.ittun.com/upload/17.4/
-
-if [ $ARCH == "x86_64" ]; then
-    FILE=linux64.zip
-elif [ $ARCH == "i686" ]; then
-    FILE=linux32.zip
-else
-    echo "Arch unsupported"
-    exit 1
-fi
 
 if command -v curl > /dev/null 2>&1; then
-    DOWNLOAD="curl -O"
+    DOWNLOAD="$(which curl) -O"
 elif command -v wget > /dev/null 2>&1; then
-    DOWNLOAD="wget"
+    DOWNLOAD="$(which wget)"
 else
     echo "wget or curl not exists."
     exit 1
 fi
 
 
-setconfig
-echo "Selected $FILE";
-URL=${ITTUN_URL}${FILE}
+ngrok_CLIENT_TAR=$(basename $ngrok_CLIENT)
 cd /tmp
-if [[ ! -e /tmp/$FILE ]]; then
-    exec $DOWNLOAD $URL
+
+$DOWNLOAD ${ngrok_CLIENT}.md5
+if ! md5sum -c $(basename ${ngrok_CLIENT}.md5); then
+    $DOWNLOAD $ngrok_CLIENT
+    md5sum -c $(basename ${ngrok_CLIENT}.md5)
 fi
-unzip $FILE
-UNDIR=${FILE%.*}
-install -v -m755 ./$UNDIR/ngrok /usr/local/bin/
-rm -rf $UNDIR
 
-sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' /etc/rc.local
+
+setconfig /tmp/ngrok.yml
+if [[ $(id -u) == 0 ]]; then
+  #is root
+  tar xfz /tmp/$ngrok_CLIENT_TAR -C /usr/local/bin/
+  install -v -m644 /tmp/ngrok.yml /etc/ngrok.yml
+  sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' /etc/rc.local
+  echo "ngrok installed as root at /usr/local/bin/ngrok"
+  echo "Config: /etc/ngrok.yml "
+  echo "Autorun ngrok configured at /etc/rc.local"
+  ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &
+else
+  tar xvfz /tmp/$ngrok_CLIENT_TAR -C ~
+  install -v -m644  /tmp/ngrok.yml ~/.ngrok
+  echo "ngrok installed at $HOME/ngrok"
+  echo "Config: $HOME/.ngrok"
+  echo "RUN: "
+  echo "~/ngrok -config=$HOME/.ngrok start ssh"
+fi
+rm -f /tmp/ngrok.yml
+
 echo "---------------------"
-ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &
 echo "Done"
-
