@@ -7,6 +7,7 @@
 .voffset6 { margin-top: 60px; }
 .main_btns > button:not(:last-child) { margin-right: .25rem; }
 #last_update_card .card-block { padding: 0.35rem 1rem; }
+#last_update { font-size: .5rem; }
 .price, .last_date { font-family: monospace; font-size: 0.99rem; }
 .negtive { margin-left: -0.5rem; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
