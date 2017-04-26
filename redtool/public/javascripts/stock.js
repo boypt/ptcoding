@@ -501,22 +501,16 @@ var _reg_event_handlers = function () {
         });
 
 
-    $('#sync_check').click(function (evn) {
-        var idnt = $("#sync_idnt").val();
-        var lo_idnt = localStorage.getItem("sync_idnt");
-        if(lo_idnt != idnt) {
-          $("#sync_date").val('Loading...');
-          check_sync(idnt)
-          .done(function(json) {
-            localStorage.setItem("sync_idnt", json.idnt);
-            $.scojs_message("Loaded: "+json.idnt, $.scojs_message.TYPE_OK);
-            $("#sync_date").val(new Date(json.syncts).toLocaleString());
-          })
-          .fail(function () {
-            $("#sync_date").val('');
-            $.scojs_message("Code not exists: "+idnt, $.scojs_message.TYPE_ERROR);
-          });
-        }
+    $('#sync_list').on('click', function (env) {
+
+      $.getJSON('api/storage/all')
+      .done(function (json) {
+        var idnts = $.map(json, function (elem) {
+          return elem.idnt;
+        });
+        console.log(idnts);
+        $.scojs_message("CODES:\n"+idnts.join("\n"), $.scojs_message.TYPE_OK);
+      })
     });
 
     $('#sync_upload').on('click', function (env) {

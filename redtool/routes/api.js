@@ -50,6 +50,15 @@ router.post('/storage', function(req, res, next) {
   });
 });
 
+router.get('/storage/all', function(req, res, next) {
+  storage.getall(function (err, docs) {
+    if(docs === null) {
+      res.status(404).json({msg:'not found'});
+    } else {
+      res.json(docs);
+    }
+  });
+});
 
 router.get('/storage/:idnt*', function(req, res, next) {
   const idnt = req.param('idnt');

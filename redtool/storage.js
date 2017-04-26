@@ -4,6 +4,10 @@ var Datastore = require('nedb')
 // You can issue commands right away
 
 
+exports.getall = function (callback) {
+  db.find({}, callback);
+}
+
 exports.get = function (key, callback) {
   const query = {idnt:key};
   debug(query);
