@@ -505,11 +505,9 @@ var _reg_event_handlers = function () {
 
       $.getJSON('api/storage/all')
       .done(function (json) {
-        var idnts = $.map(json, function (elem) {
-          return elem.idnt;
-        });
+        var idnts = $.map(json, (el) => {return el.idnt;});
         console.log(idnts);
-        $.scojs_message("CODES:\n"+idnts.join("\n"), $.scojs_message.TYPE_OK);
+        $.scojs_message("CODES:<br/>"+idnts.join("<br/>"), $.scojs_message.TYPE_OK);
       })
     });
 
