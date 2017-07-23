@@ -48,13 +48,14 @@ def format_stockindex():
         incr = curval - preclose
         incr_pct = (incr/preclose)*100
         if incr_pct > 0:
-            title += "{0}涨{1:+.2f}  ".format(name, incr_pct)
+            changechn = '涨'
         elif incr_pct < 0:
-            title += "{0}跌{1:+.2f}  ".format(name, incr_pct)
+            changechn = '跌'
         else:
-            title += "{0}平{1:+.2f}  ".format(name, incr_pct)
+            changechn = '平'
 
-        content += "{0} {1:.2f} {2:+.2f}%\n\n".format(name, curval, incr_pct)
+        title += "{0}{1}{2:+.2f}　".format(name[:2], changechn, incr_pct)
+        content += "{0}{1:.2f}".format(name, curval)
 
     return title, content
 
@@ -64,7 +65,8 @@ if __name__ == '__main__':
      #val = sina_stock()
      #print(val)
      title, content = format_stockindex()
-     print(noti_serverchan(title, content))
+     print(title)
+     noti_serverchan(title, content)
 
 
 
