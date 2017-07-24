@@ -29,7 +29,7 @@ def noti_serverchan(title, desp):
 def format_stockindex():
 
     #indexs = ['sh000001','sz399001','hkHSI','gb_$dji','hkHSI_i']
-    indexs = ['sh000001','sz399001']
+    indexs = ['sh000001','sz399001', 'sz399006']
     vals = sina_stock(indexs)
     content = []
     title = []
@@ -37,9 +37,11 @@ def format_stockindex():
         q = inx.split(',')
 #"上证指数,3236.5881,3244.8647,3237.9817,3247.7122,3231.9556,0,0,206003251,221956909910,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2017-07-21,15:01:03,00";
         name = q[0]
+        nameshort = name[:2]
 
         preclose = float(q[2])
         curval = float(q[3])
+        vol = int(round(float(q[9])/100000000, 0))
         incr = curval - preclose
         incr_pct = (incr/preclose)*100
         if incr_pct > 0:
@@ -49,17 +51,15 @@ def format_stockindex():
         else:
             changechn = '平'
 
-        title.append((name, changechn, incr_pct))
-        content.append((name, curval, incr_pct))
+        title.append((nameshort, changechn, incr_pct))
+        content.append((name, curval, incr_pct, vol))
 
     return title, content
 
 
 if __name__ == '__main__':
 
-     #val = sina_stock()
-     #print(val)
      title, content = format_stockindex()
      tit = [ "{0}{1}{2:.2f}".format(*val) for val in title ]
-     desp = ["## {0} {1:.2f} {2:+.2f}".format(*val) for val in content]
+     desp = ["## {0} {1:.2f} {2:+.2f}% {3}亿".format(*val) for val in content]
      noti_serverchan('__'.join(tit), '\n'.join(desp))
