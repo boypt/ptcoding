@@ -3,7 +3,11 @@ import re
 import sys
 import os
 import json
+import datetime
 import urllib.request, urllib.error, urllib.parse
+
+class MarketClosed(Exception):
+    pass
 
 def sina_stock(all_num):
     reg = re.compile(r'var hq_str_(.+?)="(.+?)";\n')
@@ -39,6 +43,10 @@ def format_stockindex():
         name = q[0]
         nameshort = name[:2]
 
+        dateoffer = q[30]
+        if dateoffer != '{:%Y-%m-%d}'.format(datetime.datetime.now()):
+            raise MarketClosed()
+
         preclose = float(q[2])
         curval = float(q[3])
         vol = int(round(float(q[9])/100000000, 0))
@@ -59,7 +67,11 @@ def format_stockindex():
 
 if __name__ == '__main__':
 
-     title, content = format_stockindex()
+     try:
+         title, content = format_stockindex()
+     except MarketClosed:
+         sys.exit(0)
+
      tit = [ "{0}{1}{2:.2f}".format(*val) for val in title ]
      desp = ["## {0} {1:.2f} {2:+.2f}% {3}亿".format(*val) for val in content]
      noti_serverchan('__'.join(tit), '\n'.join(desp))
