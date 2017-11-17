@@ -12,6 +12,7 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 
+var listenaddr = process.env.ADDRESS || '127.0.0.1'
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
@@ -25,7 +26,7 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port, '127.0.0.1');
+server.listen(port, listenaddr);
 server.on('error', onError);
 server.on('listening', onListening);
 
@@ -86,5 +87,7 @@ function onListening() {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+
+  var lsaddr = addr.address;
+  debug('Listening on ' + lsaddr + ' ' + bind);
 }
