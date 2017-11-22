@@ -44,7 +44,8 @@ def format_stockindex():
         nameshort = name[:2]
 
         dateoffer = q[30]
-        if dateoffer != '{:%Y-%m-%d}'.format(datetime.datetime.now()):
+        timenow = datetime.datetime.now()
+        if dateoffer != '{:%Y-%m-%d}'.format(timenow):
             raise MarketClosed()
 
         preclose = float(q[2])
@@ -59,19 +60,21 @@ def format_stockindex():
         else:
             changechn = '平'
 
-        title.append((nameshort, changechn, incr_pct))
-        content.append((name, curval, incr_pct, vol))
+        content.append((nameshort, curval, changechn, incr_pct, vol))
 
-    return title, content
+    return timenow, content
 
 
 if __name__ == '__main__':
 
      try:
-         title, content = format_stockindex()
+         timenow, content = format_stockindex()
      except MarketClosed:
          sys.exit(0)
 
-     tit = [ "{0}{1}{2:.2f}".format(*val) for val in title ]
-     desp = ["## {0} {1:.2f} {2:+.2f}% {3}亿".format(*val) for val in content]
-     noti_serverchan('__'.join(tit), '\n'.join(desp))
+     tit = [ "{0}{1:.0f}{2}{3:.2f}交{4}亿".format(*val) for val in content]
+     #vol = [ "{0}{4}亿".format(*val) for val in content]
+     #desp = ["## {0}丨 {1:.2f} 丨{2:+.2f}%丨{3}亿".format(*val) for val in content]
+     #print(tit, vol)
+     time = timenow.strftime('%Y{y}%m{m}%d{d} %H{h}%M{mm}').format(y='年', m='月', d='日', h='时', mm='分')
+     noti_serverchan(time, '丨'.join(tit))
