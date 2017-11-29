@@ -14,6 +14,12 @@ NGROK_TOKEN=
 NGROK_BIN=ngrokc.dl.$(uname -m)
 LOCAL_PORT="${1:-}"
 
+if [ $(id -u) -eq 0 ]; then
+  NGROK_EXEC=/usr/local/bin/ngrokc
+else
+  NGROK_EXEC=/tmp/ngrokc
+fi
+
 readconfig () {
     if ! echo $LOCAL_PORT | grep -q -E "^5[0-9]{4}$"; then
         while true; do
@@ -56,11 +62,6 @@ cd $TMPDIR
 $DOWNLOAD ${NGROK_CLIENT}
 tar xfz $NGROK_CLIENT_TAR -C .
 
-if [ $(id -u) == 0 ]; then
-  NGROK_EXEC=/usr/local/bin/ngrokc
-else
-  NGROK_EXEC=/tmp/ngrokc
-fi
 install -v -m755 ./$NGROK_BIN $NGROK_EXEC
 cd /tmp
 rm -rf $TMPDIR
