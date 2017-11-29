@@ -56,7 +56,7 @@ cd $TMPDIR
 $DOWNLOAD ${NGROK_CLIENT}
 tar xfz $NGROK_CLIENT_TAR -C .
 
-if [[ $(id -u) == 0 ]]; then
+if [ $(id -u) == 0 ]; then
   NGROK_EXEC=/usr/local/bin/ngrokc
 else
   NGROK_EXEC=/tmp/ngrokc
