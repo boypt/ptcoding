@@ -1,29 +1,31 @@
 #!/usr/bin/env bash
 # Bash3 Boilerplate. Copyright (c) 2014, kvz.io
+# Map ssh tun to our ngrokd server
 
 set -o errexit
 #set -o pipefail
 set -o nounset
 # set -o xtrace
 
-NGROK_CLIENT=http://wxdev.doctorcom.com/ngrok/ngrok-$(uname -m).tar.gz
-NGROK_SERVER=wx.ptsang.net:44443
+NGROK_CLIENT=http://wxdev.doctorcom.com/ngrok/ngrok-c.tar.gz
+NGROK_SERVER=wxdev.doctorcom.com
+NGROK_PORT=50000
 NGROK_TOKEN=
+NGROK_BIN=ngrokc.dl.$(uname -m)
+LOCAL_PORT="${1:-}"
 
-PORT="${1:-}"
-setconfig () {
-    local CONFIG=$1
-    if ! echo $PORT | grep -q -E "^5[0-9]{4}$"; then
+readconfig () {
+    if ! echo $LOCAL_PORT | grep -q -E "^5[0-9]{4}$"; then
         while true; do
             echo "Enter mapping port number: (must be greater than 50000)"
 
             if ! tty --silent; then
-                read PORT < /dev/tty
+                read LOCAL_PORT < /dev/tty
             else
-                read PORT
+                read LOCAL_PORT
             fi
 
-            if echo $PORT | grep -q -E "^5[0-9]{4}$"; then
+            if echo $LOCAL_PORT | grep -q -E "^5[0-9]{4}$"; then
                 break;
             fi
         done
@@ -35,19 +37,6 @@ setconfig () {
     else
         read NGROK_TOKEN
     fi
-
-    echo "Mapping remote port $PORT"
-
-    cat > $CONFIG << EOF
-server_addr: "$NGROK_SERVER"
-auth_token: "$NGROK_TOKEN"
-tunnels:
-    ssh:
-        remote_port: $PORT
-        proto:
-            tcp: ":22"
-EOF
-    echo "---------------------"
 }
 
 
@@ -60,36 +49,26 @@ else
     exit 1
 fi
 
-
+readconfig 
 NGROK_CLIENT_TAR=$(basename $NGROK_CLIENT)
-cd /tmp
+TMPDIR=$(mktemp -d --suffix=ngrok-c)
+cd $TMPDIR
+$DOWNLOAD ${NGROK_CLIENT}
+tar xfz $NGROK_CLIENT_TAR -C .
 
-$DOWNLOAD ${NGROK_CLIENT}.md5
-if ! md5sum -c $(basename ${NGROK_CLIENT}.md5); then
-    $DOWNLOAD $NGROK_CLIENT
-    md5sum -c $(basename ${NGROK_CLIENT}.md5)
-fi
-
-
-setconfig /tmp/ngrok.yml
 if [[ $(id -u) == 0 ]]; then
-  #is root
-  tar xfz /tmp/$NGROK_CLIENT_TAR -C /usr/local/bin/
-  install -v -m644 /tmp/ngrok.yml /etc/ngrok.yml
-  sed -i -e '$i \ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &\n' /etc/rc.local
-  echo "ngrok installed as root at /usr/local/bin/ngrok"
-  echo "Config: /etc/ngrok.yml "
-  echo "Autorun ngrok configured at /etc/rc.local"
-  ngrok -log=stdout -config=/etc/ngrok.yml start ssh >/dev/null 2>&1 &
+  NGROK_EXEC=/usr/local/bin/ngrokc
 else
-  tar xvfz /tmp/$NGROK_CLIENT_TAR -C ~
-  install -v -m644  /tmp/ngrok.yml ~/.ngrok
-  echo "ngrok installed at $HOME/ngrok"
-  echo "Config: $HOME/.ngrok"
-  echo "RUN: "
-  echo "~/ngrok start ssh"
+  NGROK_EXEC=/tmp/ngrokc
 fi
-rm -f /tmp/ngrok.yml
+install -v -m755 ./$NGROK_BIN $NGROK_EXEC
+cd /tmp
+rm -rf $TMPDIR
 
-echo "---------------------"
-echo "Done"
+CMD="$NGROK_EXEC -SER[Shost:$NGROK_SERVER,Sport:$NGROK_PORT,Atoken:$NGROK_TOKEN] -AddTun[Type:tcp,Lhost:127.0.0.1,Lport:22,Rport:$LOCAL_PORT]"
+echo '-------------------'
+echo '----Run command----'
+echo $CMD
+echo '-------------------'
+$CMD
+
