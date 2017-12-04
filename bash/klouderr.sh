@@ -30,12 +30,14 @@ TEMPCOOKIE=$(mktemp)
 TEMPTORRENT=$(mktemp).torrent
 
 torrent2magent () {
+  echo "6. Get torrent2magent (session init)"
   curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" 'http://torrent2magnet.com/' -o /dev/null
   echo '----------------------------------------------------------------------------'
   echo '----------------------------------------------------------------------------'
   echo '----------------------------------------------------------------------------'
   echo '----------------------------------------------------------------------------'
-  curl --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" --referer 'http://torrent2magnet.com/' -L -F"torrent_file=@$TEMPTORRENT;filename=1.torrent" 'http://torrent2magnet.com/upload/' | grep -Po '(?<=href=")(magnet:[^"]+)(?=")'
+  echo "7. Upload torrent to get magent"
+  curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" --referer 'http://torrent2magnet.com/' -L -F"torrent_file=@$TEMPTORRENT;filename=1.torrent" 'http://torrent2magnet.com/upload/' | grep -Po '(?<=href=")(magnet:[^"]+)(?=")'
 }
 
 
@@ -47,9 +49,11 @@ echo "Getting: $URL"
 
 #http $URL  --session cap1  > /dev/null
 
+echo "1.Get klouderr page(initial session)"
 eval "$CURL $URL -o /dev/null"
 #http $CAPTCHA Referer:$URL  --session cap1  > $TEMPIMG
 
+echo "2.Get captcha img"
 eval "$CURL $CAPTCHA -o $TEMPIMG"
 #mplayer -monitorpixelaspect 0.5 -nosub -contrast 25 -framedrop  -vo caca -quiet $TEMPIMG   2>/dev/null
 feh $TEMPIMG || true
@@ -59,6 +63,7 @@ read CODE
 #http $URL downloadverify=1 d=1 captchacode=$CODE  --session cap1 --form -p b | grep -oE "http://.+?torrent"
 #echo TORRENT=$(eval "$CURL -d 'downloadverify=1&d=1&captchacode='$CODE $URL" | grep -oE "http://.+?torrent" | head -n 1)
 
+echo "3.Get torrent url"
 TORRENT=$(eval "$CURL -d 'downloadverify=1&d=1&captchacode='$CODE $URL" | grep -oE "http://.+?torrent" | head -n 1)
 
 echo "-------------------------------------------"
@@ -68,12 +73,13 @@ echo "-------------------------------------------"
 #FILENAME=$(urldecode  $TORRENT | grep -oE '[^=]+?.torrent')
 #echo "$CURL -o '/tmp/$FILENAME' '$TORRENT'"
 #eval "$CURL -o '/tmp/$FILENAME' '$TORRENT'"
-echo "wait 15"
+echo "4. wait 15"
 sleep 15
-#echo wget --content-disposition \'"$TORRENT"\'
-#wget --content-disposition "$TORRENT"
-curl -Lv -o "$TEMPTORRENT" "$TORRENT"
+
+echo "5. Get torrent"
+curl -L -o "$TEMPTORRENT" "$TORRENT"
 file "$TEMPTORRENT" 
+
 torrent2magent
 
 #echo "Downloaded: $FILENAME"
