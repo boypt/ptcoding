@@ -16,27 +16,44 @@ arg1="${1:-}"
 
 # allow command fail:
 # fail_command || true
+black() { echo -e "$(tput setaf 0)$*$(tput setaf 9)"; }
+red() { echo -e "$(tput setaf 1)$*$(tput setaf 9)"; }
+green() { echo -e "$(tput setaf 2)$*$(tput setaf 9)"; }
+yellow() { echo -e "$(tput setaf 3)$*$(tput setaf 9)"; }
+blue() { echo -e "$(tput setaf 4)$*$(tput setaf 9)"; }
+magenta() { echo -e "$(tput setaf 5)$*$(tput setaf 9)"; }
+cyan() { echo -e "$(tput setaf 6)$*$(tput setaf 9)"; }
+white() { echo -e "$(tput setaf 7)$*$(tput setaf 9)"; }
+
+red_n() { echo -ne "$(tput setaf 1)$*$(tput setaf 9)"; }
+cyan_n() { echo -ne "$(tput setaf 6)$*$(tput setaf 9)"; }
+line_sleep () {
+    local SEC=$1
+    while [[ $SEC -gt 0 ]]; do
+      printf -v P "%02d" $SEC
+      cyan_n "-${P}-"
+      SEC=$(($SEC-1))
+      sleep 1
+    done
+    echo ""
+}
 
 
-URL=$1
+URL=$arg1
 if ! echo $URL | grep -q 'klouderr.com/download.php'; then
-    echo "$0 'klouderr.com/download.php?xxxxx' "
+    red "$0 'klouderr.com/download.php?xxxxx' "
     exit 1
 fi
 
 UASTR='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'
 TEMPIMG=$(mktemp).png
-TEMPCOOKIE=$(mktemp)
+TEMPCOOKIE=$(mktemp).jar
 TEMPTORRENT=$(mktemp).torrent
 
 torrent2magent () {
-  echo "6. Get torrent2magent (session init)"
+  green "6. Get torrent2magent (session init)"
   curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" 'http://torrent2magnet.com/' -o /dev/null
-  echo '----------------------------------------------------------------------------'
-  echo '----------------------------------------------------------------------------'
-  echo '----------------------------------------------------------------------------'
-  echo '----------------------------------------------------------------------------'
-  echo "7. Upload torrent to get magent"
+  green "7. Upload torrent to get magent"
   curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" --referer 'http://torrent2magnet.com/' -L -F"torrent_file=@$TEMPTORRENT;filename=1.torrent" 'http://torrent2magnet.com/upload/' | grep -Po '(?<=href=")(magnet:[^"]+)(?=")'
 }
 
@@ -44,43 +61,25 @@ torrent2magent () {
 CAPTCHA=http://klouderr.com/captcha.php?rand=0.${RANDOM}${RANDOM}${RANDOM}
 CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '"${UASTR}"' --referer $URL"
 
-#echo $CURL
-echo "Getting: $URL"
-
-#http $URL  --session cap1  > /dev/null
-
-echo "1.Get klouderr page(initial session)"
+green "1.Get klouderr page($URL)"
 eval "$CURL $URL -o /dev/null"
-#http $CAPTCHA Referer:$URL  --session cap1  > $TEMPIMG
 
-echo "2.Get captcha img"
+green "2.Get captcha img"
 eval "$CURL $CAPTCHA -o $TEMPIMG"
-#mplayer -monitorpixelaspect 0.5 -nosub -contrast 25 -framedrop  -vo caca -quiet $TEMPIMG   2>/dev/null
-feh $TEMPIMG || true
-echo -n "Enter Code:"
+cacaview "$TEMPIMG"
+red_n "Enter Code:"
 read CODE
 
-#http $URL downloadverify=1 d=1 captchacode=$CODE  --session cap1 --form -p b | grep -oE "http://.+?torrent"
-#echo TORRENT=$(eval "$CURL -d 'downloadverify=1&d=1&captchacode='$CODE $URL" | grep -oE "http://.+?torrent" | head -n 1)
-
-echo "3.Get torrent url"
+green "3.Get torrent url, code:$CODE"
 TORRENT=$(eval "$CURL -d 'downloadverify=1&d=1&captchacode='$CODE $URL" | grep -oE "http://.+?torrent" | head -n 1)
 
-echo "-------------------------------------------"
-echo "$TORRENT";
-echo "-------------------------------------------"
+green "4.Wait 15"
+line_sleep 15
 
-#FILENAME=$(urldecode  $TORRENT | grep -oE '[^=]+?.torrent')
-#echo "$CURL -o '/tmp/$FILENAME' '$TORRENT'"
-#eval "$CURL -o '/tmp/$FILENAME' '$TORRENT'"
-echo "4. wait 15"
-sleep 15
+green "5. Get torrent"
+curl --silent -L -o "$TEMPTORRENT" "$TORRENT"
 
-echo "5. Get torrent"
-curl -L -o "$TEMPTORRENT" "$TORRENT"
-file "$TEMPTORRENT" 
-
+yellow $(file "$TEMPTORRENT" | grep "BitTorrent")
 torrent2magent
 
-#echo "Downloaded: $FILENAME"
-rm -f $TEMPIMG $TEMPCOOKIE
+rm -f $TEMPIMG $TEMPCOOKIE $TEMPTORRENT
