@@ -13,9 +13,8 @@ __base="$(basename ${__file} .sh)"
 __root="$(cd "$(dirname "${__dir}")" && pwd)" # <-- change this as it depends on your app
 
 arg1="${1:-}"
+URL=$arg1
 
-# allow command fail:
-# fail_command || true
 black() { echo -e "$(tput setaf 0)$*$(tput setaf 9)"; }
 red() { echo -e "$(tput setaf 1)$*$(tput setaf 9)"; }
 green() { echo -e "$(tput setaf 2)$*$(tput setaf 9)"; }
@@ -39,7 +38,14 @@ line_sleep () {
 }
 
 
-URL=$arg1
+if ! command -v cacaview >/dev/null; then
+    red "caca-utils required."
+fi
+
+if ! command -v curl >/dev/null; then
+    red "curl required."
+fi
+
 if ! echo $URL | grep -q 'klouderr.com/download.php'; then
     red "$0 'klouderr.com/download.php?xxxxx' "
     exit 1
