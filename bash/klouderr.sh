@@ -87,7 +87,5 @@ line_sleep 15
 green "5. Get torrent"
 curl --silent -L -o "$TEMPTORRENT" "$TORRENT"
 
-yellow $(file "$TEMPTORRENT" | grep "BitTorrent")
 torrent2magent
-
 rm -f $TEMPIMG $TEMPCOOKIE $TEMPTORRENT
