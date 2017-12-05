@@ -58,13 +58,6 @@ TEMPIMG=$(mktemp).png
 TEMPCOOKIE=$(mktemp).jar
 TEMPTORRENT=$(mktemp).torrent
 
-torrent2magent () {
-  green "6. Get torrent2magent (session init)"
-  curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" 'http://torrent2magnet.com/' -o /dev/null
-  green "7. Upload torrent to get magent"
-  curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent "${UASTR}" --referer 'http://torrent2magnet.com/' -L -F"torrent_file=@$TEMPTORRENT;filename=1.torrent" 'http://torrent2magnet.com/upload/' | grep -Po '(?<=href=")(magnet:[^"]+)(?=")'
-}
-
 
 CAPTCHA=http://klouderr.com/captcha.php?rand=0.${RANDOM}${RANDOM}${RANDOM}
 CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '"${UASTR}"' --referer $URL"
@@ -79,13 +72,25 @@ red_n "Enter Code:"
 read CODE
 
 green "3.Get torrent url, code:$CODE"
-TORRENT=$(eval "$CURL -d 'downloadverify=1&d=1&captchacode='$CODE $URL" | grep -oE "http://.+?torrent" | head -n 1)
+TORRENT=$(eval "$CURL -d 'downloadverify=1&d=1&captchacode='$CODE $URL" | grep -oP "(?<=\")http://.+?torrent")
 
-green "4.Wait 15"
+echo $TORRENT
+green "4.Wait 15 secs until the url ready."
 line_sleep 15
 
-green "5. Get torrent"
-curl --silent -L -o "$TEMPTORRENT" "$TORRENT"
+green "5.Get the torrent"
+eval "$CURL -L -o '$TEMPTORRENT' '$TORRENT'"
 
-torrent2magent
+if command -v file >/dev/null; then
+   file "$TEMPTORRENT"
+fi
+
+#######
+green "6.Get torrent2magent (session init)"
+CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '${UASTR}'"
+eval "$CURL -o /dev/null http://torrent2magnet.com/"
+
+green "7.Upload torrent to get magent"
+eval "$CURL --referer 'http://torrent2magnet.com/' -L -F\"torrent_file=@$TEMPTORRENT;filename=1.torrent\" 'http://torrent2magnet.com/upload/'" | grep -Po '(?<=href=")(magnet:[^"]+)(?=")'
+
 rm -f $TEMPIMG $TEMPCOOKIE $TEMPTORRENT
