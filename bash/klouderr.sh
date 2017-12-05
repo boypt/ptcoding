@@ -40,10 +40,12 @@ line_sleep () {
 
 if ! command -v cacaview >/dev/null; then
     red "caca-utils required."
+    exit 1
 fi
 
 if ! command -v curl >/dev/null; then
     red "curl required."
+    exit 1
 fi
 
 if ! echo $URL | grep -q 'klouderr.com/download.php'; then
