@@ -460,7 +460,7 @@ var _reg_event_handlers = function () {
     .on('shown.bs.modal', function () {
         var _v = $("#neat_val");
         var _h = _v.prop("scrollHeight");
-        _v.animate({"height":_h},100).select();
+        _v.animate({"height":_h},100);
     })
     .on('hidden.bs.modal', function () {
         $("#neat_val").outerHeight(0);

@@ -19,30 +19,31 @@
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 
-  <link rel="stylesheet" href="//cdn.css.net/libs/datatables/1.10.13/css/dataTables.bootstrap4.min.css">
-  <link rel="stylesheet" href="//cdn.css.net/libs/twitter-bootstrap/4.0.0-beta/css/bootstrap.css">
-  <link rel="stylesheet" href="//cdn.css.net/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="//cdn.css.net/libs/sco.js/1.1.0/css/sco.message.min.css">
+  <link rel="stylesheet" href="//cdnjs.cat.net/ajax/libs/datatables/1.10.16/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="//cdnjs.cat.net/ajax/libs/twitter-bootstrap/4.0.0-beta.3/css/bootstrap.css">
+  <link rel="stylesheet" href="//cdnjs.cat.net/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdnjs.cat.net/ajax/libs/sco.js/1.1.0/css/sco.message.min.css">
   <link rel="stylesheet" href="stylesheets/custom.css">
 
   <!-- JavaScript
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script type="text/javascript" src="//cdn.css.net/libs/script.js/2.5.8/script.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cat.net/ajax/libs/script.js/2.5.8/script.min.js"></script>
   <script type="text/javascript">
     $script([
-      "//cdn.css.net/libs/nanobar/0.4.2/nanobar.min.js",
-      "//cdn.css.net/libs/jquery/3.1.0/jquery.min.js",
-      "//cdn.css.net/libs/popper.js/1.12.5/umd/popper.min.js", // require by bootstrap 4
+      "//cdnjs.cat.net/ajax/libs/nanobar/0.4.2/nanobar.min.js",
+      "//cdnjs.cat.net/ajax/libs/jquery/3.2.1/jquery.min.js",
+      "//cdnjs.cat.net/ajax/libs/popper.js/1.13.0/umd/popper.min.js", // require by bootstrap 4
       "javascripts/js_templates.js",
       "javascripts/stock.js"
     ], function() {
       window._bar = new Nanobar();
       _bar.go(20);
       $script([
-          "//cdn.css.net/libs/datatables/1.10.13/js/jquery.dataTables.min.js",
-          "//cdn.css.net/libs/twitter-bootstrap/4.0.0-beta/js/bootstrap.js",
-          "//cdn.css.net/libs/sco.js/1.1.0/js/sco.message.min.js",
-          "//cdn.css.net/libs/underscore.js/1.8.3/underscore-min.js"
+          "//cdnjs.cat.net/ajax/libs/datatables/1.10.16/js/jquery.dataTables.min.js",
+          "//cdnjs.cat.net/ajax/libs/twitter-bootstrap/4.0.0-beta.3/js/bootstrap.js",
+          "//cdnjs.cat.net/ajax/libs/sco.js/1.1.0/js/sco.message.min.js",
+          "//cdnjs.cat.net/ajax/libs/clipboard.js/1.7.1/clipboard.min.js",
+          "//cdnjs.cat.net/ajax/libs/underscore.js/1.8.3/underscore-min.js"
         ],
         function() {
           $.scojs_message.options.delay = 2000;
@@ -58,6 +59,7 @@
             _reg_event_handlers();
             _List.current_portfolio().activate();
             _bar.go(100);
+            new Clipboard('#neat_val_copy');
           });
         }
       );
@@ -136,6 +138,7 @@
         </div>
         <div class="modal-body">
           <textarea class="form-control" id="neat_val" readonly></textarea>
+          <button class="btn btn-secondary btn-sm" id="neat_val_copy" data-clipboard-target="#neat_val">复制</button>
         </div>
       </div>
     </div>
