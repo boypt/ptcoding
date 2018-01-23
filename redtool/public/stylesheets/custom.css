@@ -7,13 +7,13 @@
 .voffset6 { margin-top: 60px; }
 .main_btns > button:not(:last-child) { margin-right: .25rem; }
 #last_update_card .card-block { padding: 0.35rem 1rem; }
-#last_update { font-size: .5rem; }
+#last_update { font-size: 0.8rem; }
 .price, .last_date { font-family: monospace; font-size: 0.99rem; }
 .negtive { margin-left: -0.5rem; }
 .tg_name a:link, .tg_name a:visited {color:#000; text-decoration: none;}
 .tg_name a:hover, .tg_name a:active {text-decoration:underline;}
 .pfbtn ul button {margin-bottom:10px;}
-#sharenums { font-size: 0.6rem; }
+#sharenums { font-size: 0.8rem; }
 #neat_val {
     background-color:#F1F1F1;
     margin: 1em auto;
