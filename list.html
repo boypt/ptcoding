@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style type="text/css">
+            /* */
+        </style>
+        <script type="text/javascript" src="//cdnjs.cat.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            /* */
+        function getRootUrl(url) { return url.toString().replace(/^(.*\/\/[^\/?#]*).*$/,"$1"); }
+        $().ready(function () {
+            var root = getRootUrl(window.location.href);
+            var jsonurl = root +'/dljson',
+                dlroot = root +'/dl';
+            var getlist = function(url, dir) {
+                $.getJSON(url, function(data) {
+                    $.each(data, function(i, obj){
+                        if(obj.size < 1024*1024) { return false; }
+                        else if(obj.type === "directory") { 
+                            getlist(url+ dir +obj.name, dir+obj.name+'/'); 
+                        } else { 
+                            var dlurl = dlroot + dir + encodeURIComponent(obj.name);
+                            $("<p>").text(dlurl).appendTo("#list");
+                            console.log(dlurl);
+                        }
+                    });
+                });
+            };
+            
+            getlist(jsonurl, '/');
+        });
+        </script>
+    </head>
+    <body>
+<div id="list"></div>
+        <!--
+        -->
+    </body>
+</html>
+
