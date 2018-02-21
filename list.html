@@ -17,10 +17,10 @@
             var getlist = function(url, dir) {
                 $.getJSON(url, function(data) {
                     $.each(data, function(i, obj){
-                        if(obj.size < 1024*1024) { return false; }
-                        else if(obj.type === "directory") { 
+                        if(obj.type === "directory") {
                             getlist(jsonurl + dir +obj.name+'/', dir+obj.name+'/'); 
                         } else { 
+                            if(obj.size < 1024*1024) { return true; } // continue
                             var dlurl = dlroot + dir + encodeURIComponent(obj.name);
                             $("<p>").text(dlurl).appendTo("#list");
                             console.log(dlurl);
