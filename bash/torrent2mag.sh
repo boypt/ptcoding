@@ -48,6 +48,8 @@ fi
 
 UASTR='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'
 TEMPCOOKIE=$(mktemp).jar
+CLDTORRENT="https://lit.ptsang"".net:30""00/api/magnet"
+CLDCOOKIE="Coo""kie: cookiea""uth=MTYzODQkOCQxJDgwNDA0NGQ2MzFlYTljN2Y4NjgwZjU0ODI3ZmUzNzJmJDYzNmVlYmY0NTNjYWI3NmIxZDg4ODk0NWEyYjVkM2FmNTczYmI3M2Y1OWM2ZWE1YjI3MTdkZTE0YWU0M2ZjMGU=|1520334756"
 
 green ".Get torrent2magent (session init)"
 CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '${UASTR}'"
@@ -59,7 +61,9 @@ torrent2mag () {
 }
 
 for T in "$@"; do
-  torrent2mag "$T"
+  MAG=$(torrent2mag "$T")
+  curl -d "$MAG" -H "Content-Type: application/json" -H "$CLDCOOKIE" -X POST "$CLDTORRENT"
+
 done
 
 rm -f $TEMPCOOKIE 
