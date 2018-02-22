@@ -53,14 +53,14 @@ if ! echo $URL | grep -q 'klouderr.com/download.php'; then
     exit 1
 fi
 
+if [[ -e $HOME/.ptutils.config ]]; then
+  source $HOME/.ptutils.config
+fi
+
 UASTR='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'
 TEMPIMG=$(mktemp).png
 TEMPCOOKIE=$(mktemp).jar
 TEMPTORRENT=$(mktemp).torrent
-
-CLDTORRENT="https://lit.ptsang"".net:30""00/api/magnet"
-CLDCOOKIE="Coo""kie: cookiea""uth=MTYzODQkOCQxJDgwNDA0NGQ2MzFlYTljN2Y4NjgwZjU0ODI3ZmUzNzJmJDYzNmVlYmY0NTNjYWI3NmIxZDg4ODk0NWEyYjVkM2FmNTczYmI3M2Y1OWM2ZWE1YjI3MTdkZTE0YWU0M2ZjMGU=|1520334756"
-
 CAPTCHA=http://klouderr.com/captcha.php?rand=0.${RANDOM}${RANDOM}${RANDOM}
 CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '"${UASTR}"' --referer $URL"
 
