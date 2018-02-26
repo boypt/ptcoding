@@ -53,7 +53,15 @@ if [[ -e $HOME/.ptutils.config ]]; then
   source $HOME/.ptutils.config
 fi
 
-green ".Get torrent2magent (session init)"
+if [[ -z $CLDTORRENT || -z $CLDCOOKIE ]]; then
+  red "Config not foud. add '$HOME/.ptutils.config'"
+  echo "CLDTORRENT=https://....."
+  echo "CLDCOOKIE=Cookie: cookieauth=...."
+fi
+
+CLDTORRENT_MAGNET="$CLDTORRENT""/api/magnet"
+
+green "1. Get torrent2magent (session init)"
 CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '${UASTR}'"
 eval "$CURL -o /dev/null http://torrent2magnet.com/"
 
@@ -64,9 +72,8 @@ torrent2mag () {
 
 for T in "$@"; do
   MAG=$(torrent2mag "$T")
-  curl -d "$MAG" -H "Content-Type: application/json" -H "$CLDCOOKIE" -X POST "$CLDTORRENT"
-
+  curl -d "$MAG" -H "Content-Type: application/json" -H "$CLDCOOKIE" -X POST "$CLDTORRENT_MAGNET"
+  echo ""
 done
-
 rm -f $TEMPCOOKIE 
 

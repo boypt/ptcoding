@@ -57,12 +57,19 @@ if [[ -e $HOME/.ptutils.config ]]; then
   source $HOME/.ptutils.config
 fi
 
+if [[ -z $CLDTORRENT || -z $CLDCOOKIE ]]; then
+  red "Config not foud. add '$HOME/.ptutils.config'"
+  echo "CLDTORRENT=https://....."
+  echo "CLDCOOKIE=Cookie: cookieauth=...."
+fi
+
 UASTR='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'
 TEMPIMG=$(mktemp).png
 TEMPCOOKIE=$(mktemp).jar
 TEMPTORRENT=$(mktemp).torrent
 CAPTCHA=http://klouderr.com/captcha.php?rand=0.${RANDOM}${RANDOM}${RANDOM}
 CURL="curl --silent --cookie $TEMPCOOKIE --cookie-jar $TEMPCOOKIE --user-agent '"${UASTR}"' --referer $URL"
+CLDTORRENT_MAGNET="$CLDTORRENT""/api/magnet"
 
 green "1.Get klouderr page($URL)"
 eval "$CURL $URL -o /dev/null"
@@ -96,7 +103,7 @@ green "7.Upload torrent to get magent"
 MAGLNK=$(eval "$CURL --referer 'http://torrent2magnet.com/' -L -F\"torrent_file=@$TEMPTORRENT;filename=1.torrent\" 'http://torrent2magnet.com/upload/'" | grep -Po '(?<=href=")(magnet:[^"]+)(?=")')
 
 green "8.Add to Cloud"
-curl -d "$MAGLNK" -H "Content-Type: application/json" -H "$CLDCOOKIE" -X POST "$CLDTORRENT"
+curl -d "$MAGLNK" -H "Content-Type: application/json" -H "$CLDCOOKIE" -X POST "$CLDTORRENT_MAGNET"
 echo ""
 rm -f $TEMPIMG $TEMPCOOKIE $TEMPTORRENT
 
