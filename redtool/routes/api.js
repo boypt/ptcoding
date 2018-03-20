@@ -2,7 +2,8 @@ var debug = require('debug')('redtool:api');
 var express = require('express');
 var router = express.Router();
 var http = require('http');
-var storage = require('../storage');
+var path = require('path');
+var fs = require('fs');
 
 router.get('/sina', function(req, res, next) {
 
@@ -44,32 +45,27 @@ router.get('/sina', function(req, res, next) {
 
 
 router.post('/storage', function(req, res, next) {
-  debug(`get post idnt ${req.body.idnt}`);
-  storage.set(req.body.idnt, req.body, function (err) {
+  debug(`post idnt ${req.body.idnt}`);
+  let filename = path.resolve(__dirname, '..', 'public', 'json', `${req.body.idnt}.json`)
+  fs.writeFile(filename, JSON.stringify(req.body), (err) => {
+    if (err) throw err;
     res.json({msg:'ok', idnt: req.body.idnt});
   });
 });
 
 router.get('/storage/all', function(req, res, next) {
-  storage.getall(function (err, docs) {
-    if(docs === null) {
-      res.status(404).json({msg:'not found'});
-    } else {
-      res.json(docs);
+  let jsondir = path.resolve(__dirname, '..', 'public', 'json');
+  fs.readdir(jsondir, (err, files) => {
+    let docs = []
+    for(let fn of files) {
+      if(fn.endsWith(".json")) {
+         let obj = JSON.parse(fs.readFileSync(path.resolve(jsondir, fn)))
+         docs.unshift(obj)
+      }
     }
+    res.json(docs);
   });
 });
 
-router.get('/storage/:idnt*', function(req, res, next) {
-  const idnt = req.param('idnt');
-  debug(`idnt: ${idnt}`)
-  storage.get(idnt, function (err, doc) {
-    if(doc === null) {
-      res.status(404).json({msg:'not found'});
-    } else {
-      res.json(doc);
-    }
-  });
-});
 
 module.exports = router;

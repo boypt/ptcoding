@@ -477,7 +477,7 @@ var _reg_event_handlers = function () {
     });
 
     var check_sync = function (idnt, succ) {
-        var json = 'api/storage/'+idnt;
+        var json = `json/${idnt}.json`;
         console.log("getting "+json);
         $.scojs_message("Loading /json/"+idnt, $.scojs_message.TYPE_OK)
         return $.getJSON(json)
@@ -503,7 +503,7 @@ var _reg_event_handlers = function () {
 
     $('#sync_list').on('click', function (env) {
 
-      $.getJSON('api/storage/all')
+      $.getJSON('api/storage/all?')
       .done(function (json) {
         var idnts = $.map(json, (el) => {return el.idnt;});
         console.log(idnts);
