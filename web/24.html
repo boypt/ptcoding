@@ -2,19 +2,20 @@
 <html>
     <head>
         <title>24点</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <script src="https://cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.slim.js"></script>
         <style type="text/css">
   .ctrls { margin: 1em; }
-  #input_pads button { font-size: 2em; width: 1.5em; margin: 0.5em; }
-  #input_dis { font-size: 1.5em; }
+  #input_pads button { font-size: 1.2em; margin: 0.5em; width: 2.2em;}
+  #input_dis { width:12.8em; font-size: 1.5em; }
   #result p { font-size: 1.5em; font-weight: bold; }
         </style>
     </head>
     <body>
 
     <div align="center">
-      <h1>计算24点(加、减、乘、除、括号)</h1>
+      <h1>计算24点</h1>
       <form id="input_form">
         <div id="input_pads">
           <div>
@@ -38,10 +39,12 @@
           </div>
         </div>
         <div class="ctrls">
-          <input id="input_dis" type="text" readonly>
           <label>单解</label>
           <input id="input_singleAns" type="checkbox" name="findOne" checked />
           <input id="input_clear" type="button" name="clear" value="  清空  ">
+        </div>
+        <div class="ctrls">
+          <input id="input_dis" type="text" readonly>
         </div>
       </form>
 
