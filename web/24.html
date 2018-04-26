@@ -6,17 +6,29 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <script src="https://cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.slim.js"></script>
         <style type="text/css">
-  .ctrls { margin: 1em; }
-  #input_pads button { font-size: 1.2em; margin: 0.3em; width: 2.3em;}
-  #input_dis { width:10em; font-size: 1.5em; }
+  #input_ctrls { margin: .8em;
+    display: flex; 
+    justify-content:space-between;
+  }
+  #input_pads > div {
+    display: flex;
+    align-content: space-between;
+  }
+  #input_pads > div > button {
+    margin: 1em;
+    flex-grow: 1;
+  }
+  #input_disbox { margin:1em;  }
+  #input_dis { width: 100%; font-size: 1.5em;}
+  #result {margin: 1em;}
   #result p { font-size: 1.5em; font-weight: bold; }
         </style>
     </head>
     <body>
 
-    <div align="center">
+    <div>
       <h1>计算24点</h1>
-      <form id="input_form">
+      <div>
         <div id="input_pads">
           <div>
             <button data-value="1">A</button>
@@ -38,15 +50,17 @@
             <button data-value="13">K</button>
           </div>
         </div>
-        <div class="ctrls">
-          <label>单解</label>
-          <input id="input_singleAns" type="checkbox" name="findOne" checked />
+        <div id="input_ctrls">
+          <span>
+            <label>单解</label>
+            <input id="input_singleAns" type="checkbox" name="findOne" checked />
+          </span>
           <input id="input_clear" type="button" name="clear" value="  清空  ">
         </div>
-        <div class="ctrls">
+        <div id="input_disbox">
           <input id="input_dis" type="text" readonly>
         </div>
-      </form>
+      </div>
 
       <div id="result"></div>
     </div>
@@ -55,7 +69,6 @@
 <script type="text/javascript">
 
   var num_seq = [];
-
   $("#input_pads").on("click", "button", function (event) {
       event.preventDefault();
       var val = $(event.target).data("value");
@@ -71,18 +84,18 @@
       var isfindOne = document.querySelector('#input_singleAns').checked;
       var answer = funMain(isfindOne, num_seq);
       if (Object.keys(answer).length === 0) {
-        log("无答案")
+        log("无解");
       }
   });
 
   $("#input_clear").click(function(){
-    num_seq = [];
-    $("#input_dis").val('');
-    $("#result").empty();
+      num_seq = [];
+      $("#input_dis").val('');
+      $("#result").empty();
   });
 
   function log(str) {
-    $("#result").append($("<p>").text(str));
+      $("#result").append($("<p>").text(str));
   }
 
   function humanAnswer(exp) {
