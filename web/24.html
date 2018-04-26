@@ -3,23 +3,45 @@
     <head>
         <title>24点</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script src="https://cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.slim.js"></script>
         <style type="text/css">
   .ctrls { margin: 1em; }
-  .num { font-size: 2em; width: 5em;}
+  #input_pads button { font-size: 2em; width: 1.5em; margin: 0.5em; }
+  #input_dis { font-size: 1.5em; }
+  #result p { font-size: 1.5em; font-weight: bold; }
         </style>
     </head>
     <body>
 
     <div align="center">
       <h1>计算24点(加、减、乘、除、括号)</h1>
-      <form onsubmit="return funCount()" >
-        <div class="ctrls">
-          <input class="num" type="text" name="seq">
+      <form id="input_form">
+        <div id="input_pads">
+          <div>
+            <button data-value="1">A</button>
+            <button data-value="2">2</button>
+            <button data-value="3">3</button>
+            <button data-value="4">4</button>
+            <button data-value="5">5</button>
+          </div>
+          <div>
+            <button data-value="6">6</button>
+            <button data-value="7">7</button>
+            <button data-value="8">8</button>
+            <button data-value="9">9</button>
+            <button data-value="10">10</button>
+          </div>
+          <div>
+            <button data-value="11">J</button>
+            <button data-value="12">Q</button>
+            <button data-value="13">K</button>
+          </div>
         </div>
         <div class="ctrls">
-          <label>一个：</label><input type="checkbox" name="findOne" checked />
-          <input type="button" name="clear" value="  清空  " onclick="clearResult()">
-          <input type="submit" name="btn" value="  计算  ">
+          <input id="input_dis" type="text" readonly>
+          <label>单解</label>
+          <input id="input_singleAns" type="checkbox" name="findOne" checked />
+          <input id="input_clear" type="button" name="clear" value="  清空  ">
         </div>
       </form>
 
@@ -28,19 +50,36 @@
     </body>
 
 <script type="text/javascript">
-  function clearResult() {
-    document.querySelector('input[name="seq"]').value = '';
-    var rst = document.querySelector("#result")
-    while (rst.firstChild) {
-      rst.removeChild(rst.firstChild);
-    }
-  }
+
+  var num_seq = [];
+
+  $("#input_pads").on("click", "button", function (event) {
+      event.preventDefault();
+      var val = $(event.target).data("value");
+      var text = $(event.target).text();
+      var dis = $("#input_dis");
+      dis.val(dis.val() + ' ' + text);
+
+      num_seq.push(parseInt(val));
+      if( num_seq.length != 4) {
+        return;
+      }
+
+      var isfindOne = document.querySelector('#input_singleAns').checked;
+      var answer = funMain(isfindOne, num_seq);
+      if (Object.keys(answer).length === 0) {
+        log("无答案")
+      }
+  });
+
+  $("#input_clear").click(function(){
+    num_seq = [];
+    $("#input_dis").val('');
+    $("#result").empty();
+  });
 
   function log(str) {
-    console.log(str)
-    var el = document.createElement('p');
-    el.textContent = str;
-    document.querySelector("#result").appendChild(el);
+    $("#result").append($("<p>").text(str));
   }
 
   function humanAnswer(exp) {
@@ -72,60 +111,6 @@
     var exp = genExpress(expn, a, b, c, d, m1, m2, m3);//生成计算表达式
     var ret = eval("(" + exp + ")");
     return Math.abs(ret - 24) < 0.1 ? exp : false;
-  }
-
-  //接收四个输入框的数字，调用主程序
-  function funCount() {
-    try {
-
-      var isfindOne = document.querySelector('input[name="findOne"]').checked;
-      var seq = document.querySelector('input[name="seq"]').value.toUpperCase();
-      var seq_ar = seq.split('');
-      var num_seq = [];
-
-      while (seq_ar.length > 0) {
-        var digit = seq_ar.shift();
-        switch (digit) {
-          case 'A':
-            num_seq.push(1);
-            break;
-          case 'J':
-            num_seq.push(11);
-            break;
-          case 'Q':
-            num_seq.push(12);
-            break;
-          case 'K':
-            num_seq.push(13);
-            break;
-          case '1':
-            if (seq_ar.length > 0 && seq_ar[0] === '0') {
-              num_seq.push(10);
-              seq_ar.shift();
-            } else {
-              num_seq.push(1);
-            }
-            break;
-          default:
-            num_seq.push(parseInt(digit));
-        }
-      }
-      if (num_seq.length != 4) {
-        alert("错误输入");
-        return false;
-      }
-      console.log(num_seq);
-      log("----" + num_seq.join(",") + "----")
-      var answer = funMain(isfindOne, num_seq);
-      if (Object.keys(answer).length === 0) {
-        log("无答案")
-      }
-
-    } catch (e) {
-      console.log(e);
-    } finally {
-      return false;
-    }
   }
 
   //主程序
