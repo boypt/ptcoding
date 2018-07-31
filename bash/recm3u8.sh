@@ -16,7 +16,7 @@ arg1="${1:-}"
 
 RECPATH=/srv/md/mp4
 RECNAME=${RECPATH}/gz-$(date '+%m%d-%H%M%S').mp4
-FFMPEGCMD="ffmpeg -hide_banner -loglevel panic -re -i http://satellitepull.cnr.cn:80/live/wxgdgsgb/playlist.m3u8  -c copy -bsf:a aac_adtstoasc"
+FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i http://satellitepull.cnr.cn/live/wxgdgsgb/playlist.m3u8  -c copy -bsf:a aac_adtstoasc"
 
 killall -q ffmpeg || true
 ${FFMPEGCMD} $RECNAME &
