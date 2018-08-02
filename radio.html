@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta name="viewport" content="user-scalable=no">
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  	<link media="all" rel="stylesheet" href="APlayer.min.css" />
+        <style type="text/css">
+            /* */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        .container {
+            max-width: 32rem;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 150px;
+        }
+        h1 {
+            font-size: 54px;
+            color: #333;
+            margin: 30px 0 10px;
+        }
+        h2 {
+            font-size: 22px;
+            color: #555;
+        }
+        h3 {
+            font-size: 24px;
+            color: #555;
+        }
+        hr {
+            display: block;
+            width: 7rem;
+            height: 1px;
+            margin: 2.5rem 0;
+            background-color: #eee;
+            border: 0;
+        }
+        a {
+            color: #08c;
+            text-decoration: none;
+        }
+        p {
+            font-size: 18px;
+        }
+
+    .button {
+        background-color: #b7daff;
+        border: none;
+        padding: 15px 32px;
+        font-size: 2em;
+    }
+    
+    .seek_btns {
+      margin: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+        </style>
+    <script src="//cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="APlayer.min.js"></script>
+<!-- 
+ APlayer
+https://aplayer.js.org/#/zh-Hans/
+ -->
+
+    </head>
+    <body>
+<div class="container">
+<div id="player" class="aplayer"></div>
+<div id="btns" class="seek_btns">
+  <button class="seekbtn button" data-sec="-30">&lt;&lt;</button>
+  <button class="seekbtn button" data-sec="30">&gt;&gt;</button>
+</div>
+
+</div>
+
+    </body>
+        <script type="text/javascript">
+            /* */
+var ap = new APlayer({
+    element: document.getElementById('player'),
+    mini: false,
+    autoplay: false,
+    lrcType: false,
+    listFolded: false,
+    mutex: true,
+    volume: 1.0,
+    order: 'list',
+});
+
+$.getJSON("audio/", function(idx){ 
+  var list = idx.map(e => {
+    return {
+      "name": e.Name.slice(0, -5).replace('_', ' '),
+      "artist": "Radio",
+      "url": "audio"+e.URL.substring(1),
+      "cover": "cover.png"
+    }
+  });
+  ap.list.add(list);
+});
+
+$("#btns").on("click", "button.seekbtn", (evn) => {
+  var curr = ap.audio.currentTime;
+  var sec = $(evn.target).data("sec");
+  curr += sec;
+  ap.seek(curr);
+  if(ap.audio.paused)
+    ap.play();
+});
+
+</script>
+</html>
+
