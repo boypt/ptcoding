@@ -16,7 +16,7 @@ arg1="${1:-}"
 
 #SRCINPUT="http://satellitepull.cnr.cn/live/wxgdgsgb/playlist.m3u8"
 SRCINPUT="http://ls.qingting.fm/live/4847/64k.m3u8?deviceid=00000000-2a50-2e6a-7cbf-0d991c12983e"
-RECPATH=/srv/md/mp4
+RECPATH=/srv/md/radio/audio
 RECNAME=${RECPATH}/$(date '+%m-%d_%H:%M:%S')
 #FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -c copy -bsf:a aac_adtstoasc ${RECNAME}.opus"
 FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -c:a libopus -ab 12k -af pan=mono|c0=.5*c0+.5*c1 ${RECNAME}.opus"
