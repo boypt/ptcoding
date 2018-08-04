@@ -88,11 +88,12 @@ var ap = new APlayer({
     listFolded: false,
     mutex: true,
     volume: 1.0,
+    preload: 'none',
     order: 'list',
 });
 
 function update_list() {
-	$.getJSON("audio/", function(idx){ 
+	$.getJSON("audio/?sort=time&order=asc", function(idx){
 	  var list = idx.map(e => {
 		return {
 		  "name": e.Name.slice(0, -5).replace('_', ' '),
