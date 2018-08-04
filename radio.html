@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  	<link media="all" rel="stylesheet" href="APlayer.min.css" />
+    <link media="all" rel="stylesheet" href="APlayer.min.css" />
         <style type="text/css">
             /* */
         body {
@@ -70,14 +70,14 @@ https://aplayer.js.org/#/zh-Hans/
 
     </head>
     <body>
-		<div class="container">
-			<div id="player" class="aplayer"></div>
-			<div id="btns" class="seek_btns">
-				<button class="seekbtn button" data-sec="-30">&lt;&lt;</button>
-				<button class="update_list button">UD</button>
-				<button class="seekbtn button" data-sec="30">&gt;&gt;</button>
-			</div>
-		</div>
+    <div class="container">
+      <div id="player" class="aplayer"></div>
+      <div id="btns" class="seek_btns">
+        <button class="seekbtn button" data-sec="-30">&lt;&lt;</button>
+        <button class="update_list button">UD</button>
+        <button class="seekbtn button" data-sec="30">&gt;&gt;</button>
+      </div>
+    </div>
     </body>
     <script type="text/javascript">
 var ap = new APlayer({
@@ -93,17 +93,22 @@ var ap = new APlayer({
 });
 
 function update_list() {
-	$.getJSON("audio/?sort=time&order=asc", function(idx){
-	  var list = idx.map(e => {
-		return {
-		  "name": e.Name.slice(0, -5).replace('_', ' '),
-		  "artist": "Radio",
-		  "url": "audio"+e.URL.substring(1),
-		  "cover": "cover.png"
-		}
-	  });
-	  ap.list.add(list);
-	});
+  $.getJSON("audio/?sort=time&order=asc", function(idx){
+    var list = idx.map(e => {
+     
+    var pos = e.Name.indexOf('-');
+    var name = e.Name.substring(pos + 1).slice(0, -5).replace('_', ' ');
+    var art = e.Name.substring(pos, 0);
+      
+    return {
+      "name": name,
+      "artist": art,
+      "url": "audio"+e.URL.substring(1),
+      "cover": "cover.png"
+    }
+    });
+    ap.list.add(list);
+  });
 }
 
 $("#btns").on("click", "button.seekbtn", (evn) => {
