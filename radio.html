@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link media="all" rel="stylesheet" href="APlayer.min.css" />
+    <link media="all" rel="stylesheet" href="res/APlayer.min.css" />
         <style type="text/css">
             /* */
         body {
@@ -61,8 +61,8 @@
     }
 
         </style>
-    <script src="//cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="APlayer.min.js"></script>
+    <script src="res/zepto.min.js"></script>
+    <script src="res/APlayer.min.js"></script>
 <!-- 
  APlayer
 https://aplayer.js.org/#/zh-Hans/
@@ -96,16 +96,16 @@ function update_list() {
   $.getJSON("audio/?sort=time&order=asc", function(idx){
     var list = idx.map(e => {
      
-    var pos = e.Name.indexOf('-');
-    var name = e.Name.substring(pos + 1).slice(0, -5).replace('_', ' ');
-    var art = e.Name.substring(pos, 0);
-      
-    return {
-      "name": name,
-      "artist": art,
-      "url": "audio"+e.URL.substring(1),
-      "cover": "cover.png"
-    }
+      var pos = e.Name.indexOf('-');
+      var name = e.Name.substring(pos + 1).slice(0, -5).replace('_', ' ');
+      var art = e.Name.substring(pos, 0);
+        
+      return {
+        "name": name,
+        "artist": art,
+        "url": "audio"+e.URL.substring(1),
+        "cover": "res/cover.png"
+      }
     });
     ap.list.add(list);
   });
@@ -124,6 +124,7 @@ $(".update_list").click(function() {
   ap.list.clear();
   update_list();
 });
+
 
 update_list();
 </script>
