@@ -32,7 +32,7 @@ fi
 
 RECNAME=${RECPATH}/[${SKEY}]-$(date '+%m-%d_%H:%M:%S')
 #FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -c copy -bsf:a aac_adtstoasc ${RECNAME}.opus"
-FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -c:a libopus -ab 12k -af pan=mono|c0=.5*c0+.5*c1 ${RECNAME}.opus"
+FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -multiple_requests 1 -c:a libopus -ab 12k -af pan=mono|c0=.5*c0+.5*c1 ${RECNAME}.opus"
 
 killall -q ffmpeg || true
 ${FFMPEGCMD} &
