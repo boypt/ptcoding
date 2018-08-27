@@ -93,7 +93,7 @@ var ap = new APlayer({
 });
 
 function update_list() {
-    $.getJSON("audio/?sort=time&order=asc", idx => {
+    $.getJSON(`audio/?sort=time&order=asc&_=${Math.random()}`, idx => {
     var list = idx.map(e => {
      
       var pos = e.Name.indexOf('-');
@@ -103,7 +103,7 @@ function update_list() {
       return {
         "name": name,
         "artist": art,
-	"url": `audio${e.URL.substring(1)}`,
+        "url": `audio${e.URL.substring(1)}`,
         "cover": "res/cover.png"
       }
     });
