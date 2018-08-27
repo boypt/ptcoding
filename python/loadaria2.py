@@ -62,8 +62,6 @@ def aria2_getInfo():
 Active:  {}
 DownSpeed: {:.2f} M/s
 """.format(rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024))
-        #pprint.pprint(rsp["result"])    
-        
     
 def aria2_tellActive():
     rsp = aria2_do_jsonrpc("aria2.tellActive")
@@ -79,8 +77,9 @@ def aria2_tellActive():
     
 def main():
 
-    if os.path.exists(os.path.expanduser("~/.ptutils.config")):
-        with open(os.path.expanduser("~/.ptutils.config")) as f:
+    conf = os.path.expanduser("~/.ptutils.config")
+    if os.path.exists(conf):
+        with open(conf) as f:
             configs = f.readlines()
         
         glbs = globals()
@@ -93,6 +92,7 @@ def main():
                 glbs[key] = val.strip('"')
                 
     else:
+        print("~/.ptutils.config not found")
         sys.exit(1)
 
     aria2_getInfo()
