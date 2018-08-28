@@ -14,18 +14,16 @@ def do_recur_getlist(root):
     fulluris = []
 
     rst = requests.get(root, headers={'accept': 'application/json'})
-
-    for item in rst.json():
-    
-        uri = "{}{}".format(root, item["URL"][2:])
-
-        if item["IsDir"]:
-            fulluris.extend(do_recur_getlist(uri))
-        else:
-            if item["Size"] < 10*1024*1024:
-                continue
-                
-            fulluris.append(uri)
+    if rst.text != "null":
+        for item in rst.json():
+            uri = "{}{}".format(root, item["URL"][2:])
+            if item["IsDir"]:
+                fulluris.extend(do_recur_getlist(uri))
+            else:
+                if item["Size"] < 10*1024*1024:
+                    continue
+                    
+                fulluris.append(uri)
             
     return fulluris
 
@@ -107,8 +105,10 @@ def main():
     uris = do_recur_getlist(sourceroot)
     for uri in uris:
         ret = aria2_addUri(uri)
-        if "error" not in ret:
-            print(ret)
+        print(ret)
+
+    print("==="*20)
+    aria2_getInfo()
 
 if __name__ == "__main__":
     main()
