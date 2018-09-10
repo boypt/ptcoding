@@ -5,6 +5,9 @@ import json
 import pprint
 import sys
 import os
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 
 aria2_url=""
 aria2_token=""
@@ -69,7 +72,7 @@ def aria2_tellActive():
             int(t['files'][0]['completedLength']) / int(t['files'][0]['length']) * 100,
             os.path.basename(t['files'][0]['path'])
         )
-        for t in rsp['result'] ]
+        for t in rsp['result'] if int(t['files'][0]['length']) > 0 ]
     
     [ print(p) for p in progs ]
     
@@ -103,6 +106,7 @@ def main():
         return
             
     uris = do_recur_getlist(sourceroot)
+    print("Get: URLs ({})".format(len(uris)))
     for uri in uris:
         ret = aria2_addUri(uri)
         print(ret)
