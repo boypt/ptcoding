@@ -6,6 +6,9 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+export http_proxy=http://localhost:7070
+export https_proxy=http://localhost:7070
+
 # Set magic variables for current file & dir
 __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 __file="${__dir}/$(basename "${BASH_SOURCE[0]}")"
