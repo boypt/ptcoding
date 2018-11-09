@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import asyncio
+import concurrent.futures
+import urllib
+import functools
 import requests
 import json
 import pprint
@@ -50,23 +54,29 @@ def aria2_do_jsonrpc(method, params = []):
     return response
     
 def aria2_addUri(uris):
-    return aria2_do_jsonrpc("aria2.addUri", [uris])
+    rsp = aria2_do_jsonrpc("aria2.addUri", [uris])
+    assert "result" in rsp, 'result in resp'
+
+    fn = os.path.basename(uris)
+    fn = urllib.parse.unquote(fn, encoding='utf-8', errors='replace') 
+    return fn
 
 def aria2_getInfo():
     rsp =  aria2_do_jsonrpc("aria2.getVersion")
-    if "result" in rsp:
-        print(rsp["result"]["version"])
+    assert "result" in rsp, 'result in resp'
+    version = rsp["result"]["version"]
         
     rsp =  aria2_do_jsonrpc("aria2.getGlobalStat")
-    if "result" in rsp:
-        print("""
+
+    assert "result" in rsp, 'result in resp'
+    return """
+Ver: {}
 Active:  {}
 DownSpeed: {:.2f} M/s
-""".format(rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024))
+""".format(version, rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024)
     
 def aria2_tellActive():
     rsp = aria2_do_jsonrpc("aria2.tellActive")
-    #print(rsp['result'])
     progs = [ 
         "{:.0f}% - {}".format(
             int(t['files'][0]['completedLength']) / int(t['files'][0]['length']) * 100,
@@ -74,10 +84,9 @@ def aria2_tellActive():
         )
         for t in rsp['result'] if int(t['files'][0]['length']) > 0 ]
     
-    [ print(p) for p in progs ]
+    return "\n".join(progs)
     
-def main():
-
+async def main():
     conf = os.path.expanduser("~/.ptutils.config")
     if os.path.exists(conf):
         with open(conf) as f:
@@ -95,24 +104,36 @@ def main():
     else:
         print("~/.ptutils.config not found")
         sys.exit(1)
+    loop = asyncio.get_event_loop()
 
-    aria2_getInfo()
+    print(await loop.run_in_executor(None, aria2_getInfo))
     print("==="*20)
     
     if len(sys.argv) > 1:
         if sys.argv[1] == "list":
             aria2_tellActive()
-                    
+            print(await loop.run_in_executor(None, aria2_tellActive))
         return
             
     uris = do_recur_getlist(sourceroot)
     print("Get: URLs ({})".format(len(uris)))
-    for uri in uris:
-        ret = aria2_addUri(uri)
-        print(ret)
+    futures = []
+    for idx, uri in enumerate(uris):
+        fut = loop.run_in_executor(None, aria2_addUri, uri)
+        fut.add_done_callback(functools.partial(
+            lambda idx, fut: print("{}:{}".format(idx+1, fut.result())),
+            idx)
+        )
 
+        #fut.add_done_callback(print)
+        futures.append(fut)
+
+    asyncio.gather(*futures)
+    print(await loop.run_in_executor(None, aria2_getInfo))
     print("==="*20)
-    aria2_getInfo()
 
 if __name__ == "__main__":
-    main()
+    #main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+
