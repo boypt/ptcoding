@@ -118,15 +118,12 @@ async def main():
     for idx, uri in enumerate(uris):
         fut = loop.run_in_executor(None, aria2_addUri, uri)
         fut.add_done_callback(functools.partial(
-            lambda idx, fut: print("{}:{}".format(idx+1, fut.result())),
+            lambda idx, fut: print("[{:^3}]:{}".format(idx+1, fut.result())),
             idx)
         )
-
-        #fut.add_done_callback(print)
         futures.append(fut)
 
-    asyncio.gather(*futures)
-    print(await loop.run_in_executor(None, aria2_getInfo))
+    await asyncio.gather(*futures)
     print("==="*20)
 
 if __name__ == "__main__":
