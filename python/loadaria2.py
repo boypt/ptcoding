@@ -62,18 +62,13 @@ def aria2_addUri(uris):
     return fn
 
 def aria2_getInfo():
-    rsp =  aria2_do_jsonrpc("aria2.getVersion")
-    assert "result" in rsp, 'result in resp'
-    version = rsp["result"]["version"]
-        
     rsp =  aria2_do_jsonrpc("aria2.getGlobalStat")
 
     assert "result" in rsp, 'result in resp'
     return """
-Ver: {}
 Active:  {}
 DownSpeed: {:.2f} M/s
-""".format(version, rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024)
+""".format(rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024)
     
 def aria2_tellActive():
     rsp = aria2_do_jsonrpc("aria2.tellActive")
@@ -106,16 +101,18 @@ async def main():
         sys.exit(1)
     loop = asyncio.get_event_loop()
 
-    print(await loop.run_in_executor(None, aria2_getInfo))
+    fu_info = loop.run_in_executor(None, aria2_getInfo)
+    fu_info.add_done_callback(lambda x: print(x.result()))
     print("==="*20)
     
     if len(sys.argv) > 1:
         if sys.argv[1] == "list":
-            aria2_tellActive()
-            print(await loop.run_in_executor(None, aria2_tellActive))
+            fu_act = loop.run_in_executor(None, aria2_tellActive)
+            fu_act.add_done_callback(lambda x: print(x.result()))
+            await asyncio.gather(fu_info, fu_act)
         return
             
-    uris = do_recur_getlist(sourceroot)
+    uris = await loop.run_in_executor(None, do_recur_getlist, sourceroot)
     print("Get: URLs ({})".format(len(uris)))
     futures = []
     for idx, uri in enumerate(uris):
