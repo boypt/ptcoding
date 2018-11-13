@@ -130,7 +130,7 @@ async def do_load(loop):
     await asyncio.wait(futures)
     print("==="*20)
 
-async def main(loop, args):
+async def main(loop):
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', action='count', dest='verbose', help='verbose request process')
     parser.add_argument('-l', '--list', action='store_true', dest='list', help='list')
