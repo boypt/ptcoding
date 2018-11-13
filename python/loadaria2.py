@@ -9,13 +9,33 @@ import json
 import pprint
 import sys
 import os
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+import argparse
+import logging
+from http.client import HTTPConnection
 
 
 aria2_url=""
 aria2_token=""
 sourceroot=""
+
+def readconf():
+    conf = os.path.expanduser("~/.ptutils.config")
+    if os.path.exists(conf):
+        with open(conf) as f:
+            configs = f.readlines()
+        
+        glbs = globals()
+        for f in configs:
+            if len(f) < 2:
+                continue
+            
+            key, val = f.strip().split('=', 1)
+            if key in glbs:
+                glbs[key] = val.strip('"')
+                
+    else:
+        print("~/.ptutils.config not found")
+        sys.exit(1)
 
 def do_recur_getlist(root):
     fulluris = []
@@ -49,7 +69,7 @@ def aria2_do_jsonrpc(method, params = []):
     
     #print(data)
     response = requests.post(
-        aria2_url, data=data, headers=headers, verify=False).json()
+        aria2_url, data=data, headers=headers).json()
 
     return response
     
@@ -81,36 +101,20 @@ def aria2_tellActive():
     
     return "\n".join(progs)
     
-async def main():
-    conf = os.path.expanduser("~/.ptutils.config")
-    if os.path.exists(conf):
-        with open(conf) as f:
-            configs = f.readlines()
-        
-        glbs = globals()
-        for f in configs:
-            if len(f) < 2:
-                continue
-            
-            key ,val = f.strip().split('=', 1)
-            if key in glbs:
-                glbs[key] = val.strip('"')
-                
-    else:
-        print("~/.ptutils.config not found")
-        sys.exit(1)
-    loop = asyncio.get_event_loop()
+async def do_list(loop):
+    futus = [
+        loop.run_in_executor(None, fn)
+        for fn in (aria2_getInfo, aria2_tellActive)
+    ]
+    for fu in futus:
+        fu.add_done_callback(lambda x: print(x.result()))
 
-    fu_info = loop.run_in_executor(None, aria2_getInfo)
-    fu_info.add_done_callback(lambda x: print(x.result()))
+    await asyncio.wait(futus)
+
+async def do_load(loop):
+
+    print(await loop.run_in_executor(None, aria2_getInfo))
     print("==="*20)
-    
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "list":
-            fu_act = loop.run_in_executor(None, aria2_tellActive)
-            fu_act.add_done_callback(lambda x: print(x.result()))
-            await asyncio.gather(fu_info, fu_act)
-        return
             
     uris = await loop.run_in_executor(None, do_recur_getlist, sourceroot)
     print("Get: URLs ({})".format(len(uris)))
@@ -123,11 +127,30 @@ async def main():
         )
         futures.append(fut)
 
-    await asyncio.gather(*futures)
+    await asyncio.wait(futures)
     print("==="*20)
 
+async def main(loop, args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', action='count', dest='verbose', help='verbose request process')
+    parser.add_argument('-l', '--list', action='store_true', dest='list', help='list')
+    args = parser.parse_args()
+    if args.verbose:
+        if args.verbose > 0:
+            logging.basicConfig()
+            logging.getLogger().setLevel(logging.DEBUG)
+            requests_log = logging.getLogger("requests.packages.urllib3")
+            requests_log.setLevel(logging.DEBUG)
+        if args.verbose > 1:
+            HTTPConnection.debuglevel = 1
+
+    if args.list:
+        await do_list(loop)
+    else:
+        await do_load(loop)
+
 if __name__ == "__main__":
-    #main()
+    readconf()
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    loop.run_until_complete(main(loop))
 
