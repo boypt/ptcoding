@@ -37,15 +37,17 @@ def readconf():
         print("~/.ptutils.config not found")
         sys.exit(1)
 
-def do_recur_getlist(root):
+async def do_recur_getlist(root):
     fulluris = []
 
-    rst = requests.get(root, headers={'accept': 'application/json'})
+    rst = await loop.run_in_executor(None, lambda:requests.get(root,
+         headers={'accept': 'application/json'}))
+
     if rst.text != "null":
         for item in rst.json():
             uri = "{}{}".format(root, item["URL"][2:])
             if item["IsDir"]:
-                fulluris.extend(do_recur_getlist(uri))
+                fulluris.extend(await do_recur_getlist(uri))
             else:
                 if item["Size"] < 10*1024*1024:
                     continue
@@ -54,7 +56,7 @@ def do_recur_getlist(root):
             
     return fulluris
 
-def aria2_do_jsonrpc(method, params = []):
+async def aria2_do_jsonrpc(method, params = []):
 
     headers = {'content-type': 'application/json'}
 
@@ -67,22 +69,20 @@ def aria2_do_jsonrpc(method, params = []):
     }
     data = json.dumps(payload)
     
-    #print(data)
-    response = requests.post(
-        aria2_url, data=data, headers=headers).json()
-
-    return response
+    resp = await loop.run_in_executor(None, lambda: requests.post(
+        aria2_url, data=data, headers=headers))
+    return resp.json()
     
-def aria2_addUri(uris):
-    rsp = aria2_do_jsonrpc("aria2.addUri", [uris])
+async def aria2_addUri(uris):
+    rsp = await aria2_do_jsonrpc("aria2.addUri", [uris])
     assert "result" in rsp, 'result in resp'
 
     fn = os.path.basename(uris)
     fn = urllib.parse.unquote(fn, encoding='utf-8', errors='replace') 
     return fn
 
-def aria2_getInfo():
-    rsp =  aria2_do_jsonrpc("aria2.getGlobalStat")
+async def aria2_getInfo():
+    rsp = await aria2_do_jsonrpc("aria2.getGlobalStat")
 
     assert "result" in rsp, 'result in resp'
     return """
@@ -90,8 +90,8 @@ Active:  {}
 DownSpeed: {:.2f} M/s
 """.format(rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024)
     
-def aria2_tellActive():
-    rsp = aria2_do_jsonrpc("aria2.tellActive")
+async def aria2_tellActive():
+    rsp = await aria2_do_jsonrpc("aria2.tellActive")
     progs = [ 
         "{:.0f}% - {}".format(
             int(t['files'][0]['completedLength']) / int(t['files'][0]['length']) * 100,
@@ -112,19 +112,19 @@ async def do_list(loop):
     await asyncio.wait(futus)
 
 async def do_load(loop):
-
     print(await loop.run_in_executor(None, aria2_getInfo))
     print("==="*20)
             
-    uris = await loop.run_in_executor(None, do_recur_getlist, sourceroot)
+    uris = await do_recur_getlist(sourceroot)
     print("Get: URLs ({})".format(len(uris)))
     futures = []
     for idx, uri in enumerate(uris):
-        fut = loop.run_in_executor(None, aria2_addUri, uri)
+        fut = asyncio.ensure_future(aria2_addUri(uri))
         fut.add_done_callback(functools.partial(
             lambda idx, fut: print("[{:^3}]:{}".format(idx+1, fut.result())),
             idx)
         )
+        
         futures.append(fut)
 
     await asyncio.wait(futures)
