@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import asyncio
-import aiofiles
 import urllib
 import requests
 import pprint
@@ -37,10 +36,9 @@ def readconf():
         print("~/.ptutils.config not found")
         sys.exit(1)
 
-async def torrent2mag(idx, fn):
-    async with aiofiles.open(fn, mode='rb') as f:
-        contents = await f.read()
-        metadata = bencode3.bdecode(contents)
+def torrent2mag(idx, fn):
+    with open(fn, mode='rb') as f:
+        metadata = bencode3.bdecode(f.read())
         hash_contents = bencode3.bencode(metadata['info'])
         digest = hashlib.sha1(hash_contents).digest().hex()
 
@@ -68,7 +66,7 @@ async def mag2cloud(idx, mag):
 
 async def main():
     futures = [
-        asyncio.ensure_future(mag2cloud(idx, await torrent2mag(idx, local_fn)))
+        asyncio.ensure_future(mag2cloud(idx, torrent2mag(idx, local_fn)))
         for idx, local_fn in enumerate(glob.glob(torrent_local_path))
     ]
     await asyncio.wait(futures)
