@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 
 import asyncio
-import concurrent.futures
+import aiofiles
 import urllib
-import functools
 import requests
-import json
 import pprint
 import sys
 import os
 import re
 import glob
 import logging
-import urllib
 import argparse
-from http.client import HTTPConnection
+import bencode3
+import hashlib
 
 CLDTORRENT=""
 CLDCOOKIE=""
@@ -39,32 +37,22 @@ def readconf():
         print("~/.ptutils.config not found")
         sys.exit(1)
 
-async def torrent2mag(local_fn):
-    req_headers = requests.utils.default_headers()
-    req_headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36',
-    })
-    re_mag = re.compile(r'(?<=href=")(magnet:[^"]+)(?=")')
-    url = "http://torrent2magnet.com/upload/"
-    bsname = os.path.basename(local_fn)
-    loop = asyncio.get_event_loop()
-    magurl = ""
-    with open(local_fn, 'rb') as torrent:
-        r = await loop.run_in_executor(None, lambda : requests.post(url, headers=req_headers, files={'torrent_file': (bsname, torrent)}))
-        assert r.status_code == 200
-        mag = re_mag.search(r.text)
-        assert mag is not None
-        magurl = mag[0]
+async def torrent2mag(idx, fn):
+    async with aiofiles.open(fn, mode='rb') as f:
+        contents = await f.read()
+        metadata = bencode3.bdecode(contents)
+        hash_contents = bencode3.bencode(metadata['info'])
+        digest = hashlib.sha1(hash_contents).digest().hex()
 
-    return await mag2cloud(magurl)
-    
-async def mag2cloud(mag):
-    _re_name = re.compile(r';dn=(\S+)$')
-    fn = _re_name.search(mag)
-    if fn:
-        fn = urllib.parse.unquote_plus(fn[1])
-        print("-->> ", fn, )
+        if 'name' in metadata['info']:
+            name = '&dn='+urllib.parse.quote_plus(metadata['info']['name'])
+        else:
+            name = ''
 
+        print('[{}] {} --> {}'.format(idx, os.path.basename(fn), metadata['info']['name']))
+        return 'magnet:?xt=urn:btih:{}{}'.format(digest, name)
+
+async def mag2cloud(idx, mag):
     loop = asyncio.get_event_loop()
     req_headers = requests.utils.default_headers()
     req_headers.update({
@@ -75,15 +63,14 @@ async def mag2cloud(mag):
     r = await loop.run_in_executor(None, lambda :requests.post(url, headers=req_headers, data=mag))
 
     assert r.status_code == 200
-    print(r.text, fn)
+    print("[{}] {}".format(idx, r.text))
     return r.text
 
 async def main():
     futures = [
-        asyncio.ensure_future(torrent2mag(local_fn))
-        for local_fn in glob.glob(torrent_local_path)
+        asyncio.ensure_future(mag2cloud(idx, await torrent2mag(idx, local_fn)))
+        for idx, local_fn in enumerate(glob.glob(torrent_local_path))
     ]
-    print("==="*20)
     await asyncio.wait(futures)
     print("==="*20)
 
@@ -99,6 +86,7 @@ if __name__ == "__main__":
         requests_log.setLevel(logging.DEBUG)
     
     if results.verbose and results.verbose > 1:
+        from http.client import HTTPConnection
         HTTPConnection.debuglevel = 1
 
     readconf()
