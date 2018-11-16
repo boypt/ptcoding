@@ -65,10 +65,12 @@ async def mag2cloud(idx, mag):
     return r.text
 
 async def main():
+    print("==="*20)
     futures = [
         asyncio.ensure_future(mag2cloud(idx, torrent2mag(idx, local_fn)))
         for idx, local_fn in enumerate(glob.glob(torrent_local_path))
     ]
+    print("==="*20)
     await asyncio.wait(futures)
     print("==="*20)
 

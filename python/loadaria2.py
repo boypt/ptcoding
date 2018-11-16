@@ -107,6 +107,7 @@ async def aria2_tellActive():
     return "\n".join(progs)
     
 async def do_list(loop):
+    print("==="*20)
     futus = [
         asyncio.ensure_future(fn)
         for fn in (aria2_getInfo, aria2_tellActive)
@@ -115,8 +116,10 @@ async def do_list(loop):
         fu.add_done_callback(lambda x: print(x.result()))
 
     await asyncio.wait(futus)
+    print("==="*20)
 
 async def do_load(loop):
+    print("==="*20)
     _fu = asyncio.ensure_future(aria2_getInfo())
     _fu.add_done_callback(lambda f:print(f.result()))
     uris = await do_recur_getlist(sourceroot)
