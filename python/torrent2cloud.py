@@ -40,14 +40,16 @@ def torrent2mag(idx, fn):
     with open(fn, mode='rb') as f:
         metadata = bencode3.bdecode(f.read())
         hash_contents = bencode3.bencode(metadata['info'])
-        digest_hex = hashlib.sha1(hash_contents).digest().hex()
 
-        magurn=[ digest_hex ]
+        maglink = []
+        xt = 'xt=urn:btih:' + hashlib.sha1(hash_contents).digest().hex()
+        maglink.append(xt)
+
         if 'name' in metadata['info']:
-            magurn.append('&dn='+urllib.parse.quote_plus(metadata['info']['name']))
+            maglink.append('dn='+urllib.parse.quote_plus(metadata['info']['name']))
             print('[{}] {} --> {}'.format(idx, os.path.basename(fn), metadata['info']['name']))
 
-        return 'magnet:?xt=urn:btih:' + ''.join(magurn)
+        return 'magnet:?' + '&'.join(maglink)
 
 async def mag2cloud(idx, mag):
     loop = asyncio.get_event_loop()
