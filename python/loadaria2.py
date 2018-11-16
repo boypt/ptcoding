@@ -44,15 +44,20 @@ async def do_recur_getlist(root):
          headers={'accept': 'application/json'}))
 
     if rst.text != "null":
+
+        futs = []
         for item in rst.json():
             uri = "{}{}".format(root, item["URL"][2:])
             if item["IsDir"]:
-                fulluris.extend(await do_recur_getlist(uri))
+                futs.append( asyncio.ensure_future(do_recur_getlist(uri)) )
             else:
                 if item["Size"] < 10*1024*1024:
                     continue
                     
                 fulluris.append(uri)
+
+        if len(futs) > 0:
+            fulluris.extend(*await asyncio.gather(*futs))
             
     return fulluris
 
@@ -78,7 +83,7 @@ async def aria2_addUri(uris):
     assert "result" in rsp, 'result in resp'
 
     fn = os.path.basename(uris)
-    fn = urllib.parse.unquote(fn, encoding='utf-8', errors='replace') 
+    fn = urllib.parse.unquote_plus(fn, encoding='utf-8', errors='replace') 
     return fn
 
 async def aria2_getInfo():
@@ -103,7 +108,7 @@ async def aria2_tellActive():
     
 async def do_list(loop):
     futus = [
-        loop.run_in_executor(None, fn)
+        asyncio.ensure_future(fn)
         for fn in (aria2_getInfo, aria2_tellActive)
     ]
     for fu in futus:
@@ -112,16 +117,16 @@ async def do_list(loop):
     await asyncio.wait(futus)
 
 async def do_load(loop):
-    print(await loop.run_in_executor(None, aria2_getInfo))
-    print("==="*20)
-            
+    _fu = asyncio.ensure_future(aria2_getInfo())
+    _fu.add_done_callback(lambda f:print(f.result()))
     uris = await do_recur_getlist(sourceroot)
+    print("==="*20)
     print("Get: URLs ({})".format(len(uris)))
     futures = []
     for idx, uri in enumerate(uris):
         fut = asyncio.ensure_future(aria2_addUri(uri))
         fut.add_done_callback(functools.partial(
-            lambda idx, fut: print("[{:^3}]:{}".format(idx+1, fut.result())),
+            lambda idx, fut: print("[{:^3}] {}".format(idx+1, fut.result())),
             idx)
         )
         
