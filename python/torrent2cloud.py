@@ -40,15 +40,14 @@ def torrent2mag(idx, fn):
     with open(fn, mode='rb') as f:
         metadata = bencode3.bdecode(f.read())
         hash_contents = bencode3.bencode(metadata['info'])
-        digest = hashlib.sha1(hash_contents).digest().hex()
+        digest_hex = hashlib.sha1(hash_contents).digest().hex()
 
+        magurn=[ digest_hex ]
         if 'name' in metadata['info']:
-            name = '&dn='+urllib.parse.quote_plus(metadata['info']['name'])
-        else:
-            name = ''
+            magurn.append('&dn='+urllib.parse.quote_plus(metadata['info']['name']))
+            print('[{}] {} --> {}'.format(idx, os.path.basename(fn), metadata['info']['name']))
 
-        print('[{}] {} --> {}'.format(idx, os.path.basename(fn), metadata['info']['name']))
-        return 'magnet:?xt=urn:btih:{}{}'.format(digest, name)
+        return 'magnet:?xt=urn:btih:' + ''.join(magurn)
 
 async def mag2cloud(idx, mag):
     loop = asyncio.get_event_loop()
@@ -68,7 +67,7 @@ async def main():
     print("==="*20)
     futures = [
         asyncio.ensure_future(mag2cloud(idx, torrent2mag(idx, local_fn)))
-        for idx, local_fn in enumerate(glob.glob(torrent_local_path))
+        for idx, local_fn in enumerate(glob.glob(torrent_local_path), start=1)
     ]
     print("==="*20)
     await asyncio.wait(futures)
@@ -77,6 +76,7 @@ async def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', action='count', dest='verbose', help='verbose request process')
+    parser.add_argument('-p', action='store_true', dest='printmag', help='print magnet uri and exit.')
     results = parser.parse_args()
 
     if results.verbose and results.verbose > 0:
@@ -88,6 +88,11 @@ if __name__ == "__main__":
     if results.verbose and results.verbose > 1:
         from http.client import HTTPConnection
         HTTPConnection.debuglevel = 1
+
+    if results.printmag:
+        for idx, local_fn in enumerate(glob.glob(torrent_local_path), start=1):
+            print(torrent2mag(idx, local_fn))
+        sys.exit(0)
 
     readconf()
     loop = asyncio.get_event_loop()
