@@ -109,7 +109,7 @@ async def aria2_tellActive():
 async def do_list(loop):
     print("==="*20)
     futus = [
-        asyncio.ensure_future(fn)
+        asyncio.ensure_future(fn())
         for fn in (aria2_getInfo, aria2_tellActive)
     ]
     for fu in futus:
