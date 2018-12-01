@@ -20,8 +20,9 @@ class wangyiyun():
             url=self.main_url+'playlist?id=%s'% playlist
             re= self.session.get(url)   #直接用session进入网页，懒得构造了
             sel=Selector(text=re.text)   #用scrapy的Selector，懒得用BS4了
+            listname = sel.xpath("/html/head/meta[@property='og:title']/@content").extract()[0]
             songurls=sel.xpath('//ul[@class="f-hide"]/li/a/@href').extract()
-            return songurls   #所有歌曲组成的list
+            return listname, songurls   #所有歌曲组成的list
             ##['/song?id=64006', '/song?id=63959', '/song?id=25642714', '/song?id=63914', '/song?id=4878122', '/song?id=63650']
 
     def get_songinfo(self,songurl):
@@ -36,11 +37,14 @@ class wangyiyun():
             songname=singer+'-'+song_name
             return str(song_id),songname
 
-    def download_song(self, songurl, dir_path):
+    def download_song(self, songurl, dir_path, idx, maxlen):
             '''根据歌曲url，下载mp3文件'''
             song_id, songname = self.get_songinfo(songurl)  # 根据歌曲url得出ID、歌名
             song_url = 'http://music.163.com/song/media/outer/url?id=%s.mp3'%song_id
-            path = os.path.join(dir_path, '{}.mp3'.format(songname))
+
+            filenametpl = '{{:0{}}}_{{}}.mp3'.format(maxlen)
+
+            path = os.path.join(dir_path, filenametpl.format(idx, songname))
             if os.path.exists(path):
                 print('!! skiped: {}'.format(songname))
                 return
@@ -49,10 +53,13 @@ class wangyiyun():
 
 
     def work(self, playlist, dir_path):
-            songurls = self.get_songurls(playlist)  # 输入歌单编号，得到歌单所有歌曲的url
-            print("--> {} songs found.".format(len(songurls)))
-            for songurl in songurls:
-                self.download_song(songurl, dir_path)  # 下载歌曲
+            listname, songurls = self.get_songurls(playlist)  # 输入歌单编号，得到歌单所有歌曲的url
+            print("{}--> {} songs found.".format(listname, len(songurls)))
+            dir_path = os.path.join(dir_path, listname)
+            if not os.path.isdir(dir_path):
+                os.makedirs(dir_path)
+            for idx, songurl in enumerate(songurls, start=1):
+                self.download_song(songurl, dir_path, idx, len(str(len(songurls))))  # 下载歌曲
                 time.sleep(1)
 
 if __name__ == '__main__':
