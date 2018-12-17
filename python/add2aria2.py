@@ -65,7 +65,7 @@ DownSpeed: {:.2f} M/s
 def main():
     assert "CLD_PATH" in os.environ
     url = "{}/{}".format(sourceroot,
-         urllib.parse.quote_plus(os.environ["CLD_PATH"], encoding='utf-8', errors='replace'))
+         urllib.parse.quote(os.environ["CLD_PATH"], encoding='utf-8', errors='replace'))
     print("URL: "+url)
     try:
         #print(aria2_getInfo())
