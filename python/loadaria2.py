@@ -11,6 +11,7 @@ import sys
 import os
 import argparse
 import logging
+import itertools
 from http.client import HTTPConnection
 
 
@@ -38,6 +39,7 @@ def readconf():
         sys.exit(1)
 
 async def do_recur_getlist(root):
+    print(root)
     fulluris = []
 
     rst = await loop.run_in_executor(None, lambda:requests.get(root,
@@ -57,7 +59,7 @@ async def do_recur_getlist(root):
                 fulluris.append(uri)
 
         if len(futs) > 0:
-            fulluris.extend(*await asyncio.gather(*futs))
+            fulluris.extend(itertools.chain(*await asyncio.gather(*futs)))
             
     return fulluris
 
