@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+from __future__ import print_function
 
 import urllib
-import requests
+import urllib2
 import json
 import sys
 import os
@@ -31,8 +32,6 @@ def readconf():
 
 def aria2_do_jsonrpc(method, params = []):
 
-    headers = {'content-type': 'application/json'}
-
     # Example echo method
     payload = {
         "method": method,
@@ -41,21 +40,19 @@ def aria2_do_jsonrpc(method, params = []):
         "id": 0,
     }
     data = json.dumps(payload)
-    
-    resp = requests.post(aria2_url, data=data, headers=headers)
-    return resp.json()
+    req = urllib2.Request(aria2_url)
+    req.add_header('Content-Type', 'application/json')
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36')
+    response = urllib2.urlopen(req, data)
+    return json.load(response)
     
 def aria2_addUri(uris):
     rsp = aria2_do_jsonrpc("aria2.addUri", [uris])
     assert "result" in rsp, 'result in resp'
-
-    fn = os.path.basename(uris)
-    fn = urllib.parse.unquote_plus(fn, encoding='utf-8', errors='replace') 
-    return fn
+    return rsp
 
 def aria2_getInfo():
     rsp = aria2_do_jsonrpc("aria2.getGlobalStat")
-
     assert "result" in rsp, 'result in resp'
     return """
 Active:  {}
@@ -64,11 +61,10 @@ DownSpeed: {:.2f} M/s
     
 def main():
     assert "CLD_PATH" in os.environ
-    url = "{}/{}".format(sourceroot,
-         urllib.parse.quote(os.environ["CLD_PATH"], encoding='utf-8', errors='replace'))
+    url = "{}/{}".format(sourceroot, urllib.quote(os.environ["CLD_PATH"]))
     print("URL: "+url)
     try:
-        #print(aria2_getInfo())
+        print(aria2_getInfo())
         print(aria2_addUri(url))
     except:
         with open('/tmp/url2aria.log', 'a+') as f:
