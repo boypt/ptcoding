@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from __future__ import print_function
 
 import urllib
@@ -58,17 +58,32 @@ def aria2_getInfo():
 Active:  {}
 DownSpeed: {:.2f} M/s
 """.format(rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024)
-    
-def main():
-    assert "CLD_PATH" in os.environ
-    url = "{}/{}".format(sourceroot, urllib.quote(os.environ["CLD_PATH"]))
-    print("URL: "+url)
+
+def genUrl2aria2(fn):
+    url = "{}/{}".format(sourceroot, urllib.quote(fn))
+    print("AddURL: "+url)
+    #print(aria2_getInfo())
     try:
-        print(aria2_getInfo())
         print(aria2_addUri(url))
     except:
         with open('/tmp/url2aria.log', 'a+') as f:
             f.write(url+'\n')
+    
+def main():
+
+    cld_dir = os.environ.get('CLD_DIR', '')
+    cld_path = os.environ.get('CLD_PATH', '')
+
+    taskpath = os.path.join(cld_dir, cld_path)
+    if os.path.exists(taskpath):
+        if os.path.isdir(taskpath):
+            for fn in os.listdir(taskpath):
+                genUrl2aria2('{}/{}'.format(cld_path, fn))
+        else:
+            genUrl2aria2(cld_path)
+    else:
+        print("Path not exists: "+taskpath)
+
 
 if __name__ == "__main__":
     readconf()
