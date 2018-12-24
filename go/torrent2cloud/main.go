@@ -130,7 +130,7 @@ func main() {
 	conf := make(map[string]string)
 	parsePtConf(conf)
 
-	tors, err := filepath.Glob("/mnt/d/*.torrent")
+	tors, err := filepath.Glob(fmt.Sprintf("%s/*.torrent", conf["CLDTORRENTDIR"]))
 	if err != nil {
 		return
 	}

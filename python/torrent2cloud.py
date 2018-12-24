@@ -13,9 +13,9 @@ import argparse
 import bencode3
 import hashlib
 
+CLDTORRENTDIR=""
 CLDTORRENT=""
 CLDCOOKIE=""
-torrent_local_path="/mnt/d/*.torrent"
 
 def readconf():
     conf = os.path.expanduser("~/.ptutils.config")
@@ -69,7 +69,7 @@ async def main():
     print("==="*20)
     futures = [
         asyncio.ensure_future(mag2cloud(idx, torrent2mag(idx, local_fn)))
-        for idx, local_fn in enumerate(glob.glob(torrent_local_path), start=1)
+        for idx, local_fn in enumerate(glob.glob(CLDTORRENTDIR+"/*.torrent"), start=1)
     ]
     print("==="*20)
     await asyncio.wait(futures)
