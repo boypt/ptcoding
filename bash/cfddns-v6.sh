@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 #
 # Cloudflare API Dynamic AAAA DNS Updater for IPv6 addresse in Bash
@@ -15,6 +15,7 @@ CF_ZONEID=''
 CF_KEY=''
 CF_NS='elle.ns.cloudflare.com'
 INTERFACE='br-lan'
+TMPREC=/tmp/cfddnsv6.addr
 
 ######
 CF_DNSRECID=__RECID__
@@ -23,7 +24,7 @@ CF_DNSRECID=__RECID__
 ######
 
 ######
-INET6IDNT='/64 scope global dynamic'
+INET6IDNT='\/64 scope global dynamic'
 # Note: the identical line of address varies in different distro.
 # (Debian) FOR DHCPv6 Address:      '/128 scope global dynamic'
 # (Debian) FOR EUI64 SLAAC Address: '/64 scope global dynamic mngtmpaddr'
@@ -32,8 +33,8 @@ INET6IDNT='/64 scope global dynamic'
 ######
 
 
-__dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-__file="${__dir}/$(basename "${BASH_SOURCE[0]}")"
+__dir="$(cd "$(dirname "$0")" && pwd)"
+__file="${__dir}/$(basename "$0")"
 
 waitv6addr () {
 #
@@ -51,12 +52,15 @@ updaterecid () {
 #
 # Retrive the subdomian record id, and replace the variable in this script.
 #
-    local RECID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records?name=${DOMAIN}" \
+    local RECID=$(curl -k -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records?name=${DOMAIN}" \
      -H "X-Auth-Email: ${CF_EMAIL}" \
      -H "X-Auth-Key: ${CF_KEY}" \
      -H "Content-Type: application/json" \
     | sed 's/,/\n/g' | awk -F'"' '/id/{print $6}' | head -1)
-    sed -i "s/^CF_DNSRECID=__RECID__/CF_DNSRECID='${RECID}'/" $__file
+
+    if [[ ! -z $RECID ]]; then
+        sed -i "s/^CF_DNSRECID=__RECID__/CF_DNSRECID='${RECID}'/" $__file
+    fi
 }
 
 
@@ -81,12 +85,21 @@ if [[ ${CF_DNSRECID} == "__RECID__" ]]; then
     exit 0
 fi
 
+if [[ ! -f $TMPREC ]]; then
+    echo $LOCALv6 > $TMPREC
+    /usr/bin/logger -t cfddnsv6 "First run, log LOCAL: ${LOCALv6} to $TMPREC"
+    exit 0
+else
+    LASTv6=$(cat $TMPREC)
+fi
+
 #
 # Real work here.
 #
-DNSv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
-if [[ "$LOCALv6" != "$DNSv6" ]]; then
-    /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, REMOTE:$DNSv6"
+# DNSv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
+if [[ "$LOCALv6" != "$LASTv6" ]]; then
+    echo $LOCALv6 > $TMPREC
+    /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, LASTv6:$LASTv6"
     /usr/bin/curl -k -s -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records/${CF_DNSRECID}" \
      -H "X-Auth-Email: ${CF_EMAIL}" \
      -H "X-Auth-Key: ${CF_KEY}" \
