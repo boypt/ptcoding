@@ -63,9 +63,6 @@ updaterecid () {
     fi
 }
 
-
-LOCALv6=$(waitv6addr)
-
 #
 # Simple check before running.
 #
@@ -85,10 +82,14 @@ if [[ ${CF_DNSRECID} == "__RECID__" ]]; then
     exit 0
 fi
 
+# 
+# Read last REC from tempdir (or from NS)
+#
+LOCALv6=$(waitv6addr)
 if [[ ! -f $TMPREC ]]; then
     echo $LOCALv6 > $TMPREC
-    /usr/bin/logger -t cfddnsv6 "First run, log LOCAL: ${LOCALv6} to $TMPREC"
-    exit 0
+    LASTv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
+    /usr/bin/logger -t cfddnsv6 "First run, query NS for LASTADDR: ${LASTv6}, LOCALv6: ${LOCALv6}"
 else
     LASTv6=$(cat $TMPREC)
 fi
@@ -96,10 +97,9 @@ fi
 #
 # Real work here.
 #
-# DNSv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
 if [[ "$LOCALv6" != "$LASTv6" ]]; then
     echo $LOCALv6 > $TMPREC
-    /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, LASTv6:$LASTv6"
+    /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, LASTv6:${LASTv6}"
     /usr/bin/curl -k -s -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records/${CF_DNSRECID}" \
      -H "X-Auth-Email: ${CF_EMAIL}" \
      -H "X-Auth-Key: ${CF_KEY}" \
