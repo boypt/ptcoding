@@ -1,4 +1,5 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+#!/usr/bin/env sh # for openwrt
 
 #
 # Cloudflare API Dynamic AAAA DNS Updater for IPv6 addresse in Bash
@@ -98,11 +99,11 @@ fi
 # Real work here.
 #
 if [[ "$LOCALv6" != "$LASTv6" ]]; then
-    echo $LOCALv6 > $TMPREC
     /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, LASTv6:${LASTv6}"
     /usr/bin/curl -k -s -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records/${CF_DNSRECID}" \
      -H "X-Auth-Email: ${CF_EMAIL}" \
      -H "X-Auth-Key: ${CF_KEY}" \
      -H "Content-Type: application/json" \
-     --data '{"type":"AAAA","name":"'${DOMAIN}'","content":"'${LOCALv6}'","ttl":600,"proxied":false}' | /usr/bin/logger -t cfddnsv6
+     --data '{"type":"AAAA","name":"'${DOMAIN}'","content":"'${LOCALv6}'","ttl":600,"proxied":false}' | /usr/bin/logger -t cfddnsv6 && \
+     echo $LOCALv6 > $TMPREC
 fi
