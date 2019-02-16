@@ -78,8 +78,12 @@ def main():
     if os.path.exists(taskpath):
         if os.path.isdir(taskpath):
             for fn in os.listdir(taskpath):
+                if os.path.getsize(os.path.join(taskpath, fn)) < 1024 * 1024 * 5:
+                    continue
                 genUrl2aria2('{}/{}'.format(cld_path, fn))
         else:
+            if os.path.getsize(os.path.join(taskpath, fn)) < 1024 * 1024 * 5:
+                return
             genUrl2aria2(cld_path)
     else:
         print("Path not exists: "+taskpath)
