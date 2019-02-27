@@ -11,3 +11,15 @@
 	If query != "")
 		Run, cmd /K %USERPROFILE%\bin\ydcv.exe %query%
 	Return
+
+>!F9::
+	regKey := "HKCU\SOFTWARE\Microsoft\InputMethod\Settings\CHS"
+	regValue := "Enable Double Pinyin"
+	RegRead, DouEnabled, %regKey%, %regValue%
+	If (DouEnabled == 0) {
+		RegWrite, REG_DWORD, %regKey%, %regValue%, 1
+		MsgBox, ˫ƴ
+	} else {
+		RegWrite, REG_DWORD, %regKey%, %regValue%, 0
+		MsgBox, ȫƴ
+	}
