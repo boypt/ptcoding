@@ -37,6 +37,21 @@ INET6IDNT='\/64 scope global dynamic'
 __dir="$(cd "$(dirname "$0")" && pwd)"
 __file="${__dir}/$(basename "$0")"
 
+METHOD=$1
+LAST_FROMDNS=0
+LAST_FROMLOCAL=0
+case $METHOD in
+    dns)
+    LAST_FROMDNS=1
+    ;;
+    local)
+    LAST_FROMLOCAL=1
+    ;;
+    *)
+    LAST_FROMDNS=1
+    ;;
+esac
+
 waitv6addr () {
 #
 # Some device got IPv6 Address latter at boot, need to wait a while.
@@ -87,12 +102,18 @@ fi
 # Read last REC from tempdir (or from NS)
 #
 LOCALv6=$(waitv6addr)
-if [[ ! -f $TMPREC ]]; then
-    echo $LOCALv6 > $TMPREC
+if [[ $LAST_FROMLOCAL -eq 1 ]]; then
+    if [[ ! -f $TMPREC ]]; then
+        echo $LOCALv6 > $TMPREC
+        LASTv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
+        /usr/bin/logger -t cfddnsv6 "First run, query NS for LASTADDR: ${LASTv6}, LOCALv6: ${LOCALv6}"
+    else
+        LASTv6=$(cat $TMPREC)
+    fi
+fi
+
+if [[ $LAST_FROMDNS -eq 1 ]]; then
     LASTv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
-    /usr/bin/logger -t cfddnsv6 "First run, query NS for LASTADDR: ${LASTv6}, LOCALv6: ${LOCALv6}"
-else
-    LASTv6=$(cat $TMPREC)
 fi
 
 #
