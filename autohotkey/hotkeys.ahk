@@ -1,4 +1,4 @@
->!7::Run, cmd /C "ping -t 172.16.192.10"
+﻿>!7::Run, cmd /C "ping -t 172.16.192.10"
 >!1::Run, cmd /C "ping -t 192.168.1.1"
 >!d::Run, cmd /C "ping -t 240c::6666"
 >!p::
@@ -9,7 +9,7 @@
 >!y::
 	InputBox, query, Word
 	If query != "")
-		Run, cmd /K %USERPROFILE%\bin\ydcv.exe %query%
+		Run, cmd /K %USERPROFILE%\bin\ydgo.exe %query%
 	Return
 
 >!F9::

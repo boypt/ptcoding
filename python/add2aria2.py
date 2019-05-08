@@ -82,7 +82,7 @@ def main():
                     continue
                 genUrl2aria2('{}/{}'.format(cld_path, fn))
         else:
-            if os.path.getsize(os.path.join(taskpath, fn)) < 1024 * 1024 * 5:
+            if os.path.getsize(taskpath) < 1024 * 1024 * 5:
                 return
             genUrl2aria2(cld_path)
     else:
