@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +14,8 @@ import (
 	"strings"
 	"sync"
 
-	bencode "github.com/anacrolix/torrent/bencode"
+	"github.com/anacrolix/torrent/bencode"
+	"github.com/joho/godotenv"
 )
 
 type torrentFile struct {
@@ -60,47 +60,9 @@ func torrentDecode(fn string) (string, string) {
 	return f.Info.Name, maglink
 }
 
-func parsePtConf(conf map[string]string) {
-	// func parsePtConf() {
-
-	cur, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ptconf := filepath.Join(cur.HomeDir, ".ptutils.config")
-	file, err := os.Open(ptconf)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) < 1 {
-			break
-		}
-
-		line = strings.TrimSuffix(line, "\n")
-		spc := strings.SplitN(line, "=", 2)
-		key := spc[0]
-		val := strings.TrimRight(strings.TrimLeft(spc[1], "'\""), "'\"")
-
-		// fmt.Println(key, val)
-		conf[key] = val
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-}
-
-func mag2cloud(conf map[string]string, maglink string, idx int, wg *sync.WaitGroup) {
+func mag2cloud(maglink string, idx int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	magapi := fmt.Sprintf("%s/api/magnet", conf["CLDTORRENT"])
+	magapi := fmt.Sprintf("%s/api/magnet", os.Getenv("CLDTORRENT"))
 	req, err := http.NewRequest("POST", magapi, strings.NewReader(maglink))
 	if err != nil {
 		log.Fatal(err)
@@ -108,7 +70,7 @@ func mag2cloud(conf map[string]string, maglink string, idx int, wg *sync.WaitGro
 
 	client := &http.Client{}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Cookie", strings.TrimPrefix(conf["CLDCOOKIE"], "cookie: "))
+	req.Header.Set("Cookie", strings.TrimPrefix(os.Getenv("CLDCOOKIE"), "cookie: "))
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -126,21 +88,25 @@ func mag2cloud(conf map[string]string, maglink string, idx int, wg *sync.WaitGro
 
 func main() {
 
-	var wg sync.WaitGroup
-	conf := make(map[string]string)
-	parsePtConf(conf)
+	cur, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	_ = godotenv.Load(filepath.Join(cur.HomeDir, ".ptutils.config"))
+	_ = godotenv.Load() // for .env
 
-	tors, err := filepath.Glob(fmt.Sprintf("%s/*.torrent", conf["CLDTORRENTDIR"]))
+	tors, err := filepath.Glob(fmt.Sprintf("%s/*.torrent", os.Getenv("CLDTORRENTDIR")))
 	if err != nil {
 		return
 	}
 
+	var wg sync.WaitGroup
 	for i, torf := range tors {
 		_, base := path.Split(torf)
 		name, mag := torrentDecode(torf)
-		fmt.Printf("[%d] %s --> %s\n", i+1, base, name)
+		fmt.Printf("[%d] %s --> %s\n    %s\n\n", i+1, base, name, mag)
 		wg.Add(1)
-		go mag2cloud(conf, mag, i+1, &wg)
+		go mag2cloud(mag, i+1, &wg)
 	}
 
 	fmt.Println("===================================")
