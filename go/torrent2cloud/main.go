@@ -36,28 +36,39 @@ type torrentFile struct {
 	URLList      interface{} `bencode:"url-list,omitempty"`
 }
 
-func torrentDecode(fn string) (string, string) {
+type magnetInfo struct {
+	Name    string
+	MagLink string
+}
+
+func torrentDecode(fn string) (*magnetInfo, error) {
 	var f torrentFile
 	content, err := ioutil.ReadFile(fn)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
 	//decode
 	err = bencode.Unmarshal([]byte(content), &f)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
 	metainfo, err := bencode.Marshal(f.Info)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
-	sha1sum := fmt.Sprintf("xt=urn:btih:%x", sha1.Sum(metainfo))
-	dn := fmt.Sprintf("dn=%s", url.QueryEscape(f.Info.Name))
-	maglink := fmt.Sprintf("magnet:?%s&%s", sha1sum, dn)
-	return f.Info.Name, maglink
+	maglink := fmt.Sprintf(
+		"magnet:?xt=urn:btih:%x&dn=%s",
+		sha1.Sum(metainfo),
+		url.QueryEscape(f.Info.Name),
+	)
+
+	return &magnetInfo{
+		Name:    f.Info.Name,
+		MagLink: maglink,
+	}, nil
 }
 
 func mag2cloud(maglink string) (string, error) {
@@ -104,17 +115,20 @@ func main() {
 
 	for i, torf := range tors {
 		_, base := path.Split(torf)
-		name, mag := torrentDecode(torf)
+		m, err := torrentDecode(torf)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 		wg.Add(1)
-		fmt.Printf("[%d] %s --> %s\n%s\n\n", i+1, base, name, mag)
+		fmt.Printf("[%d] %s --> %s\n%s\n\n", i+1, base, m.Name, m.MagLink)
 		go func(idx int) {
-			defer wg.Done()
-			ret, err := mag2cloud(mag)
+			ret, err := mag2cloud(m.MagLink)
 			if err != nil {
-				resCh <- fmt.Sprintf("[%d]%s:%s", idx, name, err.Error())
-				return
+				ret = err.Error()
 			}
-			resCh <- fmt.Sprintf("[%d]%s:%s", idx, name, ret)
+			resCh <- fmt.Sprintf("[%d]%s:%s", idx, m.Name, ret)
+			wg.Done()
 		}(i + 1)
 	}
 
