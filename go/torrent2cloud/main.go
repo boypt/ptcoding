@@ -40,18 +40,18 @@ func torrentDecode(fn string) (string, string) {
 	var f torrentFile
 	content, err := ioutil.ReadFile(fn)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	//decode
 	err = bencode.Unmarshal([]byte(content), &f)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	metainfo, err := bencode.Marshal(f.Info)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	sha1sum := fmt.Sprintf("xt=urn:btih:%x", sha1.Sum(metainfo))
@@ -60,12 +60,11 @@ func torrentDecode(fn string) (string, string) {
 	return f.Info.Name, maglink
 }
 
-func mag2cloud(maglink string, idx int, wg *sync.WaitGroup) {
-	defer wg.Done()
+func mag2cloud(maglink string) (string, error) {
 	magapi := fmt.Sprintf("%s/api/magnet", os.Getenv("CLDTORRENT"))
 	req, err := http.NewRequest("POST", magapi, strings.NewReader(maglink))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	client := &http.Client{}
@@ -74,16 +73,16 @@ func mag2cloud(maglink string, idx int, wg *sync.WaitGroup) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	fmt.Printf("[ %d] %s\n", idx, string(body))
-	defer resp.Body.Close()
+	return string(body), nil
 }
 
 func main() {
@@ -101,14 +100,35 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	resCh := make(chan string)
+
 	for i, torf := range tors {
 		_, base := path.Split(torf)
 		name, mag := torrentDecode(torf)
-		fmt.Printf("[%d] %s --> %s\n    %s\n\n", i+1, base, name, mag)
 		wg.Add(1)
-		go mag2cloud(mag, i+1, &wg)
+		fmt.Printf("[%d] %s --> %s\n%s\n\n", i+1, base, name, mag)
+		go func(idx int) {
+			defer wg.Done()
+			ret, err := mag2cloud(mag)
+			if err != nil {
+				resCh <- fmt.Sprintf("[%d]%s:%s", idx, name, err.Error())
+				return
+			}
+			resCh <- fmt.Sprintf("[%d]%s:%s", idx, name, ret)
+		}(i + 1)
 	}
 
+	go func() {
+		wg.Wait()
+		close(resCh)
+	}()
+
 	fmt.Println("===================================")
-	wg.Wait()
+	for {
+		if r, ok := <-resCh; ok {
+			fmt.Println(r)
+		} else {
+			break
+		}
+	}
 }
