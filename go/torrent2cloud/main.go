@@ -120,16 +120,18 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
-		wg.Add(1)
 		fmt.Printf("[%d] %s --> %s\n%s\n\n", i+1, base, m.Name, m.MagLink)
-		go func(idx int) {
+		resInfo := fmt.Sprintf("[%d]%s:", i+1, m.Name)
+
+		wg.Add(1)
+		go func() {
 			ret, err := mag2cloud(m.MagLink)
 			if err != nil {
 				ret = err.Error()
 			}
-			resCh <- fmt.Sprintf("[%d]%s:%s", idx, m.Name, ret)
+			resCh <- resInfo + ret
 			wg.Done()
-		}(i + 1)
+		}()
 	}
 
 	go func() {
@@ -138,11 +140,8 @@ func main() {
 	}()
 
 	fmt.Println("===================================")
-	for {
-		if r, ok := <-resCh; ok {
-			fmt.Println(r)
-		} else {
-			break
-		}
+	// printer in main goroutine
+	for r := range resCh {
+		fmt.Println(r)
 	}
 }
