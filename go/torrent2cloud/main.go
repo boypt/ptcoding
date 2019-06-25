@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -144,4 +146,11 @@ func main() {
 	for r := range resCh {
 		fmt.Println(r)
 	}
+
+	if runtime.GOOS == "windows" {
+		fmt.Println("===================================")
+		fmt.Println("\nPress 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	}
+
 }
