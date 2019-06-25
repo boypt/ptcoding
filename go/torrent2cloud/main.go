@@ -73,7 +73,7 @@ func main() {
 		return
 	}
 
-	var wg sync.WaitGroup
+	wg := new(sync.WaitGroup)
 	resCh := make(chan string)
 
 	for i, torf := range tors {
