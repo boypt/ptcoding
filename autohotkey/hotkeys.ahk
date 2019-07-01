@@ -9,7 +9,7 @@
 >!y::
 	InputBox, query, Word
 	If query != "")
-		Run, cmd /K %USERPROFILE%\bin\ydgo.exe %query%
+		Run, %USERPROFILE%\bin\ydgo.exe %query%
 	Return
 
 >!F9::
