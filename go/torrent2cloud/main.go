@@ -18,7 +18,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func torrent2Magnet(fn string) (*metainfo.Magnet, error) {
+type tItem struct {
+	Index    int
+	FileName string
+	DispName string
+	MagLink  string
+	RetInfo  string
+}
+
+func torrent2Magnet(fn string) (*tItem, error) {
 
 	mi, err := metainfo.LoadFromFile(fn)
 	if err != nil {
@@ -31,12 +39,16 @@ func torrent2Magnet(fn string) (*metainfo.Magnet, error) {
 	}
 
 	m := mi.Magnet(info.Name, mi.HashInfoBytes())
-	return &m, nil
+	i := &tItem{FileName: fn,
+		DispName: info.Name,
+		MagLink:  m.String(),
+	}
+	return i, nil
 }
 
-func mag2cloud(m *metainfo.Magnet) (string, error) {
+func mag2cloud(maglink string) (string, error) {
 	magapi := fmt.Sprintf("%s/api/magnet", os.Getenv("CLDTORRENT"))
-	req, err := http.NewRequest("POST", magapi, strings.NewReader(m.String()))
+	req, err := http.NewRequest("POST", magapi, strings.NewReader(maglink))
 	if err != nil {
 		return "", err
 	}
@@ -74,26 +86,27 @@ func main() {
 	}
 
 	wg := new(sync.WaitGroup)
-	resCh := make(chan string)
+	resCh := make(chan *tItem)
 
 	for i, torf := range tors {
 		_, base := path.Split(torf)
-		m, err := torrent2Magnet(torf)
+		item, err := torrent2Magnet(torf)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		fmt.Printf("(%d)%s -> %s\n%s\n\n", i+1, base, m.DisplayName, m.String())
-		resInfo := fmt.Sprintf("(%d)%s:", i+1, m.DisplayName)
+		item.Index = i + 1
+		fmt.Printf("(%d)%s -> %s\n%s\n\n", item.Index, base, item.DispName, item.MagLink)
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ret, err := mag2cloud(m)
+			ret, err := mag2cloud(item.MagLink)
 			if err != nil {
 				ret = err.Error()
 			}
-			resCh <- resInfo + ret
+			item.RetInfo = ret
+			resCh <- item
 		}()
 	}
 
@@ -105,7 +118,8 @@ func main() {
 	fmt.Println("===================================")
 	// printer in main goroutine
 	for r := range resCh {
-		fmt.Println(r)
+		fmt.Printf("(%d)%s: %s\n", r.Index, r.DispName, r.RetInfo)
+		os.Remove(r.FileName)
 	}
 
 	if runtime.GOOS == "windows" {
