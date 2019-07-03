@@ -26,6 +26,14 @@ type tItem struct {
 	RetInfo  string
 }
 
+func (t tItem) printMag() {
+	_, base := path.Split(t.FileName)
+	fmt.Printf("(%d)%s -> %s\n%s\n\n", t.Index, base, t.DispName, t.MagLink)
+}
+func (t tItem) printRet() {
+	fmt.Printf("(%d)%s: %s\n", t.Index, t.DispName, t.RetInfo)
+}
+
 func torrent2Magnet(fn string) (*tItem, error) {
 
 	mi, err := metainfo.LoadFromFile(fn)
@@ -89,15 +97,14 @@ func main() {
 	resCh := make(chan *tItem)
 
 	for i, torf := range tors {
-		_, base := path.Split(torf)
 		item, err := torrent2Magnet(torf)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 		item.Index = i + 1
-		fmt.Printf("(%d)%s -> %s\n%s\n\n", item.Index, base, item.DispName, item.MagLink)
 
+		item.printMag()
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -118,7 +125,7 @@ func main() {
 	fmt.Println("===================================")
 	// printer in main goroutine
 	for r := range resCh {
-		fmt.Printf("(%d)%s: %s\n", r.Index, r.DispName, r.RetInfo)
+		r.printRet()
 		os.Remove(r.FileName)
 	}
 
