@@ -126,7 +126,10 @@ func main() {
 	// printer in main goroutine
 	for r := range resCh {
 		r.printRet()
-		os.Remove(r.FileName)
+		if strings.HasPrefix(r.RetInfo, "OK") {
+			fmt.Println("Removed: ", r.FileName)
+			os.Remove(r.FileName)
+		}
 	}
 
 	if runtime.GOOS == "windows" {
