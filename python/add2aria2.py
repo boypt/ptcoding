@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import urllib
 import urllib2
+import time
 import json
 import sys
 import os
@@ -64,30 +65,35 @@ def genUrl2aria2(fn):
     print("AddURL: "+url)
     #print(aria2_getInfo())
     try:
-        print(aria2_addUri(url))
+        return aria2_addUri(url)
     except:
         with open('/tmp/url2aria.log', 'a+') as f:
             f.write(url+'\n')
+        return {}
     
 def main():
 
-    cld_dir = os.environ.get('CLD_DIR', '')
+    # cld_dir = os.environ.get('CLD_DIR', '')
     cld_path = os.environ.get('CLD_PATH', '')
+    cld_type = os.environ.get('CLD_TYPE', '')
+    cld_size = os.environ.get('CLD_SIZE', '')
 
-    taskpath = os.path.join(cld_dir, cld_path)
-    if os.path.exists(taskpath):
-        if os.path.isdir(taskpath):
-            for fn in os.listdir(taskpath):
-                if os.path.getsize(os.path.join(taskpath, fn)) < 1024 * 1024 * 5:
-                    continue
-                genUrl2aria2('{}/{}'.format(cld_path, fn))
-        else:
-            if os.path.getsize(taskpath) < 1024 * 1024 * 5:
-                return
-            genUrl2aria2(cld_path)
-    else:
-        print("Path not exists: "+taskpath)
+    if cld_type != "file":
+        print("task {} is not file".format(cld_type))
+        return
 
+    if int(cld_size) < 5*1024**2:
+        print("file size {} too small".format(cld_size))
+        return
+
+    retry = 10
+    while retry > 0:
+        retry -= 1
+        ret = genUrl2aria2(cld_path)
+        if "jsonrpc" in ret:
+            break
+
+        time.sleep(3)
 
 if __name__ == "__main__":
     readconf()
