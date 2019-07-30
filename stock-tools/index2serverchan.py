@@ -9,6 +9,27 @@ import urllib.request, urllib.error, urllib.parse
 class MarketClosed(Exception):
     pass
 
+serverchansec = ""
+
+def readconf():
+    conf = os.path.expanduser("~/.ptutils.config")
+    if os.path.exists(conf):
+        with open(conf) as f:
+            configs = f.readlines()
+        
+        glbs = globals()
+        for f in configs:
+            if len(f) < 2:
+                continue
+            
+            key, val = f.strip().split('=', 1)
+            if key in glbs:
+                glbs[key] = val.strip('"')
+                
+    else:
+        print("~/.ptutils.config not found")
+        sys.exit(1)
+
 def sina_stock(all_num):
     reg = re.compile(r'var hq_str_(.+?)="(.+?)";\n')
     query_str = ",".join(all_num)
@@ -19,9 +40,8 @@ def sina_stock(all_num):
     return stall
 
 def noti_serverchan(title, desp):
-    url = "https://pushbear.ftqq.com/sub"
+    url = "https://sc.ftqq.com/{}.send".format(serverchansec)
     data = {
-    	"sendkey": "522-f933512d43abe659548998b284ceec89",
     	"text": title,
     	"desp": desp
     }
@@ -41,7 +61,7 @@ def format_stockindex():
         q = inx.split(',')
 #"上证指数,3236.5881,3244.8647,3237.9817,3247.7122,3231.9556,0,0,206003251,221956909910,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2017-07-21,15:01:03,00";
         name = q[0]
-        nameshort = name[:2]
+        nameshort = name[:1]
 
         dateoffer = q[30]
         timenow = datetime.datetime.now()
@@ -67,14 +87,16 @@ def format_stockindex():
 
 if __name__ == '__main__':
 
-     try:
-         timenow, content = format_stockindex()
-     except MarketClosed:
-         sys.exit(0)
+    readconf()
 
-     tit = [ "{0}{1:.0f}{2}{3:.2f}交{4}亿".format(*val) for val in content]
-     #vol = [ "{0}{4}亿".format(*val) for val in content]
-     #desp = ["## {0}丨 {1:.2f} 丨{2:+.2f}%丨{3}亿".format(*val) for val in content]
-     #print(tit, vol)
-     time = timenow.strftime('%Y{y}%m{m}%d{d} %H{h}%M{mm}').format(y='年', m='月', d='日', h='时', mm='分')
-     noti_serverchan(time, '丨'.join(tit))
+    try:
+        timenow, content = format_stockindex()
+    except MarketClosed:
+        sys.exit(0)
+
+    tit = [ "{0}{2}{3:.2f}".format(*val) for val in content]
+    #vol = [ "{0}{4}亿".format(*val) for val in content]
+    #desp = ["## {0}丨 {1:.2f} 丨{2:+.2f}%丨{3}亿".format(*val) for val in content]
+    #print(tit, vol)
+    time = timenow.strftime('%Y{y}%m{m}%d{d} %H{h}%M{mm}').format(y='年', m='月', d='日', h='时', mm='分')
+    noti_serverchan('丨'.join(tit), time)

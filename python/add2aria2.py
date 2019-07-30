@@ -11,6 +11,7 @@ import os
 aria2_url=""
 aria2_token=""
 sourceroot=""
+serverchansec = ""
 
 def readconf():
     conf = os.path.expanduser("~/.ptutils.config")
@@ -30,6 +31,19 @@ def readconf():
     else:
         print("~/.ptutils.config not found")
         sys.exit(1)
+
+def noti_serverchan(title, desp):
+    if serverchansec == "":
+        return
+
+    url = "https://sc.ftqq.com/{}.send".format(serverchansec)
+    data = {
+    	"text": title,
+    	"desp": desp
+    }
+    req = urllib2.Request(url)
+    ret = urllib2.urlopen(req, urllib.urlencode(data).encode('utf-8'))
+    return json.load(ret)
 
 def aria2_do_jsonrpc(method, params = []):
 
@@ -79,7 +93,11 @@ def main():
     cld_size = os.environ.get('CLD_SIZE', '')
 
     if cld_type != "file":
-        print("task {} is not file".format(cld_type))
+        desp = """
+## {}
+## {}
+""".format(cld_path, cld_size)
+        noti_serverchan(cld_path, desp)
         return
 
     if int(cld_size) < 5*1024**2:
