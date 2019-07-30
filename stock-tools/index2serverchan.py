@@ -95,8 +95,9 @@ if __name__ == '__main__':
         sys.exit(0)
 
     tit = [ "{0}{2}{3:.2f}".format(*val) for val in content]
+    desp = [ "* {0}{1:.0f}{2}{3:.2f}交{4}亿".format(*val) for val in content]
     #vol = [ "{0}{4}亿".format(*val) for val in content]
     #desp = ["## {0}丨 {1:.2f} 丨{2:+.2f}%丨{3}亿".format(*val) for val in content]
     #print(tit, vol)
-    time = timenow.strftime('%Y{y}%m{m}%d{d} %H{h}%M{mm}').format(y='年', m='月', d='日', h='时', mm='分')
-    noti_serverchan('丨'.join(tit), time)
+    time = timenow.strftime('\n\n%Y{y}%m{m}%d{d} %H{h}%M{mm}').format(y='年', m='月', d='日', h='时', mm='分')
+    noti_serverchan('丨'.join(tit), "\n".join(desp) + time)
