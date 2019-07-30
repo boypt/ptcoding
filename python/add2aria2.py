@@ -85,6 +85,20 @@ def genUrl2aria2(fn):
             f.write(url+'\n')
         return {}
     
+def sizeof_fmt(num, suffix='o'):
+    """Readable file size
+    :param num: Bytes value
+    :type num: int
+    :param suffix: Unit suffix (optionnal) default = o
+    :type suffix: str
+    :rtype: str
+    """
+    for unit in ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z']:
+        if abs(num) < 1024.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
 def main():
 
     # cld_dir = os.environ.get('CLD_DIR', '')
@@ -92,12 +106,16 @@ def main():
     cld_type = os.environ.get('CLD_TYPE', '')
     cld_size = os.environ.get('CLD_SIZE', '')
 
-    if cld_type != "file":
+    if cld_type == "torrent":
         desp = """
-## {}
-## {}
-""".format(cld_path, cld_size)
+### File: {}
+### Size: {}
+""".format(cld_path, sizeof_fmt(cld_size))
         noti_serverchan(cld_path, desp)
+        return
+
+    if cld_type != "file":
+        print("unknown cld_type")
         return
 
     if int(cld_size) < 5*1024**2:
@@ -110,6 +128,8 @@ def main():
         ret = genUrl2aria2(cld_path)
         if "jsonrpc" in ret:
             break
+        else:
+            print("genUrl2aria2 retry in 3 secs")
 
         time.sleep(3)
 

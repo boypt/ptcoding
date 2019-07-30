@@ -100,4 +100,5 @@ if __name__ == '__main__':
     #desp = ["## {0}丨 {1:.2f} 丨{2:+.2f}%丨{3}亿".format(*val) for val in content]
     #print(tit, vol)
     time = timenow.strftime('\n\n%Y{y}%m{m}%d{d} %H{h}%M{mm}').format(y='年', m='月', d='日', h='时', mm='分')
-    noti_serverchan('丨'.join(tit), "\n".join(desp) + time)
+    r = noti_serverchan('丨'.join(tit), "\n".join(desp) + time)
+    print(r)
