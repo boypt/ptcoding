@@ -108,9 +108,9 @@ def main():
 
     if cld_type == "torrent":
         desp = """
-### File: {}
-### Size: {}
-""".format(cld_path, sizeof_fmt(cld_size))
+* File: {}
+* Size: {}
+""".format(cld_path, sizeof_fmt(int(cld_size)))
         noti_serverchan(cld_path, desp)
         return
 
