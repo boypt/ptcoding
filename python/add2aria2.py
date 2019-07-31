@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import urllib
 import urllib2
+import random
 import time
 import json
 import sys
@@ -45,14 +46,14 @@ def noti_serverchan(title, desp):
     ret = urllib2.urlopen(req, urllib.urlencode(data).encode('utf-8'))
     return ret.read()
 
-def aria2_do_jsonrpc(method, params = []):
+def aria2_do_jsonrpc(_id, method, params = []):
 
     # Example echo method
     payload = {
         "method": method,
         "params": ["token:{}".format(aria2_token), params],
         "jsonrpc": "2.0",
-        "id": 0,
+        "id": _id,
     }
     data = json.dumps(payload)
     req = urllib2.Request(aria2_url)
@@ -61,14 +62,12 @@ def aria2_do_jsonrpc(method, params = []):
     response = urllib2.urlopen(req, data)
     return json.load(response)
     
-def aria2_addUri(uris):
-    rsp = aria2_do_jsonrpc("aria2.addUri", [uris])
-    assert "result" in rsp, 'result in resp'
+def aria2_addUri(_id, uris):
+    rsp = aria2_do_jsonrpc(_id, "aria2.addUri", [uris])
     return rsp
 
-def aria2_getInfo():
-    rsp = aria2_do_jsonrpc("aria2.getGlobalStat")
-    assert "result" in rsp, 'result in resp'
+def aria2_getInfo(_id):
+    rsp = aria2_do_jsonrpc(_id, "aria2.getGlobalStat")
     return """
 Active:  {}
 DownSpeed: {:.2f} M/s
@@ -76,14 +75,18 @@ DownSpeed: {:.2f} M/s
 
 def genUrl2aria2(fn):
     url = "{}/{}".format(sourceroot, urllib.quote(fn))
-    print("AddURL: "+url)
+    _id = random.randint(100, 999)
+    print("[{}]AddURL: {}".format(_id, url))
     #print(aria2_getInfo())
     try:
-        return aria2_addUri(url)
-    except:
+        r = aria2_addUri(_id, url)
+        print("jsonrpc return:", r)
+        if r["_id"] != _id:
+            raise IOError("id not match")
+    except Exception as e:
+        print(e)
         with open('/tmp/url2aria.log', 'a+') as f:
             f.write(url+'\n')
-        return {}
     
 def sizeof_fmt(num, suffix='o'):
     """Readable file size
@@ -133,12 +136,12 @@ def main():
     retry = 10
     while retry > 0:
         retry -= 1
-        ret = genUrl2aria2(cld_path)
-        if "jsonrpc" in ret:
-            break
-        else:
+        try:
+            genUrl2aria2(cld_path)
+        except:
             print("genUrl2aria2 retry in 3 secs")
-
+        else:
+            break
         time.sleep(3)
 
 if __name__ == "__main__":
