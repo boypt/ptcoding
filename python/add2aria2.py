@@ -43,7 +43,7 @@ def noti_serverchan(title, desp):
     }
     req = urllib2.Request(url)
     ret = urllib2.urlopen(req, urllib.urlencode(data).encode('utf-8'))
-    return json.load(ret)
+    return ret
 
 def aria2_do_jsonrpc(method, params = []):
 
