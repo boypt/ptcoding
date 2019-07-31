@@ -108,8 +108,8 @@ def main():
 
     if cld_type == "torrent":
         desp = """
-* Task: {}
-* Size: {}
+* Task: **{}**
+* Size: **{}**
 """.format(cld_path, sizeof_fmt(int(cld_size), "B"))
 
         while True:
@@ -118,7 +118,7 @@ def main():
             except Exception:
                 pass
             else:
-                print("serverchan notified", r)
+                print("serverchan notified:", r)
                 break
         return
 
