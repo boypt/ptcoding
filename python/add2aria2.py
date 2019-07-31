@@ -76,13 +76,11 @@ DownSpeed: {:.2f} M/s
 def genUrl2aria2(fn):
     url = "{}/{}".format(sourceroot, urllib.quote(fn))
     _id = random.randint(100, 999)
-    print("[{}]AddURL: {}".format(_id, url))
+    print("ID:[{}] AddURL: {}".format(_id, url))
     #print(aria2_getInfo())
     try:
         r = aria2_addUri(_id, url)
         print("jsonrpc return:", r)
-        if r["_id"] != _id:
-            raise IOError("id not match")
     except Exception as e:
         print(e)
         with open('/tmp/url2aria.log', 'a+') as f:
