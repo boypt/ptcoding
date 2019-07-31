@@ -110,7 +110,7 @@ def main():
         desp = """
 * File: {}
 * Size: {}
-""".format(cld_path, sizeof_fmt(int(cld_size)))
+""".format(cld_path, sizeof_fmt(int(cld_size), "B"))
         noti_serverchan(cld_path, desp)
         return
 
