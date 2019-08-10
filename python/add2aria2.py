@@ -8,6 +8,7 @@ import time
 import json
 import sys
 import os
+import re
 
 aria2_url=""
 aria2_token=""
@@ -39,8 +40,8 @@ def noti_serverchan(title, desp):
 
     url = "https://sc.ftqq.com/{}.send".format(serverchansec)
     data = {
-    	"text": title,
-    	"desp": desp
+        "text": re.sub(r"[\s\-\\\/]", '_', title),
+        "desp": desp
     }
     req = urllib2.Request(url)
     ret = urllib2.urlopen(req, urllib.urlencode(data).encode('utf-8'))
