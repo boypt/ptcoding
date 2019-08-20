@@ -86,6 +86,7 @@ def genUrl2aria2(fn):
         print(e)
         with open('/tmp/url2aria.log', 'a+') as f:
             f.write(url+'\n')
+        raise e
     
 def sizeof_fmt(num, suffix='o'):
     """Readable file size
