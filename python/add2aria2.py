@@ -47,6 +47,40 @@ def noti_serverchan(title, desp):
     ret = urllib2.urlopen(req, urllib.urlencode(data).encode('utf-8'))
     return ret.read()
 
+class MaxTried(IOError):
+    pass
+
+def max_try(maxtry, func, *argv):
+    maxt = maxtry
+    while maxt > 0:
+        maxt -= 1
+        try:
+            ret = func(*argv)
+        except Exception as e:
+            print("Exception raised, retry in 3 secs ", e)
+        else:
+            print(ret)
+            return
+        time.sleep(3)
+    else:
+        raise MaxTried("Max Tried")
+
+def serverchan_loop(cld_path, cld_size):
+    desp = """
+* Task: **{}**
+* Size: **{}**
+""".format(cld_path, sizeof_fmt(int(cld_size), "B"))
+    max_try(10, noti_serverchan, cld_path, desp)
+
+def add_task_loop(cld_path):
+    url = "{}/{}".format(sourceroot, urllib.quote(cld_path))
+    try:
+        max_try(10, genUrl2aria2, url)
+    except MaxTried:
+        with open('/tmp/url2aria.log', 'a+') as f:
+            f.write(url+'\n')
+        print("Max tried, url logged to /tmp/url2aria.log")
+
 def aria2_do_jsonrpc(_id, method, params = []):
 
     # Example echo method
@@ -59,7 +93,6 @@ def aria2_do_jsonrpc(_id, method, params = []):
     data = json.dumps(payload)
     req = urllib2.Request(aria2_url)
     req.add_header('Content-Type', 'application/json')
-    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36')
     response = urllib2.urlopen(req, data)
     return json.load(response)
     
@@ -74,19 +107,11 @@ Active:  {}
 DownSpeed: {:.2f} M/s
 """.format(rsp["result"]["numActive"], int(rsp["result"]["downloadSpeed"])/1024/1024)
 
-def genUrl2aria2(fn):
-    url = "{}/{}".format(sourceroot, urllib.quote(fn))
+def genUrl2aria2(url):
     _id = random.randint(100, 999)
     print("ID:[{}] AddURL: {}".format(_id, url))
-    #print(aria2_getInfo())
-    try:
-        r = aria2_addUri(_id, url)
-        print("jsonrpc return:", r)
-    except Exception as e:
-        print(e)
-        with open('/tmp/url2aria.log', 'a+') as f:
-            f.write(url+'\n')
-        raise e
+    r = aria2_addUri(_id, url)
+    print("jsonrpc return:", r)
     
 def sizeof_fmt(num, suffix='o'):
     """Readable file size
@@ -110,19 +135,7 @@ def main():
     cld_size = os.environ.get('CLD_SIZE', '')
 
     if cld_type == "torrent":
-        desp = """
-* Task: **{}**
-* Size: **{}**
-""".format(cld_path, sizeof_fmt(int(cld_size), "B"))
-
-        while True:
-            try:
-                r = noti_serverchan(cld_path, desp)
-            except Exception:
-                pass
-            else:
-                print("serverchan notified:", r)
-                break
+        serverchan_loop(cld_path, cld_size)
         return
 
     if cld_type != "file":
@@ -133,16 +146,7 @@ def main():
         print("file size {} too small".format(cld_size))
         return
 
-    retry = 10
-    while retry > 0:
-        retry -= 1
-        try:
-            genUrl2aria2(cld_path)
-        except:
-            print("genUrl2aria2 retry in 3 secs")
-        else:
-            break
-        time.sleep(3)
+    add_task_loop(cld_path)
 
 if __name__ == "__main__":
     readconf()
