@@ -59,23 +59,24 @@ def max_try(maxtry, func, *argv):
         except Exception as e:
             print("Exception raised, retry in 3 secs ", e)
         else:
-            print(ret)
+            if ret is not None:
+                print(ret)
             return
         time.sleep(3)
     else:
         raise MaxTried("Max Tried")
 
-def serverchan_loop(cld_path, cld_size):
+def try_serverchan(cld_path, cld_size):
     desp = """
 * Task: **{}**
 * Size: **{}**
 """.format(cld_path, sizeof_fmt(int(cld_size), "B"))
-    max_try(10, noti_serverchan, cld_path, desp)
+    max_try(3, noti_serverchan, cld_path, desp)
 
-def add_task_loop(cld_path):
+def try_add_task(cld_path):
     url = "{}/{}".format(sourceroot, urllib.quote(cld_path))
     try:
-        max_try(10, genUrl2aria2, url)
+        max_try(3, genUrl2aria2, url)
     except MaxTried:
         with open('/tmp/url2aria.log', 'a+') as f:
             f.write(url+'\n')
@@ -111,7 +112,7 @@ def genUrl2aria2(url):
     _id = random.randint(100, 999)
     print("ID:[{}] AddURL: {}".format(_id, url))
     r = aria2_addUri(_id, url)
-    print("jsonrpc return:", r)
+    return "Aria2Jsonrpc Return: {}".format(r)
     
 def sizeof_fmt(num, suffix='o'):
     """Readable file size
@@ -135,8 +136,7 @@ def main():
     cld_size = os.environ.get('CLD_SIZE', '')
 
     if cld_type == "torrent":
-        serverchan_loop(cld_path, cld_size)
-        return
+        return try_serverchan(cld_path, cld_size)
 
     if cld_type != "file":
         print("unknown cld_type")
@@ -146,7 +146,7 @@ def main():
         print("file size {} too small".format(cld_size))
         return
 
-    add_task_loop(cld_path)
+    return try_add_task(cld_path)
 
 if __name__ == "__main__":
     readconf()
