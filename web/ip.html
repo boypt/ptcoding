@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+
+	<style>
+		.table-list td {
+			padding: 6px 8px;
+		}
+
+		.table-list input,
+		.table-list select {
+			margin-top: 0px;
+			margin-bottom: 0px;
+		}
+		.table thead td {
+			text-align: center;
+		}
+		textarea {
+			width: 100%;
+			height: 200px;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div class="jumbotron">
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<td width="20%">检测点</td>
+					<td width="40%">检测结果</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>本站</td>
+					<td>
+						{{.IP}} / {{.TLSVersion}}
+					</td>
+				</tr>
+
+				<tr>
+					<td>国内网站</td>
+					<td>
+						<div> IP :<span id="ip_isp"></span><span id="ip"></span> DNS :<span id="dns_isp"></span><span id="dns_province"></span></div>
+					</td>
+				</tr>
+				<tr>
+					<td>国外网站 </td>
+					<td>
+						<iframe src="https://ip.anysrc.net/plain/clientip" width="100%" height="30" scrolling="no" frameborder="0"
+							marginheight="0" marginwidth="0"> </iframe>
+					</td>
+				</tr>
+
+				<tr>
+					<td>谷歌网站</td>
+					<td>
+						<iframe src="https://ip-goji.appspot.com/text" width="100%" height="30" scrolling="no" frameborder="0"
+							marginheight="0" marginwidth="0">
+							您无法访问谷歌网站
+						</iframe>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<textarea>
+				{{range $field, $val := .Req.Header}}
+{{$field}}: {{$val}}
+				{{end}}
+		</textarea>
+
+	</div>
+</body>
+
+<script type="text/javascript" src="//nstool.netease.com/info.js"></script>
+<script type="text/javascript">
+	document.querySelector("#ip_isp").innerHTML = ip_isp;
+	document.querySelector("#ip").innerHTML = ip;
+	document.querySelector("#dns_isp").innerHTML = dns_isp;
+	document.querySelector("#dns_province").innerHTML = dns_province;
+</script>
+
+
+</html>
