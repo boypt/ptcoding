@@ -6,7 +6,7 @@ if ! id www-data; then
 fi
 mkdir -p /etc/ssl/caddy /etc/caddy/
 chown root:www-data -R /etc/ssl/caddy 
-chmod 0770 /etc/ssl/caddy
+chmod 0770 -R /etc/ssl/caddy
 
 curl https://getcaddy.com | bash -s personal
 (base64 -d | gunzip -c > "/etc/systemd/system/caddy.service") <<EOF
