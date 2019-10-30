@@ -5,7 +5,7 @@ if ! id www-data; then
   useradd -g www-data --no-user-group --home-dir /var/www --shell /usr/sbin/nologin --system www-data
 fi
 mkdir -p /etc/ssl/caddy /etc/caddy/
-chown root:www-data -R /etc/ssl/caddy 
+chown www-data:www-data -R /etc/ssl/caddy 
 chmod 0770 -R /etc/ssl/caddy
 
 curl https://getcaddy.com | bash -s personal
