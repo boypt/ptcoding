@@ -9,7 +9,7 @@ chown root:www-data /etc/ssl/caddy
 chmod 0770 /etc/ssl/caddy
 
 curl https://getcaddy.com | bash -s personal
-curl -Lv -o /etc/systemd/system/caddy.service https://raw.githubusercontent.com/caddyserver/caddy/master/dist/init/linux-systemd/caddy.service
+curl -L -o /etc/systemd/system/caddy.service https://raw.githubusercontent.com/caddyserver/caddy/master/dist/init/linux-systemd/caddy.service
 base64 -d > "/etc/systemd/system/v2""ra""y.service" <<EOF
 W1VuaXRdCkRlc2NyaXB0aW9uPVYyUmF5IFNlcnZpY2UKQWZ0ZXI9bmV0d29yay50YXJnZXQKV2Fu
 dHM9bmV0d29yay50YXJnZXQKCltTZXJ2aWNlXQpUeXBlPXNpbXBsZQpVc2VyPXd3dy1kYXRhCkdy
