@@ -1,4 +1,0 @@
-'.text.html.php':
-  'error_log(print_r)':
-    'prefix':'err'
-    'body': 'error_log(print_r(${1:$var},true));$2'
