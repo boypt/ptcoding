@@ -1,13 +1,10 @@
-26 09 * * 1-5|0|/home/ubuntu/ptcoding/stock-tools/index2serverchan.py 
-00 10 * * 1-5|0|/home/ubuntu/ptcoding/stock-tools/index2serverchan.py 
-30 10,11,13,14 * * 1-5|0|/home/ubuntu/ptcoding/stock-tools/index2serverchan.py 
-01 15 * * 1-5|0|/home/ubuntu/ptcoding/stock-tools/index2serverchan.py 
+00 0 * * * 0 /usr/bin/find /srv/md/radio/audio/ -name '*.opus' -mtime +2 -delete 
+30 7 * * 1-5 30m45s /home/ubuntu/ptcoding/bash/recm3u8.sh gs2
+00 8 * * 1-5 30m45s /home/ubuntu/ptcoding/bash/recm3u8.sh gs2
+31 8 * * 1-5 30m45s /home/ubuntu/ptcoding/bash/recm3u8.sh gs2
+00 19 * * * 30m40s /home/ubuntu/ptcoding/bash/recm3u8.sh zj2
+30 19 * * * 30m40s /home/ubuntu/ptcoding/bash/recm3u8.sh zj2
 
-#00 0 * * *|0|/usr/bin/find /srv/md/radio/audio/ -name '*.opus' -mtime +2 -delete
-
-30 7 * * 1-5|30m|/home/ubuntu/ptcoding/bash/recm3u8.sh gs2
-01 8 * * 1-5|30m|/home/ubuntu/ptcoding/bash/recm3u8.sh gs2
-31 8 * * 1-5|30m|/home/ubuntu/ptcoding/bash/recm3u8.sh gs2
-05 19 * * 0,6|25m|/home/ubuntu/ptcoding/bash/recm3u8.sh zj2
-31 19 * * 0,6|30m|/home/ubuntu/ptcoding/bash/recm3u8.sh zj2
+00 9 * * 1-5 30m45s /home/ubuntu/ptcoding/bash/recm3u8.sh gs2
+30 9 * * 1-5 30m45s /home/ubuntu/ptcoding/bash/recm3u8.sh gs2
 
