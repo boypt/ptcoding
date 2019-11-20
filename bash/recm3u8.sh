@@ -14,6 +14,11 @@ __root="$(cd "$(dirname "${__dir}")" && pwd)" # <-- change this as it depends on
 
 SKEY="${1:-}"
 
+if [[ -z $SKEY ]]; then
+  echo "need key"
+  exit 1
+fi
+
 
 declare -A SRCS
 SRCS["gs"]="http://satellitepull.cnr.cn/live/wxgdgsgb/playlist.m3u8"
@@ -27,13 +32,15 @@ if [[ -z $SRCINPUT ]]; then  exit 1; fi
 RECPATH=/srv/md/radio/audio
 
 if [[ ! -d $RECPATH ]]; then
-  RECPATH=.
+  RECPATH=/tmp
 fi
 
 RECNAME=${RECPATH}/[${SKEY}]-$(date '+%m-%d_%H:%M:%S')
 #FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -c copy -bsf:a aac_adtstoasc ${RECNAME}.opus"
-FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -multiple_requests 1 -c:a libopus -ab 12k -af pan=mono|c0=.5*c0+.5*c1 ${RECNAME}.opus"
-
-#killall -q ffmpeg || true
-${FFMPEGCMD}
+/usr/local/bin/ffmpeg -hide_banner -loglevel error -y -nostdin -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 -timeout 1000000 -re -i ${SRCINPUT} -fflags +genpts+igndts -multiple_requests 1 -c:a libopus -ab 12k -af "pan=mono|c0=.5*c0+.5*c1" ${RECNAME}.opus &
+FFPID=$!
+sleep 10
+if kill -0 $FFPID; then
+  /usr/local/bin/fdwatchdog -s opus -p $FFPID
+fi
 
