@@ -47,6 +47,8 @@ func torrent2Magnet(fn string) (*tItem, error) {
 	}
 
 	m := mi.Magnet(info.Name, mi.HashInfoBytes())
+	m.Trackers = nil //remove trackers
+
 	i := &tItem{FileName: fn,
 		DispName: info.Name,
 		MagLink:  m.String(),
