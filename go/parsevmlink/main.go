@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -81,6 +82,7 @@ func writeLink(vmess []string) {
 	}
 	out.Write([]byte("\n"))
 	out.Close()
+	fmt.Fprintf(os.Stderr, "output %d links\n", len(vmess))
 }
 
 func main() {
