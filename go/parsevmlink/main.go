@@ -18,23 +18,35 @@ var (
 	feedurl  string
 	output   string
 	validate bool
+	unique   bool
+	conn     int
+	verbose  bool
 )
 
 func runVmessPing(vmess []string) []string {
 
 	var good []string
 	goodch := make(chan string)
+	consem := make(chan struct{}, conn)
 	var w sync.WaitGroup
 
 	for _, v := range vmess {
+		consem <- struct{}{}
 		w.Add(1)
 		go func(lnk string) {
+			log.Println("pinging")
 			cmd := exec.Command("vmessping", "-c", "3", lnk)
+			if verbose {
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+			}
 			cmd.Run()
 			if cmd.ProcessState.ExitCode() == 0 {
 				goodch <- lnk
 			}
 			w.Done()
+			log.Println("pingdone")
+			<-consem
 		}(v)
 	}
 
@@ -76,6 +88,9 @@ func main() {
 	flag.StringVar(&feedurl, "f", "", "feed")
 	flag.StringVar(&output, "o", "", "output")
 	flag.BoolVar(&validate, "v", false, "validate available")
+	flag.BoolVar(&unique, "u", false, "remove duplicated results")
+	flag.BoolVar(&verbose, "verb", false, "verbose")
+	flag.IntVar(&conn, "conn", 5, "conncurency")
 	flag.Parse()
 
 	fp := gofeed.NewParser()
@@ -102,6 +117,19 @@ func main() {
 		}
 	}
 
+	if unique {
+		subs := &VmSubs{}
+		for _, item := range vmess {
+			if !subs.HasVM(item) {
+				if err := subs.Add(item); err != nil {
+					log.Println(err, item)
+				}
+			}
+		}
+		vmess = subs.Link
+	}
+
+	log.Printf("found %d links from feed\n", len(vmess))
 	if validate {
 		goodv := runVmessPing(vmess)
 		writeLink(goodv)
