@@ -32,9 +32,9 @@ func runVmessPing(vmess []string) []string {
 	var w sync.WaitGroup
 
 	for _, v := range vmess {
-		consem <- struct{}{}
 		w.Add(1)
 		go func(lnk string) {
+			consem <- struct{}{}
 			log.Println("pinging")
 			cmd := exec.Command("vmessping", "-c", "3")
 			cmd.Env = []string{"VMESS=" + lnk}
