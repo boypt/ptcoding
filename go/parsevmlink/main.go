@@ -36,7 +36,8 @@ func runVmessPing(vmess []string) []string {
 		w.Add(1)
 		go func(lnk string) {
 			log.Println("pinging")
-			cmd := exec.Command("vmessping", "-c", "3", lnk)
+			cmd := exec.Command("vmessping", "-c", "3")
+			cmd.Env = []string{"VMESS=" + lnk}
 			if verbose {
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -128,7 +129,11 @@ func main() {
 				}
 			}
 		}
-		vmess = subs.Link
+		var uvms []string
+		for _, s := range *subs {
+			uvms = append(uvms, s.OrigLink)
+		}
+		vmess = uvms
 	}
 
 	log.Printf("found %d links from feed\n", len(vmess))
