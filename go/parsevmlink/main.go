@@ -24,20 +24,19 @@ var (
 	verbose  bool
 )
 
-func runVmessPing(vmess []string) []string {
+func runVmessPing(sub *VmSubs) *VmSubs {
 
-	var good []string
-	goodch := make(chan string)
+	good := &VmSubs{}
+	goodch := make(chan *VmessLink)
 	consem := make(chan struct{}, conn)
 	var w sync.WaitGroup
 
-	for _, v := range vmess {
+	for _, v := range *sub {
 		w.Add(1)
-		go func(lnk string) {
+		go func(lnk *VmessLink) {
 			consem <- struct{}{}
-			log.Println("pinging")
 			cmd := exec.Command("vmessping", "-c", "3")
-			cmd.Env = []string{"VMESS=" + lnk}
+			cmd.Env = []string{"VMESS=" + lnk.OrigLink}
 			if verbose {
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -47,7 +46,6 @@ func runVmessPing(vmess []string) []string {
 				goodch <- lnk
 			}
 			w.Done()
-			log.Println("pingdone")
 			<-consem
 		}(v)
 	}
@@ -58,14 +56,14 @@ func runVmessPing(vmess []string) []string {
 	}()
 
 	for v := range goodch {
-		log.Println("goodlink: ", v)
-		good = append(good, v)
+		log.Println("goodlink: ", v.Ps)
+		good.Append(v)
 	}
 
 	return good
 }
 
-func writeLink(vmess []string) {
+func writeLink(s *VmSubs) {
 	var out io.WriteCloser
 	if output != "" {
 		f, err := os.Create(output)
@@ -77,13 +75,13 @@ func writeLink(vmess []string) {
 		out = os.Stdout
 	}
 
-	for _, v := range vmess {
-		out.Write([]byte(v))
+	for _, v := range *s {
+		out.Write([]byte(v.OrigLink))
 		out.Write([]byte("\n"))
 	}
 	out.Write([]byte("\n"))
 	out.Close()
-	fmt.Fprintf(os.Stderr, "output %d links\n", len(vmess))
+	fmt.Fprintf(os.Stderr, "output %d links\n", len(*s))
 }
 
 func main() {
@@ -120,27 +118,25 @@ func main() {
 		}
 	}
 
-	if unique {
-		subs := &VmSubs{}
-		for _, item := range vmess {
+	subs := &VmSubs{}
+	for _, item := range vmess {
+		if unique {
 			if !subs.HasVM(item) {
 				if err := subs.Add(item); err != nil {
 					log.Println(err, item)
 				}
 			}
+		} else {
+			if err := subs.Add(item); err != nil {
+				log.Println(err, item)
+			}
 		}
-		var uvms []string
-		for _, s := range *subs {
-			uvms = append(uvms, s.OrigLink)
-		}
-		vmess = uvms
 	}
 
 	log.Printf("found %d links from feed\n", len(vmess))
 	if validate {
-		goodv := runVmessPing(vmess)
-		writeLink(goodv)
+		writeLink(runVmessPing(subs))
 	} else {
-		writeLink(vmess)
+		writeLink(subs)
 	}
 }

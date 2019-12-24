@@ -35,6 +35,10 @@ func (v *VmessLink) IsEqual(c *VmessLink) bool {
 
 type VmSubs []*VmessLink
 
+func (s *VmSubs) Append(v *VmessLink) {
+	*s = append(*s, v)
+}
+
 func (s *VmSubs) Add(vmess string) error {
 	p, err := parseVmess(vmess)
 	if err != nil {
@@ -42,7 +46,7 @@ func (s *VmSubs) Add(vmess string) error {
 	}
 	p.OrigLink = vmess
 
-	*s = append(*s, p)
+	s.Append(p)
 	return nil
 }
 
@@ -67,8 +71,8 @@ func (s *VmSubs) HasVM(vmess string) bool {
 func parseVmess(vmess string) (*VmessLink, error) {
 
 	b64 := vmess[8:]
-	if len(b64)/4 != 0 {
-		b64 += strings.Repeat("=", len(b64)%4)
+	if len(b64)%4 != 0 {
+		b64 += strings.Repeat("=", 4-(len(b64)%4))
 	}
 
 	b, err := base64.StdEncoding.DecodeString(b64)
