@@ -45,6 +45,8 @@ github.com/v2fly/vmessping v0.0.8-0.20191225053628-db4f50f3bf74 h1:NfpxgDTV2t3P6
 github.com/v2fly/vmessping v0.0.8-0.20191225053628-db4f50f3bf74/go.mod h1:9gmZ7T/jslKZyeXvYrVlnH42pMcwBUUKqRm5bDS2UAc=
 github.com/v2fly/vmessping v0.0.8-0.20191225060348-adfc86dc8afd h1:tae6X3aiS5ObNzgeiyoi+KWODDpOoIdI2UYWgXP2cas=
 github.com/v2fly/vmessping v0.0.8-0.20191225060348-adfc86dc8afd/go.mod h1:9gmZ7T/jslKZyeXvYrVlnH42pMcwBUUKqRm5bDS2UAc=
+github.com/v2fly/vmessping v0.0.8-0.20191225065752-dde86637d8da h1:WCLArZT5DovnwOSWWX4I8fiJIV7DQfEz7J8nD+3Yzuo=
+github.com/v2fly/vmessping v0.0.8-0.20191225065752-dde86637d8da/go.mod h1:9gmZ7T/jslKZyeXvYrVlnH42pMcwBUUKqRm5bDS2UAc=
 go.starlark.net v0.0.0-20190225160109-1174b2613e82 h1:vAHCTDREx7LqPeWqNeTvCKWcURJztP3wBKnF2Q0sW7Q=
 go.starlark.net v0.0.0-20190225160109-1174b2613e82/go.mod h1:c1/X6cHgvdXj6pUlmWKMkuqRnW4K8x2vwt6JAaaircg=
 go.starlark.net v0.0.0-20191218235703-9fcb808a6221 h1:GMoeMjox1bR6zacPH+6Z1biOylJzpDbnzven0ymPRg8=
