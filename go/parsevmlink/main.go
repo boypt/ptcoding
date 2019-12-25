@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"regexp"
 	"sort"
+	"strconv"
 	"sync"
 
 	"github.com/mmcdole/gofeed"
@@ -36,7 +37,7 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 		w.Add(1)
 		go func(lnk *vmess.VmessLink) {
 			consem <- struct{}{}
-			args := []string{"-i", "0", "-c", "3"}
+			args := []string{"-i", "0", "-c", "5"}
 			if verbose {
 				args = append(args, "-v")
 			}
@@ -61,7 +62,7 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 	}()
 
 	for v := range goodch {
-		log.Println("goodlink: ", v.Ps)
+		log.Println("goodlink: ", v.Ps, "/", v.Add)
 		good.Append(v)
 	}
 
@@ -132,6 +133,14 @@ func main() {
 	}
 
 	log.Printf("found %d links from feed\n", len(vmess))
+
+	// small aid
+	for _, v := range *subs {
+		if i, err := strconv.Atoi(v.Aid); err == nil && i > 4 {
+			v.Aid = "2"
+		}
+	}
+
 	if validate {
 		writeLink(runVmessPing(subs))
 	} else {
