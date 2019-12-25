@@ -130,11 +130,15 @@ func main() {
 	log.Printf("found %d links from feed\n", len(vmess))
 
 	subs.Sort()
-	// small aid
+
+	// attr amends
 	for _, v := range *subs {
 		if i, err := strconv.Atoi(v.Aid); err == nil && i > 4 {
 			v.Aid = "2"
+		} else {
+			v.Aid = "0"
 		}
+
 		if v.Ps == "" {
 			v.Ps = v.Add
 		}

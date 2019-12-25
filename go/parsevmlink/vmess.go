@@ -10,7 +10,7 @@ import (
 type VmSubs []*vmess.VmessLink
 
 func (s *VmSubs) Sort() {
-	sort.Slice(*s, func(i, j int) bool {
+	sort.SliceStable(*s, func(i, j int) bool {
 		return strings.Compare((*s)[i].Ps, (*s)[j].Ps) < 0
 	})
 }
