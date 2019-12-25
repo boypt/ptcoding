@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"sort"
 	"strconv"
 	"sync"
 
@@ -113,10 +112,6 @@ func main() {
 
 	vmr := regexp.MustCompile(`vmess://[a-zA-Z0-9\+/-]+`)
 
-	sort.Slice(feed.Items, func(i, j int) bool {
-		return feed.Items[i].PublishedParsed.After(*(feed.Items[j].PublishedParsed))
-	})
-
 	var vmess []string
 	for _, item := range feed.Items {
 		desc := trimDescription(item.Description)
@@ -134,10 +129,14 @@ func main() {
 
 	log.Printf("found %d links from feed\n", len(vmess))
 
+	subs.Sort()
 	// small aid
 	for _, v := range *subs {
 		if i, err := strconv.Atoi(v.Aid); err == nil && i > 4 {
 			v.Aid = "2"
+		}
+		if v.Ps == "" {
+			v.Ps = v.Add
 		}
 	}
 

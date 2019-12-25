@@ -1,10 +1,19 @@
 package main
 
 import (
+	"sort"
+	"strings"
+
 	"github.com/v2fly/vmessping/vmess"
 )
 
 type VmSubs []*vmess.VmessLink
+
+func (s *VmSubs) Sort() {
+	sort.Slice(*s, func(i, j int) bool {
+		return strings.Compare((*s)[i].Ps, (*s)[j].Ps) < 0
+	})
+}
 
 func (s *VmSubs) Append(v *vmess.VmessLink) {
 	*s = append(*s, v)
