@@ -23,6 +23,7 @@ var (
 	validate bool
 	unique   bool
 	conn     int
+	goodth   int
 	verbose  bool
 )
 
@@ -54,7 +55,7 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 					if strings.HasPrefix(l, "rtt min/avg/max") {
 						if tl := strings.Split(l, " "); len(tl) == 5 {
 							ts := strings.Split(tl[3], "/")
-							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 && v < 1500 {
+							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 && v < goodth {
 								fmt.Println(lnk.Ps, l)
 								goodch <- lnk
 							}
@@ -106,6 +107,7 @@ func main() {
 	flag.StringVar(&output, "o", "", "output")
 	flag.BoolVar(&validate, "v", false, "validate available")
 	flag.BoolVar(&unique, "u", false, "remove duplicated results")
+	flag.IntVar(&goodth, "good", 2000, "good avg threshold")
 	flag.BoolVar(&verbose, "verb", false, "verbose")
 	flag.IntVar(&conn, "conn", 5, "conncurency")
 	flag.Parse()
