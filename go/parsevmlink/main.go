@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/mmcdole/gofeed"
@@ -36,22 +37,32 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 		w.Add(1)
 		go func(lnk *vmess.VmessLink) {
 			consem <- struct{}{}
+			defer func() {
+				w.Done()
+				<-consem
+			}()
+
 			args := []string{"-i", "0", "-c", "5"}
 			if verbose {
 				args = append(args, "-v")
 			}
 			cmd := exec.Command("vmessping", args...)
 			cmd.Env = []string{"VMESS=" + lnk.OrigLink}
-			if verbose {
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
+
+			if out, err := cmd.CombinedOutput(); err == nil {
+				for _, l := range strings.Split(string(out), "\n") {
+					if strings.HasPrefix(l, "rtt min/avg/max") {
+						if tl := strings.Split(l, " "); len(tl) == 5 {
+							ts := strings.Split(tl[3], "/")
+							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 && v < 1500 {
+								fmt.Println(lnk.Ps, l)
+								goodch <- lnk
+							}
+							return
+						}
+					}
+				}
 			}
-			cmd.Run()
-			if cmd.ProcessState.ExitCode() == 0 {
-				goodch <- lnk
-			}
-			w.Done()
-			<-consem
 		}(v)
 	}
 
