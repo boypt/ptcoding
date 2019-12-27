@@ -171,17 +171,6 @@ func main() {
 	log.Printf("found %d links \n", len(*subs))
 	subs.Sort()
 
-	// attr amends
-	for _, v := range *subs {
-		if i, err := strconv.Atoi(v.Aid); err == nil && i > 2 {
-			v.Aid = "2"
-		}
-
-		if v.Ps == "" {
-			v.Ps = v.Add
-		}
-	}
-
 	if validate {
 		writeLink(runVmessPing(subs))
 	} else {

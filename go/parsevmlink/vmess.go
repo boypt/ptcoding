@@ -2,6 +2,7 @@ package main
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/v2fly/vmessping/vmess"
@@ -25,6 +26,14 @@ func (s *VmSubs) Add(vm string, uniq bool) error {
 		return err
 	}
 	p.OrigLink = vm
+
+	// attr amends
+	if i, err := strconv.Atoi(p.Aid); err == nil && i > 2 {
+		p.Aid = "2"
+	}
+	if p.Ps == "" {
+		p.Ps = p.Add
+	}
 
 	if uniq && s.hasVM(p) {
 		return nil
