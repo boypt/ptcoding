@@ -45,7 +45,7 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 				<-consem
 			}()
 
-			args := []string{"-i", "0", "-c", "5"}
+			args := []string{"-i", "0", "-c", "5", "-q", "2"}
 			if verbose {
 				args = append(args, "-v")
 			}
