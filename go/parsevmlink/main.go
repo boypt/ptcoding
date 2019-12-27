@@ -139,7 +139,7 @@ func readFeeds() []string {
 }
 
 func readExtSus() []string {
-	bm, err := ioutil.ReadFile(feedfile)
+	bm, err := ioutil.ReadFile(extsubsfile)
 	if err != nil {
 		return nil
 	}
