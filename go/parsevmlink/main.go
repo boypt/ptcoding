@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -18,13 +18,15 @@ import (
 )
 
 var (
-	feedurl  string
-	output   string
-	validate bool
-	unique   bool
-	conn     int
-	goodth   int
-	verbose  bool
+	feedfile    string
+	extsubsfile string
+	output      string
+	validate    bool
+	unique      bool
+	conn        int
+	goodth      int
+	verbose     bool
+	vmr         = regexp.MustCompile(`vmess://[a-zA-Z0-9\+/-]+`)
 )
 
 func runVmessPing(sub *VmSubs) *VmSubs {
@@ -101,9 +103,53 @@ func writeLink(s *VmSubs) {
 	fmt.Fprintf(os.Stderr, "output %d links\n", len(*s))
 }
 
+func readFeeds() []string {
+	var vmess []string
+	fp := gofeed.NewParser()
+	bm, err := ioutil.ReadFile(feedfile)
+	if err != nil {
+		return vmess
+	}
+
+	for _, furl := range strings.Split(string(bm), "\n") {
+		furl = strings.TrimSpace(furl)
+		if furl == "" {
+			continue
+		}
+		if strings.HasPrefix(furl, "http") {
+			feed, err := fp.ParseURL(furl)
+			if err != nil {
+				log.Println("parse feed err", err)
+				continue
+			}
+
+			if len(feed.Items) == 0 {
+				continue
+			}
+
+			for _, item := range feed.Items {
+				desc := trimDescription(item.Description)
+				for _, link := range vmr.FindAllString(desc, -1) {
+					vmess = append(vmess, link)
+				}
+			}
+		}
+	}
+	return vmess
+}
+
+func readExtSus() []string {
+	bm, err := ioutil.ReadFile(feedfile)
+	if err != nil {
+		return nil
+	}
+	return vmr.FindAllString(string(bm), -1)
+}
+
 func main() {
 
-	flag.StringVar(&feedurl, "f", "", "feed")
+	flag.StringVar(&feedfile, "f", "", "feed url file")
+	flag.StringVar(&extsubsfile, "e", "", "ext subs file")
 	flag.StringVar(&output, "o", "", "output")
 	flag.BoolVar(&validate, "v", false, "validate available")
 	flag.BoolVar(&unique, "u", false, "remove duplicated results")
@@ -112,44 +158,23 @@ func main() {
 	flag.IntVar(&conn, "conn", 5, "conncurency")
 	flag.Parse()
 
-	fp := gofeed.NewParser()
-	fp.Client = &http.Client{}
-	feed, err := fp.ParseURL(feedurl)
-	if err != nil {
-		log.Fatalln("parse feed err", err)
-	}
-
-	if len(feed.Items) == 0 {
-		return
-	}
-
-	vmr := regexp.MustCompile(`vmess://[a-zA-Z0-9\+/-]+`)
-
-	var vmess []string
-	for _, item := range feed.Items {
-		desc := trimDescription(item.Description)
-		for _, link := range vmr.FindAllString(desc, -1) {
-			vmess = append(vmess, link)
-		}
-	}
-
+	var vmesses []string
+	vmesses = append(vmesses, readExtSus()...)
+	vmesses = append(vmesses, readFeeds()...)
 	subs := &VmSubs{}
-	for _, item := range vmess {
+	for _, item := range vmesses {
 		if err := subs.Add(item, unique); err != nil {
 			log.Println(err, item)
 		}
 	}
 
-	log.Printf("found %d links from feed\n", len(vmess))
-
+	log.Printf("found %d links \n", len(*subs))
 	subs.Sort()
 
 	// attr amends
 	for _, v := range *subs {
-		if i, err := strconv.Atoi(v.Aid); err == nil && i > 4 {
+		if i, err := strconv.Atoi(v.Aid); err == nil && i > 2 {
 			v.Aid = "2"
-		} else {
-			v.Aid = "0"
 		}
 
 		if v.Ps == "" {
