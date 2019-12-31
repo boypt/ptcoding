@@ -3,24 +3,27 @@ package main
 import (
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/v2fly/vmessping/vmess"
 )
 
-type VmSubs []*vmess.VmessLink
+type vmessLinkP struct {
+	vmess.VmessLink
+	Delay int
+}
+type vmSubs []*vmessLinkP
 
-func (s *VmSubs) Sort() {
+func (s *vmSubs) Sort() {
 	sort.SliceStable(*s, func(i, j int) bool {
-		return strings.Compare((*s)[i].Ps, (*s)[j].Ps) < 0
+		return (*s)[i].Delay < (*s)[j].Delay
 	})
 }
 
-func (s *VmSubs) Append(v *vmess.VmessLink) {
+func (s *vmSubs) Append(v *vmessLinkP) {
 	*s = append(*s, v)
 }
 
-func (s *VmSubs) Add(vm string, uniq bool) error {
+func (s *vmSubs) Add(vm string, uniq bool) error {
 	p, err := vmess.ParseVmess(vm)
 	if err != nil {
 		return err
@@ -39,11 +42,11 @@ func (s *VmSubs) Add(vm string, uniq bool) error {
 		return nil
 	}
 
-	s.Append(p)
+	s.Append(&vmessLinkP{*p, -1})
 	return nil
 }
 
-func (s *VmSubs) hasVM(v *vmess.VmessLink) bool {
+func (s *vmSubs) hasVM(v *vmess.VmessLink) bool {
 	for _, o := range *s {
 		if o.IsEqual(v) {
 			return true

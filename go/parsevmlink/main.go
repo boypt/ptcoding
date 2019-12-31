@@ -14,7 +14,6 @@ import (
 	"sync"
 
 	"github.com/mmcdole/gofeed"
-	"github.com/v2fly/vmessping/vmess"
 )
 
 var (
@@ -29,16 +28,16 @@ var (
 	vmr         = regexp.MustCompile(`vmess://[a-zA-Z0-9\+/-]+`)
 )
 
-func runVmessPing(sub *VmSubs) *VmSubs {
+func runVmessPing(sub *vmSubs) *vmSubs {
 
-	good := &VmSubs{}
-	goodch := make(chan *vmess.VmessLink)
+	good := &vmSubs{}
+	goodch := make(chan *vmessLinkP)
 	consem := make(chan struct{}, conn)
 	var w sync.WaitGroup
 
 	for _, v := range *sub {
 		w.Add(1)
-		go func(lnk *vmess.VmessLink) {
+		go func(lnk *vmessLinkP) {
 			consem <- struct{}{}
 			defer func() {
 				w.Done()
@@ -57,8 +56,9 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 					if strings.HasPrefix(l, "rtt min/avg/max") {
 						if tl := strings.Split(l, " "); len(tl) == 5 {
 							ts := strings.Split(tl[3], "/")
-							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 && v < goodth {
-								fmt.Println(lnk.Ps, l)
+							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 {
+								lnk.Delay = v
+								fmt.Println(lnk.Ps, " - ", v, "ms ", l)
 								goodch <- lnk
 							}
 							return
@@ -82,7 +82,7 @@ func runVmessPing(sub *VmSubs) *VmSubs {
 	return good
 }
 
-func writeLink(s *VmSubs) {
+func writeLink(s *vmSubs) {
 	var out io.WriteCloser
 	if output != "" {
 		f, err := os.Create(output)
@@ -161,7 +161,7 @@ func main() {
 	var vmesses []string
 	vmesses = append(vmesses, readExtSus()...)
 	vmesses = append(vmesses, readFeeds()...)
-	subs := &VmSubs{}
+	subs := &vmSubs{}
 	for _, item := range vmesses {
 		if err := subs.Add(item, unique); err != nil {
 			log.Println(err, item)
