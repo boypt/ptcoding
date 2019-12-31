@@ -169,10 +169,14 @@ func main() {
 	}
 
 	log.Printf("found %d links \n", len(*subs))
-	subs.Sort()
 
 	if validate {
-		writeLink(runVmessPing(subs))
+		gd := runVmessPing(subs)
+		gd.Sort()
+		for _, i := range *gd {
+			fmt.Println(i.Ps, i.Delay, "ms")
+		}
+		writeLink(gd)
 	} else {
 		writeLink(subs)
 	}
