@@ -139,6 +139,10 @@ func chanAPI(text ...string) error {
 
 func cldAPI(api, hash string) {
 
+	if api == "" {
+		return
+	}
+
 	actions := []string{"stop:" + hash, "delete:" + hash}
 	url := fmt.Sprintf("http://%s/api/torrent", api)
 
@@ -152,6 +156,10 @@ func cldAPI(api, hash string) {
 			Timeout: 10 * time.Second,
 		}
 		resp, err := c.Do(req)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
 		resp.Body.Close()
 
 		time.Sleep(time.Second)
