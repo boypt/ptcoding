@@ -1,2 +1,0 @@
-# notiferhub
-personal use program
