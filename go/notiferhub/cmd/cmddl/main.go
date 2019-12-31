@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/boypt/notiferhub/aria2rpc"
@@ -56,7 +57,7 @@ func byteCountSI(b int64) string {
 		float64(b)/float64(div), "kMGTPE"[exp])
 }
 
-func tryMax(max int, fun func(string) error, arg string) error {
+func tryMax(max int, fun func(...string) error, arg ...string) error {
 
 	var terr error
 
@@ -66,7 +67,7 @@ func tryMax(max int, fun func(string) error, arg string) error {
 			break
 		}
 
-		err := fun(arg)
+		err := fun(arg...)
 		if err == nil {
 			return nil
 		}
@@ -108,16 +109,18 @@ func notifyStock() {
 	}
 }
 
-func chanAPI(text string) error {
+func chanAPI(text ...string) error {
 	purl := os.Getenv("chanapi")
 	token := os.Getenv("chantoken")
 	if purl == "" {
 		return nil
 	}
 
+	text[1] = strings.ReplaceAll(text[1], "*", "")
 	bd := struct {
+		Title   string `json:"title,omitempty"`
 		Content string `json:"content,omitempty"`
-	}{text}
+	}{text[0], text[1]}
 	b, _ := json.Marshal(bd)
 
 	req, err := http.NewRequest("POST", purl, bytes.NewBuffer(b))
@@ -166,7 +169,7 @@ func notifyAria() {
 	case "torrent":
 		text := notifyText(cldPath, cldSize)
 		tryMax(3, tgbot.JustNotify, text)
-		tryMax(1, chanAPI, text)
+		tryMax(1, chanAPI, "torrent", text)
 		time.Sleep(time.Second * 3)
 		cldAPI(cldRest, cldHash)
 	case "file":
