@@ -146,6 +146,21 @@ func readExtSus() []string {
 	return vmr.FindAllString(string(bm), -1)
 }
 
+func saveExtSus(s *vmSubs) {
+	if output != "" {
+		out, err := os.Create(output)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, v := range *s {
+			out.Write([]byte(v.LinkStr()))
+			out.Write([]byte("\n"))
+		}
+		out.Write([]byte("\n"))
+		out.Close()
+	}
+}
+
 func main() {
 
 	flag.StringVar(&feedfile, "f", "", "feed url file")
@@ -169,15 +184,18 @@ func main() {
 	}
 
 	log.Printf("found %d links \n", len(*subs))
-
+	var final *vmSubs
 	if validate {
 		gd := runVmessPing(subs)
 		gd.Sort()
 		for _, i := range *gd {
 			fmt.Println(i.Ps, i.Delay, "ms")
 		}
-		writeLink(gd)
+		final = gd
 	} else {
-		writeLink(subs)
+		final = subs
 	}
+
+	writeLink(final)
+	saveExtSus(final)
 }
