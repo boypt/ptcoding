@@ -1,0 +1,38 @@
+version: "3"
+services:
+  phpfpm:
+    build:
+      context: .
+      dockerfile: dockerfile.php7
+    container_name: php-fpm
+    hostname: php-fpm
+    ports: 
+      - 127.0.0.1:9000:9000/tcp
+    volumes:
+      - /srv/wordpress:/srv/wordpress
+    restart: unless-stopped
+    networks:
+      - wordpress
+
+  db:
+    image: mariadb:latest
+    container_name: mariadb
+    hostname: mariadb
+    ports: 
+      - 127.0.0.1:3306:3306/tcp
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+    env_file:
+      - mysql.env
+
+    networks:
+      - wordpress
+
+networks: 
+  wordpress:
+    driver: bridge
+
+
+volumes:
+  mariadb_data:

@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+
+  service.rsshub:
+    image: diygod/rsshub
+    restart: always
+    ports:
+            - "127.0.0.1:1200:1200"
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: memery
