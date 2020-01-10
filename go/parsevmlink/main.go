@@ -88,7 +88,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 			loc := v.nodeline[pxnLen : pxnLen+3]
 			v.Ps = loc + " - " + strings.TrimSpace(v.Ps)
 		}
-		log.Println("--->", v, v.rttline)
+		log.Println("--->", v, v.nodeline, v.rttline)
 		good.Append(v)
 	}
 
