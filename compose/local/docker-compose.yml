@@ -1,0 +1,32 @@
+version: "3"
+services:
+  wol:
+    image: wol:latest
+    container_name: wol
+    hostname: wol
+    ports: 
+      - 127.0.0.1:3100:3100/tcp
+    restart: unless-stopped
+    networks:
+      - local
+
+#  portainer:
+#    image: portainer/portainer:latest
+#    container_name: portainer
+#    hostname: portainer
+#    ports: 
+#      - 127.0.0.1:3200:3200/tcp
+#    restart: unless-stopped
+#    networks:
+#      - local
+#    volumes:
+#      - portainer_data:/data
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    command: "-H unix:///var/run/docker.sock -p :3200"
+
+networks: 
+  local:
+    driver: bridge
+
+#volumes:
+#  portainer_data:

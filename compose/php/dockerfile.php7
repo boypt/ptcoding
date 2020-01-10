@@ -1,0 +1,4 @@
+FROM php:7-fpm-alpine
+RUN sh -c 'echo -e "https://mirrors.cloud.tencent.com/alpine/v3.11/main\nhttps://mirrors.cloud.tencent.com/alpine/v3.11/community" > /etc/apk/repositories'
+RUN docker-php-ext-install mysqli pdo pdo_mysql
+
