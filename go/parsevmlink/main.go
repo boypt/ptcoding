@@ -58,7 +58,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 							ts := strings.Split(tl[3], "/")
 							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 {
 								lnk.Delay = v
-								fmt.Println(lnk.Ps, " - ", v, "ms ", l)
+								log.Println("---> ", lnk.Ps, v, "ms ", l)
 								goodch <- lnk
 							}
 							return
@@ -75,7 +75,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 	}()
 
 	for v := range goodch {
-		log.Println("goodlink: ", v.Ps, "/", v.Add)
+		// log.Println("goodlink: ", v.Ps, "/", v.Add)
 		good.Append(v)
 	}
 
@@ -95,7 +95,7 @@ func writeLink(s *vmSubs) {
 	}
 
 	for _, v := range *s {
-		out.Write([]byte(v.LinkStr()))
+		out.Write([]byte(v.LinkStr("n")))
 		out.Write([]byte("\n"))
 	}
 	out.Write([]byte("\n"))
@@ -153,7 +153,7 @@ func saveExtSus(s *vmSubs) {
 			log.Fatal(err)
 		}
 		for _, v := range *s {
-			out.Write([]byte(v.LinkStr()))
+			out.Write([]byte(v.LinkStr("n")))
 			out.Write([]byte("\n"))
 		}
 		out.Write([]byte("\n"))
