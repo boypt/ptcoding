@@ -28,6 +28,12 @@ var (
 	vmr         = regexp.MustCompile(`vmess://[a-zA-Z0-9\+/-]+`)
 )
 
+const (
+	prefxNode = "Node Outbound:"
+	prefxRTT  = "rtt min/avg/max"
+	pxnLen    = len(prefxNode)
+)
+
 func runVmessPing(sub *vmSubs) *vmSubs {
 
 	good := &vmSubs{}
@@ -44,7 +50,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 				<-consem
 			}()
 
-			args := []string{"-i", "0", "-c", "5", "-q", "2"}
+			args := []string{"-n", "-i", "0", "-c", "5", "-q", "2"}
 			if verbose {
 				args = append(args, "-v")
 			}
@@ -53,12 +59,15 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 
 			if out, err := cmd.CombinedOutput(); err == nil {
 				for _, l := range strings.Split(string(out), "\n") {
-					if strings.HasPrefix(l, "rtt min/avg/max") {
+					if strings.HasPrefix(l, prefxNode) {
+						lnk.nodeline = l
+					}
+					if strings.HasPrefix(l, prefxRTT) {
+						lnk.rttline = l
 						if tl := strings.Split(l, " "); len(tl) == 5 {
 							ts := strings.Split(tl[3], "/")
 							if v, err := strconv.Atoi(ts[1]); err == nil && v > 0 {
 								lnk.Delay = v
-								log.Println("---> ", lnk.Ps, v, "ms ", l)
 								goodch <- lnk
 							}
 							return
@@ -75,7 +84,11 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 	}()
 
 	for v := range goodch {
-		// log.Println("goodlink: ", v.Ps, "/", v.Add)
+		if v.nodeline != "" {
+			loc := v.nodeline[pxnLen : pxnLen+3]
+			v.Ps = loc + " - " + strings.TrimSpace(v.Ps)
+		}
+		log.Println("--->", v, v.rttline)
 		good.Append(v)
 	}
 

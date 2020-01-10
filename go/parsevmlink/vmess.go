@@ -9,8 +9,11 @@ import (
 
 type vmessLinkP struct {
 	vmess.VmessLink
-	Delay int
+	Delay    int
+	rttline  string
+	nodeline string
 }
+
 type vmSubs []*vmessLinkP
 
 func (s *vmSubs) Sort() {
@@ -42,7 +45,7 @@ func (s *vmSubs) Add(vm string, uniq bool) error {
 		return nil
 	}
 
-	s.Append(&vmessLinkP{*p, -1})
+	s.Append(&vmessLinkP{*p, -1, "", ""})
 	return nil
 }
 
