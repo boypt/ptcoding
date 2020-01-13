@@ -30,8 +30,8 @@ var (
 	goodth      int
 	verbose     bool
 	vmr         = regexp.MustCompile(`vmess://[^ ]+`)
-	httpClient  = http.Client{
-		Timeout: time.Second * 30,
+	httpClient  = &http.Client{
+		Timeout: time.Second * 60,
 	}
 )
 
@@ -162,6 +162,7 @@ func readRemoteBase64(furl string) ([]string, error) {
 func readFeeds(furl string) ([]string, error) {
 	var vmess []string
 	fp := gofeed.NewParser()
+	fp.Client = httpClient
 
 	feed, err := fp.ParseURL(furl)
 	if err != nil {
