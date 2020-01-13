@@ -130,6 +130,7 @@ func readFeeds() []string {
 			continue
 		}
 		if strings.HasPrefix(furl, "http") {
+			log.Println("read feed", furl)
 			feed, err := fp.ParseURL(furl)
 			if err != nil {
 				log.Println("parse feed err", err)
