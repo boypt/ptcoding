@@ -50,7 +50,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 				<-consem
 			}()
 
-			args := []string{"-n", "-c", "5", "-q", "2"}
+			args := []string{"-n", "-c", "5", "-q", "2", "-dest", "https://www.cloudflare.com/cdn-cgi/trace"}
 			if verbose {
 				args = append(args, "-v")
 			}
