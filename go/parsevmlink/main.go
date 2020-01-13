@@ -1,17 +1,21 @@
 package main
 
 import (
+	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mmcdole/gofeed"
 )
@@ -26,6 +30,9 @@ var (
 	goodth      int
 	verbose     bool
 	vmr         = regexp.MustCompile(`vmess://[^ ]+`)
+	httpClient  = http.Client{
+		Timeout: time.Second * 30,
+	}
 )
 
 const (
@@ -116,49 +123,143 @@ func writeLink(s *vmSubs) {
 	fmt.Fprintf(os.Stderr, "output %d links\n", len(*s))
 }
 
-func readFeeds() []string {
+func readRemoteBase64(furl string) ([]string, error) {
+
+	req, err := http.NewRequest("GET", furl, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	cnt, err := base64.StdEncoding.DecodeString(string(content))
+	if err != nil {
+		return nil, err
+	}
+
+	var vmesses []string
+	for _, src := range strings.Split(string(cnt), "\n") {
+		src = strings.TrimSpace(src)
+		if src == "" {
+			continue
+		}
+		if !strings.HasPrefix(src, "vmess://") {
+			continue
+		}
+		vmesses = append(vmesses, src)
+	}
+
+	return vmesses, nil
+
+}
+
+func readFeeds(furl string) ([]string, error) {
 	var vmess []string
 	fp := gofeed.NewParser()
+
+	feed, err := fp.ParseURL(furl)
+	if err != nil {
+		log.Println("parse feed err", err)
+		return nil, err
+	}
+
+	if len(feed.Items) == 0 {
+		return nil, errors.New("empty feed")
+	}
+
+	for _, item := range feed.Items {
+		desc := trimDescription(item.Description)
+		desc = strings.ReplaceAll(desc, "\n", " ")
+		for _, link := range vmr.FindAllString(desc, -1) {
+			if len(link) > 1000 {
+				log.Fatalln(link)
+			}
+			vmess = append(vmess, link)
+		}
+	}
+	return vmess, nil
+}
+
+func readLocalPlain(fn string) ([]string, error) {
+	var vmesses []string
+	cnt, err := ioutil.ReadFile(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, src := range strings.Split(string(cnt), "\n") {
+		src = strings.TrimSpace(src)
+		if src == "" {
+			continue
+		}
+		vmesses = append(vmesses, src)
+	}
+
+	return vmesses, nil
+}
+
+func readSource() []string {
+	var vmess []string
 	bm, err := ioutil.ReadFile(feedfile)
 	if err != nil {
 		return vmess
 	}
 
-	for _, furl := range strings.Split(string(bm), "\n") {
-		furl = strings.TrimSpace(furl)
-		if furl == "" {
+	for _, src := range strings.Split(string(bm), "\n") {
+		src = strings.TrimSpace(src)
+		if src == "" {
 			continue
 		}
-		if strings.HasPrefix(furl, "http") {
-			log.Println("read feed", furl)
-			feed, err := fp.ParseURL(furl)
+
+		if strings.HasPrefix(src, "#") {
+			continue
+		}
+
+		source := strings.SplitN(src, ":", 2)
+		if len(source) != 2 {
+			log.Println("skip line:", src)
+			continue
+		}
+		dest := source[1]
+		switch source[0] {
+		case "feed":
+			log.Println("read feed:", dest)
+			vvms, err := readFeeds(dest)
 			if err != nil {
-				log.Println("parse feed err", err)
-				continue
+				log.Println(err)
+				break
 			}
-
-			if len(feed.Items) == 0 {
-				continue
+			log.Println("items:", len(vvms))
+			vmess = append(vmess, vvms...)
+		case "rbase64":
+			log.Println("read remotebase64:", dest)
+			vvms, err := readRemoteBase64(dest)
+			if err != nil {
+				log.Println(err)
+				break
 			}
-
-			for _, item := range feed.Items {
-				desc := trimDescription(item.Description)
-				desc = strings.ReplaceAll(desc, "\n", " ")
-				for _, link := range vmr.FindAllString(desc, -1) {
-					vmess = append(vmess, link)
-				}
+			log.Println("items:", len(vvms))
+			vmess = append(vmess, vvms...)
+		case "lplain":
+			log.Println("read lplain:", dest)
+			vvms, err := readLocalPlain(dest)
+			if err != nil {
+				log.Println(err)
+				break
 			}
+			log.Println("items:", len(vvms))
+			vmess = append(vmess, vvms...)
 		}
 	}
-	return vmess
-}
 
-func readExtSus() []string {
-	bm, err := ioutil.ReadFile(extsubsfile)
-	if err != nil {
-		return nil
-	}
-	return vmr.FindAllString(string(bm), -1)
+	log.Println("parsed source complete: ", feedfile)
+	return vmess
 }
 
 func saveExtSus(s *vmSubs) {
@@ -179,7 +280,6 @@ func saveExtSus(s *vmSubs) {
 func main() {
 
 	flag.StringVar(&feedfile, "f", "", "feed url file")
-	flag.StringVar(&extsubsfile, "e", "", "ext subs file")
 	flag.StringVar(&output, "o", "", "output")
 	flag.BoolVar(&validate, "v", false, "validate available")
 	flag.BoolVar(&unique, "u", false, "remove duplicated results")
@@ -188,13 +288,11 @@ func main() {
 	flag.IntVar(&conn, "conn", 5, "conncurency")
 	flag.Parse()
 
-	var vmesses []string
-	vmesses = append(vmesses, readExtSus()...)
-	vmesses = append(vmesses, readFeeds()...)
+	vmesses := readSource()
 	subs := &vmSubs{}
-	for _, item := range vmesses {
+	for idx, item := range vmesses {
 		if err := subs.Add(item, unique); err != nil {
-			log.Println(err, item)
+			log.Println(err, idx, item)
 		}
 	}
 
@@ -212,5 +310,5 @@ func main() {
 	}
 
 	writeLink(final)
-	saveExtSus(final)
+	// saveExtSus(final)
 }
