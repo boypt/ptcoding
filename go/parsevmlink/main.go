@@ -25,7 +25,7 @@ var (
 	conn        int
 	goodth      int
 	verbose     bool
-	vmr         = regexp.MustCompile(`vmess://[a-zA-Z0-9\+/-]+`)
+	vmr         = regexp.MustCompile(`vmess://[^ ]+`)
 )
 
 const (
@@ -142,6 +142,7 @@ func readFeeds() []string {
 
 			for _, item := range feed.Items {
 				desc := trimDescription(item.Description)
+				desc = strings.ReplaceAll(desc, "\n", " ")
 				for _, link := range vmr.FindAllString(desc, -1) {
 					vmess = append(vmess, link)
 				}
