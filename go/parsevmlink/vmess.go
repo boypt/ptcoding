@@ -34,8 +34,15 @@ func (s *vmSubs) Add(vm string, uniq bool) error {
 	p.OrigLink = vm
 
 	// attr amends
-	if i, err := strconv.Atoi(p.Aid); err == nil && i > 2 {
-		p.Aid = "2"
+	switch aid := p.Aid.(type) {
+	case int:
+		if aid > 2 {
+			p.Aid = 2
+		}
+	case string:
+		if i, err := strconv.Atoi(aid); err == nil && i > 2 {
+			p.Aid = "2"
+		}
 	}
 	if p.Ps == "" {
 		p.Ps = p.Add
