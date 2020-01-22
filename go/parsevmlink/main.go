@@ -93,7 +93,9 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 	for v := range goodch {
 		if v.nodeline != "" {
 			loc := v.nodeline[pxnLen : pxnLen+3]
-			v.Ps = loc + " - " + strings.TrimSpace(v.Ps)
+			if !strings.HasPrefix(v.Ps, loc) {
+				v.Ps = loc + " - " + strings.TrimSpace(v.Ps)
+			}
 		}
 		log.Println("--->", v, v.nodeline, v.rttline)
 		good.Append(v)
