@@ -57,7 +57,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 				<-consem
 			}()
 
-			args := []string{"-n", "-c", "5", "-q", "2", "-dest", "https://www.cloudflare.com/cdn-cgi/trace"}
+			args := []string{"-n", "-c", "5", "-q", "2", "-dest", "http://www.cloudflare.com/cdn-cgi/trace"}
 			if verbose {
 				args = append(args, "-v")
 			}
@@ -81,6 +81,8 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 						}
 					}
 				}
+			} else {
+				log.Println("vmessping", err, "\n",string(out))
 			}
 		}(v)
 	}
