@@ -82,7 +82,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 					}
 				}
 			} else {
-				log.Println("vmessping", err, "\n",string(out))
+				log.Println("vmessping", err, "\n", string(out))
 			}
 		}(v)
 	}
@@ -181,9 +181,11 @@ func readFeeds(furl string) ([]string, error) {
 	for _, item := range feed.Items {
 		desc := trimDescription(item.Description)
 		desc = strings.ReplaceAll(desc, "\n", " ")
+		desc = strings.ReplaceAll(desc, "vmess://", " vmess://")
 		for _, link := range vmr.FindAllString(desc, -1) {
 			if len(link) > 1000 {
-				log.Fatalln(link)
+				log.Println("parse feed length excceeded", link)
+				continue
 			}
 			vmess = append(vmess, link)
 		}
