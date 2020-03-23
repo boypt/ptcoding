@@ -11,11 +11,9 @@
 #   https://gist.github.com/4ft35t/510897486bc6986d19cac45b3b9ca1d0    
 
 DOMAIN=''
-CF_EMAIL=''
+CF_AUTH=''
 CF_ZONEID=''
-CF_KEY=''
 CF_NS='elle.ns.cloudflare.com'
-INTERFACE='br-lan'
 TMPREC=/tmp/cfddnsv6.addr
 
 ######
@@ -24,15 +22,10 @@ CF_DNSRECID=__RECID__
 #       See function updaterecid()
 ######
 
-######
-INET6IDNT='\/64 scope global dynamic'
-# Note: the identical line of address varies in different distro.
-# (Debian) FOR DHCPv6 Address:      '/128 scope global dynamic'
-# (Debian) FOR EUI64 SLAAC Address: '/64 scope global dynamic mngtmpaddr'
-# (OpenWrt) EUI64 SLAAC Address: '/64 scope global dynamic'
-# Do the check with command `ip address show dev INTERFACE`
-######
-
+if ! command -v ip >/dev/null 2>&1; then
+  echo "iproute2 tool not found."
+  exit 1
+fi
 
 __dir="$(cd "$(dirname "$0")" && pwd)"
 __file="${__dir}/$(basename "$0")"
@@ -52,14 +45,19 @@ case $METHOD in
     ;;
 esac
 
-waitv6addr () {
-#
-# Some device got IPv6 Address latter at boot, need to wait a while.
-#
+findv6addr () {
     local IPV6=
-    while [[ -z $IPV6 ]]; do
-        IPV6=$(ip -6 addr show dev ${INTERFACE} | sed -n -E "s/^ +inet6 //;/${INET6IDNT}/p" | head -n 1 | cut -d/ -f1)
-        [[ -z $IPV6 ]] && sleep 3
+    local FOUNDSRC=0
+    for ADDR in $(ip route get 2606:4700:4700::1111 | head -n1); do
+        if [[ "x${ADDR}" == "xsrc" ]]; then
+          FOUNDSRC=1
+          continue
+        fi
+        if [[ $FOUNDSRC -eq 1 ]]; then
+          IPV6=$ADDR
+          FOUNDSRC=0
+          break
+        fi
     done
     echo $IPV6
 }
@@ -69,8 +67,7 @@ updaterecid () {
 # Retrive the subdomian record id, and replace the variable in this script.
 #
     local RECID=$(curl -k -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records?name=${DOMAIN}" \
-     -H "X-Auth-Email: ${CF_EMAIL}" \
-     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Authorization: Bearer ${CF_AUTH}" \
      -H "Content-Type: application/json" \
     | sed 's/,/\n/g' | awk -F'"' '/id/{print $6}' | head -1)
 
@@ -82,7 +79,7 @@ updaterecid () {
 #
 # Simple check before running.
 #
-if [[ -z $DOMAIN || -z $CF_EMAIL || -z $CF_KEY || -z $CF_ZONEID ]]; then
+if [[ -z $DOMAIN || -z $CF_AUTH || -z $CF_ZONEID ]]; then
     echo "The script get your IPv6 address as: ${LOCALv6}"
     echo "But some/none of the cloudflare account info is missing."
     echo "FILL OUT THE VARIABLES AT THE TOP OF THIS SCRIPT BEFORE RUNNING. "
@@ -101,7 +98,7 @@ fi
 # 
 # Read last REC from tempdir (or from NS)
 #
-LOCALv6=$(waitv6addr)
+LOCALv6=$(findv6addr)
 if [[ $LAST_FROMLOCAL -eq 1 ]]; then
     if [[ ! -f $TMPREC ]]; then
         echo $LOCALv6 > $TMPREC
@@ -122,8 +119,7 @@ fi
 if [[ "$LOCALv6" != "$LASTv6" ]]; then
     /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, LASTv6:${LASTv6}"
     /usr/bin/curl -k -s -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records/${CF_DNSRECID}" \
-     -H "X-Auth-Email: ${CF_EMAIL}" \
-     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Authorization: Bearer ${CF_AUTH}" \
      -H "Content-Type: application/json" \
      --data '{"type":"AAAA","name":"'${DOMAIN}'","content":"'${LOCALv6}'","ttl":600,"proxied":false}' | /usr/bin/logger -t cfddnsv6 && \
      echo $LOCALv6 > $TMPREC

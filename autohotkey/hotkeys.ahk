@@ -1,6 +1,7 @@
 ﻿>!7::Run, cmd /C "ping -t 172.16.192.10"
 >!1::Run, cmd /C "ping -t 192.168.1.1"
 >!d::Run, cmd /C "ping -t 240c::6666"
+>!t::Run, cmd /C "torrent2cloud_windows"
 >!SPACE::  Winset, Alwaysontop, , A
 >!p::
 	InputBox, ipsuf, 192.168.
