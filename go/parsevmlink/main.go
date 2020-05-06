@@ -144,7 +144,11 @@ func readRemoteBase64(furl string) ([]string, error) {
 	defer resp.Body.Close()
 	cnt, err := base64.StdEncoding.DecodeString(string(content))
 	if err != nil {
-		return nil, err
+		if _, ok := err.(base64.CorruptInputError); ok {
+		    log.Println(err)
+		} else {
+		    return nil, err
+		}
 	}
 
 	var vmesses []string
