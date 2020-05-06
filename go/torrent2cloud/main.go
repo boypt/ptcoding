@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -28,16 +27,13 @@ func torrent2cloud(fn string) (string, error) {
 	mi.Announce = ""
 	mi.AnnounceList = metainfo.AnnounceList{}
 
-	ifo, _ := mi.UnmarshalInfo()
-	fmt.Println(ifo.Name)
+	if ifo, err := mi.UnmarshalInfo(); err == nil {
+		fmt.Println("[", ifo.Name, "]")
+	}
 
 	buff := &bytes.Buffer{}
 	if err := mi.Write(buff); err != nil {
 		return "", err
-	}
-
-	if buff.Len() == 0 {
-		return "", errors.New("buf size 0")
 	}
 
 	apiHost := os.Getenv("CLDTORRENT")
@@ -83,12 +79,13 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else if strings.HasPrefix(retinfo, "OK") {
-			fmt.Println("-->Removed: ", torf)
-			os.Remove(torf)
+			if err := os.Remove(torf); err == nil {
+				fmt.Println("-->Removed")
+			}
 		} else {
 			fmt.Println("ret:", retinfo)
 		}
-		fmt.Println()
+		fmt.Println("===================================")
 	}
 
 	if runtime.GOOS == "windows" {
