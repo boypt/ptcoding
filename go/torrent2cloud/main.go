@@ -17,30 +17,30 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func torrent2cloud(fn string) (string, error) {
+func torrent2cloud(fn string) error {
 
 	mi, err := metainfo.LoadFromFile(fn)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	mi.Announce = ""
 	mi.AnnounceList = metainfo.AnnounceList{}
 
 	if ifo, err := mi.UnmarshalInfo(); err == nil {
-		fmt.Println("[", ifo.Name, "]")
+		fmt.Println("--> [", ifo.Name, "]", filepath.Base(fn))
 	}
 
 	buff := &bytes.Buffer{}
 	if err := mi.Write(buff); err != nil {
-		return "", err
+		return err
 	}
 
 	apiHost := os.Getenv("CLDTORRENT")
 	magapi := apiHost + "/api/torrentfile"
 	req, err := http.NewRequest("POST", magapi, buff)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	req.Header.Set("content-type", "application/json;charset=utf-8")
@@ -48,15 +48,20 @@ func torrent2cloud(fn string) (string, error) {
 	req.Header.Set("Cookie", strings.TrimPrefix(os.Getenv("CLDCOOKIE"), "cookie: "))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return string(body), nil
+
+	if b := string(body); !strings.HasPrefix(b, "OK") {
+		return fmt.Errorf("return not ok:%s", b)
+	}
+
+	return nil
 }
 
 func main() {
@@ -74,18 +79,15 @@ func main() {
 	}
 
 	for _, torf := range tors {
-		fmt.Println("-->Load:", torf)
-		retinfo, err := torrent2cloud(torf)
-		if err != nil {
-			fmt.Println(err)
-		} else if strings.HasPrefix(retinfo, "OK") {
-			if err := os.Remove(torf); err == nil {
-				fmt.Println("-->Removed")
+		for {
+			err := torrent2cloud(torf)
+			if err == nil {
+				os.Remove(torf)
+				fmt.Println("===================================")
+				break
 			}
-		} else {
-			fmt.Println("ret:", retinfo)
+			fmt.Println("err", err)
 		}
-		fmt.Println("===================================")
 	}
 
 	if runtime.GOOS == "windows" {
