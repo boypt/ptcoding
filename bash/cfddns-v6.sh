@@ -45,21 +45,22 @@ case $METHOD in
     ;;
 esac
 
-findv6addr () {
-    local IPV6=
+findsrcaddr () {
+    local DEST=$1
+    local IPSRC=
     local FOUNDSRC=0
-    for ADDR in $(ip route get 2606:4700:4700::1111 | head -n1); do
+    for ADDR in $(ip route get $DEST | head -n1); do
         if [[ "x${ADDR}" == "xsrc" ]]; then
           FOUNDSRC=1
           continue
         fi
         if [[ $FOUNDSRC -eq 1 ]]; then
-          IPV6=$ADDR
+          IPSRC=$ADDR
           FOUNDSRC=0
           break
         fi
     done
-    echo $IPV6
+    echo $IPSRC
 }
 
 updaterecid () {
@@ -98,7 +99,7 @@ fi
 # 
 # Read last REC from tempdir (or from NS)
 #
-LOCALv6=$(findv6addr)
+LOCALv6=$(findsrcaddr 240c::6666)
 if [[ $LAST_FROMLOCAL -eq 1 ]]; then
     if [[ ! -f $TMPREC ]]; then
         echo $LOCALv6 > $TMPREC
