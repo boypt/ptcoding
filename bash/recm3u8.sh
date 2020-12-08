@@ -12,6 +12,8 @@ __file="${__dir}/$(basename "${BASH_SOURCE[0]}")"
 __base="$(basename ${__file} .sh)"
 __root="$(cd "$(dirname "${__dir}")" && pwd)" # <-- change this as it depends on your app
 
+FFMPEG=/opt/ffmpeg/ffmpeg
+
 SKEY="${1:-}"
 
 if [[ -z $SKEY ]]; then
@@ -39,7 +41,7 @@ fi
 
 RECNAME=${RECPATH}/[${SKEY}]-$(date '+%m-%d_%H:%M:%S')
 #FFMPEGCMD="/usr/local/bin/ffmpeg -hide_banner -loglevel panic -re -i ${SRCINPUT} -c copy -bsf:a aac_adtstoasc ${RECNAME}.opus"
-/usr/local/bin/ffmpeg -hide_banner -loglevel error -y -nostdin -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 -timeout 1000000 -re -i ${SRCINPUT} -fflags +genpts+igndts -multiple_requests 1 -c:a libopus -ab 12k -af "pan=mono|c0=.5*c0+.5*c1" ${RECNAME}.opus &
+$FFMPEG -hide_banner -loglevel error -y -nostdin -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 -timeout 1000000 -re -i ${SRCINPUT} -fflags +genpts+igndts -multiple_requests 1 -c:a libopus -ab 12k -af "pan=mono|c0=.5*c0+.5*c1" ${RECNAME}.opus &
 FFPID=$!
 sleep 10
 if kill -0 $FFPID; then
