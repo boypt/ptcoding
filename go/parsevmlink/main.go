@@ -82,7 +82,11 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 					}
 				}
 			} else {
-				log.Println("vmessping", err, "\n", string(out))
+				if verbose {
+					log.Println("vmessping", err, "\n", string(out))
+				} else {
+					log.Println(lnk.Ps, err)
+				}
 			}
 		}(v)
 	}
@@ -145,9 +149,9 @@ func readRemoteBase64(furl string) ([]string, error) {
 	cnt, err := base64.StdEncoding.DecodeString(string(content))
 	if err != nil {
 		if _, ok := err.(base64.CorruptInputError); ok {
-		    log.Println(err)
+			log.Println(err)
 		} else {
-		    return nil, err
+			return nil, err
 		}
 	}
 

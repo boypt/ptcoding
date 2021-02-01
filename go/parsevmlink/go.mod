@@ -19,4 +19,4 @@ require (
 	google.golang.org/grpc v1.26.0 // indirect
 )
 
-replace github.com/v2fly/vmessping => /home/ubuntu/Workdir/v2ray/vmessping
+replace github.com/v2fly/vmessping => /home/boypt/Workdir/v2ray/vmessping
