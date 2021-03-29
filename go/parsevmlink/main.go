@@ -98,7 +98,7 @@ func runVmessPing(sub *vmSubs) *vmSubs {
 
 	for v := range goodch {
 		if v.nodeline != "" {
-			loc := v.nodeline[pxnLen : pxnLen+3]
+			loc := v.nodeline[pxnLen : len(v.nodeline)-1]
 			if !strings.HasPrefix(v.Ps, loc) {
 				v.Ps = loc + " - " + strings.TrimSpace(v.Ps)
 			}
