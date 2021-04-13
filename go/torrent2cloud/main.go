@@ -17,25 +17,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func torrent2cloud(fn string) error {
-
-	mi, err := metainfo.LoadFromFile(fn)
-	if err != nil {
-		return err
-	}
-
-	mi.Announce = ""
-	mi.AnnounceList = metainfo.AnnounceList{}
-
-	if ifo, err := mi.UnmarshalInfo(); err == nil {
-		fmt.Println("--> [", ifo.Name, "]", filepath.Base(fn))
-	}
-
-	buff := &bytes.Buffer{}
-	if err := mi.Write(buff); err != nil {
-		return err
-	}
-
+func postTorrent(buff *bytes.Buffer) error {
 	apiHost := os.Getenv("CLDTORRENT")
 	magapi := apiHost + "/api/torrentfile"
 	req, err := http.NewRequest("POST", magapi, buff)
@@ -62,6 +44,31 @@ func torrent2cloud(fn string) error {
 	}
 
 	return nil
+}
+
+func torrent2cloud(fn string) error {
+
+	mi, err := metainfo.LoadFromFile(fn)
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(mi.Announce, "plab.site") {
+		log.Println("remove Annouce: ", mi.Announce)
+		mi.Announce = ""
+		mi.AnnounceList = metainfo.AnnounceList{}
+	}
+
+	if ifo, err := mi.UnmarshalInfo(); err == nil {
+		fmt.Println("--> [", ifo.Name, "]", filepath.Base(fn))
+	}
+
+	buff := &bytes.Buffer{}
+	if err := mi.Write(buff); err != nil {
+		return err
+	}
+
+	return postTorrent(buff)
 }
 
 func main() {
