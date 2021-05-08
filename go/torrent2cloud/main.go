@@ -80,9 +80,12 @@ func main() {
 	_ = godotenv.Load(filepath.Join(cur.HomeDir, ".ptutils.config"))
 	_ = godotenv.Load() // for .env
 
-	tors, err := filepath.Glob(fmt.Sprintf("%s/*.torrent", os.Getenv("CLDTORRENTDIR")))
-	if err != nil {
-		return
+	tors := []string{}
+	for _, path := range strings.Split(os.Getenv("CLDTORRENTDIR"), " ") {
+		if t, err := filepath.Glob(fmt.Sprintf("%s/*.torrent", path)); err == nil {
+			log.Printf("Path %s found %d\n", path, len(t))
+			tors = append(tors, t...)
+		}
 	}
 
 	for _, torf := range tors {
