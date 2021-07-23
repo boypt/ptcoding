@@ -10,15 +10,15 @@
 #   And of `4ft35t`@github for the OpenWrt mod in grep command.
 #   https://gist.github.com/4ft35t/510897486bc6986d19cac45b3b9ca1d0    
 
-DOMAIN=''
 CF_AUTH=''
 CF_ZONEID=''
 CF_NS='elle.ns.cloudflare.com'
 TMPREC=/tmp/cfddnsv6.addr
 
 ######
-CF_DNSRECID=__RECID__
-# Note: this line will be replaced on first run with auctual id from cloudflare.
+CF_DOMAIN=''
+CF_DNSRECID=''
+# Note: Replace this line with `$0 785a4c0d12c84640eabd5991fcb00a64`
 #       See function updaterecid()
 ######
 
@@ -30,27 +30,27 @@ fi
 __dir="$(cd "$(dirname "$0")" && pwd)"
 __file="${__dir}/$(basename "$0")"
 
-METHOD=$1
-LAST_FROMDNS=0
-LAST_FROMLOCAL=0
-case $METHOD in
-    dns)
-    LAST_FROMDNS=1
-    ;;
-    local)
-    LAST_FROMLOCAL=1
-    ;;
-    *)
-    LAST_FROMDNS=1
-    ;;
-esac
+getrecid () {
+#
+# Retrive the subdomian record id, and replace the variable in this script.
+#
+    local cf_name=${1:-}
+    [[ ! -z $cf_name ]] || return 1
+    local RECID=$(curl -k -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records?name=${cf_name}" \
+     -H "Authorization: Bearer ${CF_AUTH}" \
+     -H "Content-Type: application/json" \
+    | sed 's/,/\n/g' | awk -F'"' '/id/{print $6}' | head -1)
+
+    echo $RECID
+}
+
 
 findsrcaddr () {
     local DEST=$1
     local IPSRC=
     local FOUNDSRC=0
     for ADDR in $(ip route get $DEST | head -n1); do
-        if [[ "x${ADDR}" == "xsrc" ]]; then
+        if [[ "x${ADDR}" = "xsrc" ]]; then
           FOUNDSRC=1
           continue
         fi
@@ -63,24 +63,47 @@ findsrcaddr () {
     echo $IPSRC
 }
 
-updaterecid () {
-#
-# Retrive the subdomian record id, and replace the variable in this script.
-#
-    local RECID=$(curl -k -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records?name=${DOMAIN}" \
+update_record () {
+    local up_recid=${1:-}
+    local up_name=${2:-}
+    local up_type=${3:-AAAA}
+    local up_content=${4:-}
+
+    /usr/bin/curl -k -s -X PUT \
+    "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records/${up_recid}" \
      -H "Authorization: Bearer ${CF_AUTH}" \
      -H "Content-Type: application/json" \
-    | sed 's/,/\n/g' | awk -F'"' '/id/{print $6}' | head -1)
-
-    if [[ ! -z $RECID ]]; then
-        sed -i "s/^CF_DNSRECID=__RECID__/CF_DNSRECID='${RECID}'/" $__file
-    fi
+     --data '{"type":"'${up_type}'","name":"'${up_name}'","content":"'${up_content}'","ttl":600,"proxied":false}'
 }
+
+# MAIN
+METHOD="${1:-}"
+LAST_FROMDNS=0
+LAST_FROMLOCAL=0
+case $METHOD in
+    getrecid)
+    if [[ ! -z ${2:-} ]]; then
+        getrecid ${2:-}
+    else
+        getrecid $CF_DOMAIN
+    fi
+    exit 0
+    ;;
+    dns)
+    LAST_FROMDNS=1
+    ;;
+    local)
+    LAST_FROMLOCAL=1
+    ;;
+    *)
+    exit 1
+    ;;
+esac
 
 #
 # Simple check before running.
 #
-if [[ -z $DOMAIN || -z $CF_AUTH || -z $CF_ZONEID ]]; then
+if [[ "" = "$CF_DOMAIN" || "" = "$CF_AUTH" || "" = "$CF_ZONEID" ]]; then
     echo "The script get your IPv6 address as: ${LOCALv6}"
     echo "But some/none of the cloudflare account info is missing."
     echo "FILL OUT THE VARIABLES AT THE TOP OF THIS SCRIPT BEFORE RUNNING. "
@@ -90,10 +113,10 @@ fi
 #
 # First run.
 #
-if [[ ${CF_DNSRECID} == "__RECID__" ]]; then
-    updaterecid
-    $__file
-    exit 0
+if [[ "${CF_DNSRECID}" = "" ]]; then
+    getrecid "$CF_DOMAIN"
+    echo "edit the script replace CF_DNSRECID with the value abouve"
+    exit 1
 fi
 
 # 
@@ -103,7 +126,7 @@ LOCALv6=$(findsrcaddr 240c::6666)
 if [[ $LAST_FROMLOCAL -eq 1 ]]; then
     if [[ ! -f $TMPREC ]]; then
         echo $LOCALv6 > $TMPREC
-        LASTv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
+        LASTv6=$(dig +short AAAA $CF_DOMAIN @${CF_NS} | head -n 1)
         /usr/bin/logger -t cfddnsv6 "First run, query NS for LASTADDR: ${LASTv6}, LOCALv6: ${LOCALv6}"
     else
         LASTv6=$(cat $TMPREC)
@@ -111,7 +134,7 @@ if [[ $LAST_FROMLOCAL -eq 1 ]]; then
 fi
 
 if [[ $LAST_FROMDNS -eq 1 ]]; then
-    LASTv6=$(dig +short AAAA $DOMAIN @${CF_NS} | head -n 1)
+    LASTv6=$(dig +short AAAA $CF_DOMAIN @${CF_NS} | head -n 1)
 fi
 
 #
@@ -119,9 +142,6 @@ fi
 #
 if [[ "$LOCALv6" != "$LASTv6" ]]; then
     /usr/bin/logger -t cfddnsv6 "LOCAL: ${LOCALv6}, LASTv6:${LASTv6}"
-    /usr/bin/curl -k -s -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONEID}/dns_records/${CF_DNSRECID}" \
-     -H "Authorization: Bearer ${CF_AUTH}" \
-     -H "Content-Type: application/json" \
-     --data '{"type":"AAAA","name":"'${DOMAIN}'","content":"'${LOCALv6}'","ttl":600,"proxied":false}' | /usr/bin/logger -t cfddnsv6 && \
+    update_record ${CF_DNSRECID} ${CF_DOMAIN} AAAA ${LOCALv6}
      echo $LOCALv6 > $TMPREC
 fi
