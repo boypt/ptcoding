@@ -16,6 +16,7 @@ __root="$(cd "$(dirname "${__dir}")" && pwd)" # <-- change this as it depends on
 
 arg1="${1:-}"
 
+# trap 'echo Signal caught, cleaning up >&2; cd /tmp; /bin/rm -rfv "$TMP"; exit 15' 1 2 3 15
 # allow command fail:
 # fail_command || true
 
