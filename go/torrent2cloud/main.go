@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -15,6 +16,10 @@ import (
 
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/joho/godotenv"
+)
+
+var (
+	del = flag.Bool("del", false, "delete trackers")
 )
 
 func postTorrent(buff *bytes.Buffer) error {
@@ -48,24 +53,32 @@ func postTorrent(buff *bytes.Buffer) error {
 
 func torrent2cloud(fn string) error {
 
+	buff := &bytes.Buffer{}
 	mi, err := metainfo.LoadFromFile(fn)
 	if err != nil {
 		return err
-	}
-
-	if strings.Contains(mi.Announce, "plab.site") {
-		log.Println("remove Annouce: ", mi.Announce)
-		mi.Announce = ""
-		mi.AnnounceList = metainfo.AnnounceList{}
 	}
 
 	if ifo, err := mi.UnmarshalInfo(); err == nil {
 		fmt.Println("--> [", ifo.Name, "]", filepath.Base(fn))
 	}
 
-	buff := &bytes.Buffer{}
-	if err := mi.Write(buff); err != nil {
-		return err
+	if *del {
+		if strings.Contains(mi.Announce, "plab.site") {
+			log.Println("remove Annouce: ", mi.Announce)
+			mi.Announce = ""
+			mi.AnnounceList = metainfo.AnnounceList{}
+		}
+
+		if err := mi.Write(buff); err != nil {
+			return err
+		}
+	} else {
+		fbyte, err := ioutil.ReadFile(fn)
+		if err != nil {
+			return err
+		}
+		buff = bytes.NewBuffer(fbyte)
 	}
 
 	return postTorrent(buff)
@@ -73,6 +86,7 @@ func torrent2cloud(fn string) error {
 
 func main() {
 
+	flag.Parse()
 	cur, err := user.Current()
 	if err != nil {
 		log.Fatal(err)
