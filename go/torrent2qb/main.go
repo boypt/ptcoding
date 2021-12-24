@@ -165,17 +165,19 @@ func main() {
 	_ = godotenv.Load(filepath.Join(cur.HomeDir, ".ptutils.config"))
 	_ = godotenv.Load() // for .env
 
-	fmt.Println("Start login")
-	q, _ := newQbApi(os.Getenv("QB_BASE_URL"))
-	if err := q.Login(os.Getenv("QB_USER"), os.Getenv("QB_PASS")); err != nil {
-		log.Fatal(err)
-	}
-
 	tors := []string{}
 	for _, path := range strings.Split(os.Getenv("CLDTORRENTDIR"), " ") {
 		if t, err := filepath.Glob(fmt.Sprintf("%s/*.torrent", path)); err == nil {
 			log.Printf("Path %s found %d\n", path, len(t))
 			tors = append(tors, t...)
+		}
+	}
+
+	q, _ := newQbApi(os.Getenv("QB_BASE_URL"))
+	if len(tors) > 0 {
+		fmt.Println("Start login")
+		if err := q.Login(os.Getenv("QB_USER"), os.Getenv("QB_PASS")); err != nil {
+			log.Fatal(err)
 		}
 	}
 
