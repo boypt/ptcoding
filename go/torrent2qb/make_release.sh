@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-BIN=torrent2cloud
+BIN=torrent2qb
 SUFFIX=
 GITVER=$(git rev-parse --short HEAD)
 
