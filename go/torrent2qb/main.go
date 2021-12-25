@@ -24,7 +24,7 @@ import (
 )
 
 var (
-// del = flag.Bool("del", false, "delete trackers")
+	noremove = flag.Bool("nr", false, "dont remove torrents")
 )
 
 type qbApi struct {
@@ -57,6 +57,7 @@ func (q *qbApi) Upload(filename string) error {
 	url := q.baseUrl + "/api/v2/torrents/add"
 	filetype := "application/x-bittorrent"
 
+	log.Println("upload:", filepath.Base(filename))
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -71,6 +72,14 @@ func (q *qbApi) Upload(filename string) error {
 	}
 
 	io.Copy(part, file)
+
+	if c := ParseCatagory(filename); c != "" {
+		log.Println("add catagory:", c)
+		if fw, err := writer.CreateFormField("category"); err == nil {
+			fw.Write([]byte(c))
+		}
+	}
+
 	writer.Close()
 
 	request, err := http.NewRequest("POST", url, body)
@@ -98,6 +107,19 @@ func (q *qbApi) Upload(filename string) error {
 		return fmt.Errorf("Upload failed")
 	}
 	return nil
+}
+
+func ParseCatagory(fn string) string {
+	base := filepath.Base(fn)
+	if strings.HasPrefix(base, "[GT]") {
+		return "PORN"
+	}
+
+	if strings.Contains(base, "porn") {
+		return "PORN"
+	}
+
+	return ""
 }
 
 /*
@@ -175,17 +197,20 @@ func main() {
 
 	q, _ := newQbApi(os.Getenv("QB_BASE_URL"))
 	if len(tors) > 0 {
-		fmt.Println("Start login")
+		log.Println("Start login")
 		if err := q.Login(os.Getenv("QB_USER"), os.Getenv("QB_PASS")); err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("===================================")
 	}
 
 	for _, torf := range tors {
 		for {
-			err := q.Upload(torf)
-			if err == nil {
-				os.Remove(torf)
+			if err := q.Upload(torf); err == nil {
+				if !*noremove {
+					os.Remove(torf)
+					fmt.Println("removed ", filepath.Base(torf))
+				}
 				fmt.Println("===================================")
 				break
 			}
@@ -195,6 +220,7 @@ func main() {
 	}
 
 	if runtime.GOOS == "windows" {
+		fmt.Println("ready exit")
 		fmt.Println("===================================")
 		fmt.Println("\nPress 'Enter' to continue...")
 		bufio.NewReader(os.Stdin).ReadBytes('\n')
