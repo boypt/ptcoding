@@ -91,7 +91,7 @@ func (q *qbApi) Upload(filename string) error {
 	io.Copy(part, file)
 
 	if c := ParseCatagory(filename); c != "" {
-		log.Println("add catagory:", c)
+		log.Printf("Add Catagory:[%s]", c)
 		if fw, err := writer.CreateFormField("category"); err == nil {
 			fw.Write([]byte(c))
 		}
@@ -212,6 +212,7 @@ func main() {
 		}
 	}
 
+	fmt.Println("===================================")
 	q, _ := newQbApi(os.Getenv("QB_BASE_URL"))
 	if len(tors) > 0 {
 		log.Println("Start login")
@@ -245,7 +246,6 @@ func main() {
 	}
 
 	if runtime.GOOS == "windows" {
-		fmt.Println("ready exit")
 		fmt.Println("===================================")
 		fmt.Println("\nPress 'Enter' to continue...")
 		bufio.NewReader(os.Stdin).ReadBytes('\n')
