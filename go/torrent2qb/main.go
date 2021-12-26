@@ -47,7 +47,25 @@ func (q *qbApi) Login(user, pass string) error {
 	ret := string(body)
 	log.Println("Login:", resp.Status, ret)
 	if !strings.HasPrefix(ret, "Ok") {
-		return fmt.Errorf("Login failed")
+		return fmt.Errorf("Login failed: %s", ret)
+	}
+	return nil
+}
+
+func (q *qbApi) Logout() error {
+	api := q.baseUrl + "/api/v2/auth/logout"
+
+	resp, err := q.client.PostForm(api, nil)
+	if err != nil {
+		return err
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	ret := string(body)
+	log.Println("Logout:", resp.Status, ret)
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Logout error: %s", resp.Status)
 	}
 	return nil
 }
@@ -57,7 +75,6 @@ func (q *qbApi) Upload(filename string) error {
 	url := q.baseUrl + "/api/v2/torrents/add"
 	filetype := "application/x-bittorrent"
 
-	log.Println("upload:", filepath.Base(filename))
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -209,7 +226,7 @@ func main() {
 			if err := q.Upload(torf); err == nil {
 				if !*noremove {
 					os.Remove(torf)
-					fmt.Println("removed ", filepath.Base(torf))
+					log.Println("removed ", filepath.Base(torf))
 				}
 				fmt.Println("===================================")
 				break
@@ -217,6 +234,14 @@ func main() {
 			fmt.Println("err", err)
 			time.Sleep(time.Second * 3)
 		}
+	}
+
+	if len(tors) > 0 {
+		log.Println("exit Logout")
+		if err := q.Logout(); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("===================================")
 	}
 
 	if runtime.GOOS == "windows" {
