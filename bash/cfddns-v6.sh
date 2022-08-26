@@ -44,23 +44,14 @@ getrecid () {
     echo $RECID
 }
 
-
 findsrcaddr () {
-    local DEST=$1
     local IPSRC=
-    local FOUNDSRC=0
-    for ADDR in $(ip route get $DEST | head -n1); do
-        if [[ "x${ADDR}" = "xsrc" ]]; then
-          FOUNDSRC=1
-          continue
-        fi
-        if [[ $FOUNDSRC -eq 1 ]]; then
-          IPSRC=$ADDR
-          FOUNDSRC=0
-          break
-        fi
+    local FOUND=0
+    for ADDR in $(ip route get $1 | head -n1); do
+        [[ $FOUND -eq 1 ]] && IPSRC=$ADDR && break
+        [[ "x${ADDR}" == "xsrc" ]] && FOUND=1 && continue
     done
-    echo $IPSRC
+    [[ -n IPSRC ]] && echo $IPSRC
 }
 
 update_record () {
@@ -122,7 +113,7 @@ fi
 # 
 # Read last REC from tempdir (or from NS)
 #
-LOCALv6=$(findsrcaddr 240c::6666)
+LOCALv6=$(findsrcaddr 240c::)
 if [[ $LAST_FROMLOCAL -eq 1 ]]; then
     if [[ ! -f $TMPREC ]]; then
         echo $LOCALv6 > $TMPREC
