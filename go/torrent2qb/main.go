@@ -43,12 +43,7 @@ func (q *qbApi) Login(user, pass string) error {
 		return err
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	ret := string(body)
-	log.Println("Login:", resp.Status, ret)
-	if !strings.HasPrefix(ret, "Ok") {
-		return fmt.Errorf("Login failed: %s", ret)
-	}
+	log.Println("Login:", resp.Status)
 	return nil
 }
 
