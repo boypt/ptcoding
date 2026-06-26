@@ -35,6 +35,7 @@ type qbApi struct {
 func (q *qbApi) Login(user, pass string) error {
 	api := q.baseUrl + "/api/v2/auth/login"
 
+	log.Println("Req:", api)
 	resp, err := q.client.PostForm(api, url.Values{
 		"username": {user},
 		"password": {pass},
@@ -44,12 +45,16 @@ func (q *qbApi) Login(user, pass string) error {
 	}
 
 	log.Println("Login:", resp.Status)
+	if resp.StatusCode > 299 {
+		return fmt.Errorf("Login failed: %s", resp)
+	}
 	return nil
 }
 
 func (q *qbApi) Logout() error {
 	api := q.baseUrl + "/api/v2/auth/logout"
 
+	log.Println("Req:", api)
 	resp, err := q.client.PostForm(api, nil)
 	if err != nil {
 		return err
@@ -94,6 +99,7 @@ func (q *qbApi) Upload(filename string) error {
 
 	writer.Close()
 
+	log.Println("Req:", url)
 	request, err := http.NewRequest("POST", url, body)
 
 	if err != nil {
@@ -172,7 +178,7 @@ func torrent2cloud(fn string) error {
 func newQbApi(base string) (*qbApi, error) {
 
 	q := &qbApi{
-		baseUrl: base,
+		baseUrl: strings.TrimSuffix(base, "/"),
 	}
 
 	jar, err := cookiejar.New(nil)
